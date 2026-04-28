@@ -3,6 +3,8 @@
 ## Goal
 Create a C# ASP.NET Core Minimal API console-hosted web app with project structure, configuration model, and build system.
 
+**All tasks complete ✅**
+
 ## Tasks
 
 ### 1.1 Solution & Project Creation
@@ -45,8 +47,8 @@ Create a C# ASP.NET Core Minimal API console-hosted web app with project structu
   ```
 
 ### 1.6 Git Initialization
-- [ ] Initialize git repository (`git init`)
-- [ ] Create `.gitignore` for .NET (bin/, obj/, user-secrets, IDE files)
+- [x] Initialize git repository (`git init`)
+- [x] Create `.gitignore` for .NET (bin/, obj/, user-secrets, IDE files)
 
 ### 1.5 Program.cs Entry Point
 - [x] Create minimal `Program.cs` that builds and runs a `WebApplication`
