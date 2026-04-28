@@ -14,7 +14,7 @@ public class DefaultModelLauncher : IModelLauncher
 
         var psi = new ProcessStartInfo
         {
-            FileName = "pwsh.exe",
+            FileName = PowerShellResolver.GetExe(),
             Arguments = arguments,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
@@ -26,8 +26,10 @@ public class DefaultModelLauncher : IModelLauncher
 
     public bool IsModelRunning(string modelName)
     {
-        var pwshProcesses = Process.GetProcessesByName("pwsh");
-        return pwshProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
+        // Check both pwsh and powershell processes since either could be used
+        var psProcesses = Process.GetProcessesByName("pwsh")
+            .Concat(Process.GetProcessesByName("powershell"));
+        return psProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
