@@ -6,10 +6,13 @@ public class DefaultModelLauncher : IModelLauncher
 {
     public async Task<Process?> StartAsync(string scriptPath)
     {
+        var workingDir = Path.GetDirectoryName(scriptPath);
+
         var psi = new ProcessStartInfo
         {
             FileName = "pwsh.exe",
             Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\"",
+            WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
