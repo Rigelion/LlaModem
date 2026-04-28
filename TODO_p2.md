@@ -1,31 +1,21 @@
-# Phase 2: Basic Auth Middleware
+# Phase 2: Build Verification
 
 ## Goal
-Require HTTP Basic Authentication on all `/v1/*` routes and reject unauthenticated requests.
+Verify the application builds and runs correctly on .NET 10.
 
 **All tasks complete ✅**
 
 ## Tasks
 
-### 2.1 Auth Middleware Implementation
-- [ ] Create `Middleware/BasicAuthMiddleware.cs` that implements HTTP Basic Auth checking
-- [ ] Middleware reads the `Authorization` header from incoming requests
-- [ ] Parse the base64-encoded `username:password` credentials
-- [ ] Compare against configured `AuthUsername` and `AuthPassword` (constant-time comparison to prevent timing attacks)
-- [ ] If auth is missing or invalid, return `401 Unauthorized` with `WWW-Authenticate` header
-- [ ] If auth is valid, pass the request through via `_next(context)`
+### 2.1 Restore & Build
+- [x] Run `dotnet restore` and confirm no package resolution errors
+- [x] Run `dotnet build` and verify clean build (0 warnings, 0 errors)
+- [x] Fix any compilation errors if they arise
 
-### 2.2 Auth Extension & Registration
-- [ ] Create `Middleware/BasicAuthExtensions.cs` with an `IEndpointRouteBuilder` extension method
-- [ ] Register the middleware in `Program.cs` for `/v1/*` routes only
-- [ ] Use `app.MapWhen()` or endpoint-level grouping (`map.Map("/v1/*")`) to scope auth
-
-### 2.3 Security Considerations
-- [ ] Avoid logging the full `Authorization` header anywhere
-- [ ] Log only that authentication was attempted (without credential details)
-- [ ] Use `PasswordHasher` or simple string comparison with `SequenceEqual` for constant-time check
+### 2.2 Smoke Test
+- [x] Run the app with `dotnet run` and confirm it starts without errors
+- [x] Hit `/health` endpoint to verify it responds (200 OK, `{"status":"ok","activeModel":null}`)
+- [x] Stop the app
 
 ## Notes
-- Basic Auth is used per the user's config — not JWT or OAuth
-- Auth applies only to `/v1/*` routes; health/ping endpoints can remain unauthenticated if needed later
-- Credentials come from `appsettings.json`
+- .NET 10 SDK (10.0.101) is installed

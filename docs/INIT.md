@@ -6,7 +6,7 @@ A local Windows application that exposes an OpenAI-compatible API through a cust
 
 ## Tech Stack
 
-- **Language:** C# / .NET 8 (net8.0)
+- **Language:** C# / .NET 10 (net10.0)
 - **Framework:** ASP.NET Core Minimal API
 - **Hosting:** Console-hosted (Kestrel)
 - **Auth:** HTTP Basic Authentication

@@ -1,61 +1,18 @@
-# Phase 1: Project Setup & Configuration
+# Phase 1: Project File & Solution Upgrade
 
 ## Goal
-Create a C# ASP.NET Core Minimal API console-hosted web app with project structure, configuration model, and build system.
+Update the project file and solution to target .NET 10.
 
 **All tasks complete ✅**
 
 ## Tasks
 
-### 1.1 Solution & Project Creation
-- [x] Create `LlamaDem.sln` solution file
-- [x] Create `LlamaDem.csproj` project file targeting .NET 8+ (net8.0) for Windows
-- [x] Set output type to `Exe` (console-hosted web app)
+### 1.1 Update csproj
+- [x] Change `<TargetFramework>` from `net8.0` to `net10.0` in `LlaModem.csproj`
+- [x] Update `Microsoft.AspNetCore.OpenApi` package reference from `8.0.*` to `10.0.*`
 
-### 1.2 Dependencies
-- [x] Add `Microsoft.AspNetCore.OpenApi` package reference
-- [x] Add `Swashbuckle.AspNetCore` for Swagger (dev-only, optional)
-- [x] No external HTTP client needed — use built-in `HttpClient`
-
-### 1.3 Configuration Model
-- [x] Create `Config/RouterConfig.cs` with properties: `ListenUrl`, `AuthUsername`, `AuthPassword`, `IdleTimeoutSeconds`
-- [x] Create `Config/ModelConfig.cs` with properties: `StartScript`, `BackendUrl`
-- [x] Create `Config/AppConfig.cs` containing `Router` and dictionary of `Models` (keyed by model name)
-- [x] Wire up `IConfiguration` to bind `appsettings.json` in `Program.cs`
-
-### 1.4 appsettings.json
-- [x] Create `appsettings.json` with the full config structure:
-  ```json
-  {
-    "Router": {
-      "ListenUrl": "http://localhost:9000",
-      "AuthUsername": "admin",
-      "AuthPassword": "change-me",
-      "IdleTimeoutSeconds": 600
-    },
-    "Models": {
-      "qwen-smart": {
-        "StartScript": "F:\\llama\\start-qwen-smart.ps1",
-        "BackendUrl": "http://localhost:8001"
-      },
-      "qwen-fast": {
-        "StartScript": "F:\\llama\\start-qwen-fast.ps1",
-        "BackendUrl": "http://localhost:8002"
-      }
-    }
-  }
-  ```
-
-### 1.6 Git Initialization
-- [x] Initialize git repository (`git init`)
-- [x] Create `.gitignore` for .NET (bin/, obj/, user-secrets, IDE files)
-
-### 1.5 Program.cs Entry Point
-- [x] Create minimal `Program.cs` that builds and runs a `WebApplication`
-- [x] Register config via `builder.Configuration`
-- [x] Ensure app listens on the configured `ListenUrl`
+### 1.2 Update solution file
+- [x] Update VisualStudioVersion and MinimumVisualStudioVersion in `LlaModem.sln` for .NET 10 compatibility
 
 ## Notes
-- Single project, single solution — Windows-first target
-- No ngrok integration in this phase
-- Config uses `appsettings.json` only (no environment variable overrides needed yet)
+- No source code changes expected — Minimal API, DI, middleware are all stable across versions

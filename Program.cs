@@ -12,6 +12,15 @@ builder.Services.AddOptions<AppConfig>().Bind(builder.Configuration).ValidateOnS
 builder.Services.Configure<RouterConfig>(builder.Configuration.GetSection("Router"));
 builder.Services.AddOptions<RouterConfig>().Bind(builder.Configuration.GetSection("Router")).ValidateOnStart();
 
+// Configure Kestrel to listen on the configured URL
+var routerConfig = builder.Configuration.GetSection("Router");
+var listenUrl = routerConfig["ListenUrl"] ?? "http://localhost:9000";
+var uri = new Uri(listenUrl);
+builder.WebHost.ConfigureKestrel(server =>
+{
+    server.ListenAnyIP(uri.Port);
+});
+
 // Register services
 builder.Services.AddSingleton<ModelManager>();
 builder.Services.AddSingleton<IRequestTracker, RequestTracker>();
