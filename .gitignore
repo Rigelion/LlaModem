@@ -1,0 +1,24 @@
+## .NET
+bin/
+obj/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.log
+**/*.js
+**/*.map
+user-secrets.json
+
+## IDE
+.vs/
+.vscode/
+*.suo
+*.userplan
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Release
+dist/
+publish/
