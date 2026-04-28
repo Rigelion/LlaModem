@@ -8,6 +8,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        LogProjectEnvironment();
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Bind configuration
@@ -40,5 +42,29 @@ public class Program
         app.ConfigureEndpoints();
 
         app.Run();
+    }
+
+    private static void LogProjectEnvironment()
+    {
+        var projectVars = new[]
+        {
+            "QWEN_SMART_START_SCRIPT",
+            "QWEN_FAST_START_SCRIPT",
+            "LLAMODEM_LISTEN_URL",
+            "LLAMODEM_AUTH_USERNAME",
+            "LLAMODEM_AUTH_PASSWORD",
+            "ASPNETCORE_ENVIRONMENT"
+        };
+
+        Console.WriteLine("=== LlaModem Environment ===");
+        foreach (var key in projectVars)
+        {
+            var value = Environment.GetEnvironmentVariable(key);
+            var displayValue = string.IsNullOrEmpty(value)
+                ? "(not set)"
+                : value.Contains(" ") || value.Contains("=") ? $"\"{value}\"" : value;
+            Console.WriteLine($"  {key}={displayValue}");
+        }
+        Console.WriteLine();
     }
 }
