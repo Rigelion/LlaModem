@@ -1,6 +1,8 @@
 ## .NET
 bin/
 obj/
+**/[Bb]in/
+**/[Oo]bj/
 **/*.user
 **/*.suo
 **/*.cache
@@ -8,11 +10,19 @@ obj/
 **/*.js
 **/*.map
 user-secrets.json
+*.dll
+*.exe
 
-## IDE
-.vs/
+## IDE - Rider
+.idea/
+*.sln.DotSettings
+*.sln.user
+
+## IDE - VS Code
 .vscode/
-*.suo
+
+## IDE - Visual Studio
+*.vs/
 *.userplan
 
 ## OS
@@ -22,3 +32,23 @@ Thumbs.db
 ## Release
 dist/
 publish/
+
+## Build outputs
+**/publish/
+**/app.publish/
+
+## NuGet
+nuget.config
+*.nupkg
+project.assets.json
+project.nuget.cache
+
+## Runtime / logs
+*.log
+logs/
+
+## PI / AI tools
+.pi-lens/
+pi-session-*.html
+*.tmp
+*.temp
