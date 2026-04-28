@@ -42,6 +42,13 @@ public class ModelManager : IDisposable
                 $"Model '{modelName}' not found. Available models: {available}");
         }
 
+        // Check if a PowerShell window with this model title is already open
+        if (_launcher.IsModelRunning(modelName))
+        {
+            _logger.LogDebug("PowerShell window for model '{Model}' is already running", modelName);
+            return;
+        }
+
         lock (_lock)
         {
             if (_activeModelName == modelName && _activeProcess is not null && !_activeProcess.HasExited)
@@ -96,7 +103,7 @@ public class ModelManager : IDisposable
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
             modelName, modelConfig.StartScript, modelConfig.BackendUrl);
 
-        var process = await _launcher.StartAsync(modelConfig.StartScript);
+        var process = await _launcher.StartAsync(modelName, modelConfig.StartScript);
         if (process is null)
         {
             _logger.LogError("Failed to launch process for model '{Model}'", modelName);

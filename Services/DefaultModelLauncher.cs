@@ -4,22 +4,30 @@ namespace LlaModem.Services;
 
 public class DefaultModelLauncher : IModelLauncher
 {
-    public async Task<Process?> StartAsync(string scriptPath)
+    public async Task<Process?> StartAsync(string modelName, string scriptPath)
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
+
+        // Set window title to model name so we can identify the process later
+        var escapedScript = scriptPath.Replace("'", "''");
+        var arguments = $"-ExecutionPolicy Bypass -Command \"$$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'\"";
 
         var psi = new ProcessStartInfo
         {
             FileName = "pwsh.exe",
-            Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\"",
+            Arguments = arguments,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
+            CreateNoWindow = false
         };
 
         return Process.Start(psi);
+    }
+
+    public bool IsModelRunning(string modelName)
+    {
+        var pwshProcesses = Process.GetProcessesByName("pwsh");
+        return pwshProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
