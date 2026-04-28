@@ -24,10 +24,10 @@ public class DefaultModelLauncher : IModelLauncher
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
 
-        // Set window title to model name so we can identify the process later
+        // Set window title to the model name so we can identify the process later
         var escapedScript = scriptPath.Replace("'", "''");
         var arguments =
-            "-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = 'qwen-smart'; & 'F:/llama/llama-qwen36-SMART.ps1'\"";
+            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'\"";
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,
@@ -220,6 +220,7 @@ public class DefaultModelLauncher : IModelLauncher
     /// </summary>
     private static HashSet<int> GetDescendantProcessIds(int parentPid)
     {
+#pragma warning disable CA1416 // Validate platform compatibility
         var descendantIds = new HashSet<int>();
         try
         {
@@ -247,6 +248,7 @@ public class DefaultModelLauncher : IModelLauncher
             // WMI may not be available on all systems — log and continue without tree kill
             // This is a best-effort operation
         }
+#pragma warning restore CA1416 // Validate platform compatibility
 
         return descendantIds;
     }
