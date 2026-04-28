@@ -9,6 +9,7 @@ public class ModelManager : IDisposable
     private readonly AppConfig _config;
     private readonly ILogger<ModelManager> _logger;
     private readonly HttpClient _httpClient;
+    private readonly IModelLauncher _launcher;
     private readonly object _lock = new();
 
     private string? _activeModelName;
@@ -19,11 +20,13 @@ public class ModelManager : IDisposable
 
     public ModelManager(
         IOptions<AppConfig> config,
-        ILogger<ModelManager> logger)
+        ILogger<ModelManager> logger,
+        IModelLauncher? launcher = null)
     {
         _config = config.Value;
         _logger = logger;
         _httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        _launcher = launcher ?? new DefaultModelLauncher();
     }
 
     /// <summary>
@@ -73,31 +76,7 @@ public class ModelManager : IDisposable
             _activeModelName = null;
         }
 
-        _logger.LogInformation("Stopping model '{Model}' (PID: {Pid})", modelName, process.Id);
-
-        try
-        {
-            if (!process.HasExited)
-            {
-                // Graceful shutdown: try to terminate first
-                process.Kill(false);
-
-                // Wait up to 5 seconds for graceful exit
-                var exited = process.WaitForExit(5000);
-                if (!exited)
-                {
-                    _logger.LogWarning("Model '{Model}' did not exit gracefully within 5s, force killing", modelName);
-                    process.Kill(true);
-                    process.WaitForExit();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error stopping model '{Model}'", modelName);
-        }
-
-        _logger.LogInformation("Model '{Model}' stopped", modelName);
+        await _launcher.StopAsync(process, modelName, _logger);
     }
 
     private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig)
@@ -117,27 +96,11 @@ public class ModelManager : IDisposable
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
             modelName, modelConfig.StartScript, modelConfig.BackendUrl);
 
-        var psi = new ProcessStartInfo
+        var process = await _launcher.StartAsync(modelConfig.StartScript);
+        if (process is null)
         {
-            FileName = "pwsh.exe",
-            Arguments = $"-ExecutionPolicy Bypass -File \"{modelConfig.StartScript}\"",
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true
-        };
-
-        Process process;
-        try
-        {
-            process = Process.Start(psi)
-                      ?? throw new InvalidOperationException($"Failed to start process for model '{modelName}'");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to launch PowerShell script for model '{Model}'", modelName);
-            throw new InvalidOperationException(
-                $"Failed to start model '{modelName}': {ex.Message}", ex);
+            _logger.LogError("Failed to launch process for model '{Model}'", modelName);
+            throw new InvalidOperationException($"Failed to start model '{modelName}'");
         }
 
         // Capture stdout/stderr for logging
@@ -175,7 +138,7 @@ public class ModelManager : IDisposable
 
     private async Task<bool> WaitForHealthCheckAsync(string backendUrl)
     {
-        var healthPath = "/health"; // Common llama-server health endpoint
+        var healthPath = "/health";
         var url = $"{backendUrl.TrimEnd('/')}{healthPath}";
         var timeout = TimeSpan.FromMinutes(2);
         var delay = TimeSpan.FromMilliseconds(500);
