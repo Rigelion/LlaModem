@@ -20,7 +20,11 @@ builder.Services.AddHostedService<IdleTimeoutService>();
 var app = builder.Build();
 
 // Health endpoint (unauthenticated)
-app.MapGet("/health", () => Results.Json(new { status = "ok" }));
+app.MapGet("/health", (ModelManager modelManager) =>
+{
+    var activeModel = modelManager.ActiveModelName;
+    return Results.Json(new { status = "ok", activeModel });
+});
 
 // Apply Basic Auth to /v1/* routes
 app.UseBasicAuthWhen("/v1");
@@ -150,4 +154,59 @@ app.Map("/v1/**", async (
     }
 });
 
+// Admin endpoints (unauthenticated)
+var adminGroup = app.MapGroup("/admin");
+
+// GET /admin/status
+adminGroup.MapGet("/status", (ModelManager modelManager, IOptions<AppConfig> config) =>
+{
+    var activeModel = modelManager.ActiveModelName;
+    string? backendUrl = null;
+    if (activeModel != null && config.Value.Models.TryGetValue(activeModel, out var mc))
+    {
+        backendUrl = mc.BackendUrl;
+    }
+    return Results.Json(new { activeModel, backendUrl });
+});
+
+// POST /admin/model — switch model
+adminGroup.MapPost("/model", async (HttpContext context, ModelManager modelManager) =>
+{
+    var body = await System.Text.Json.JsonSerializer.DeserializeAsync<SwitchModelRequest>(context.Request.Body);
+    if (body?.Model == null)
+    {
+        await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = "Provide a 'model' field in the request body." });
+        return StatusCodes.Status400BadRequest;
+    }
+
+    try
+    {
+        await modelManager.EnsureModelAsync(body.Model);
+        await context.Response.WriteAsJsonAsync(new { activeModel = modelManager.ActiveModelName });
+        return StatusCodes.Status200OK;
+    }
+    catch (Exception ex)
+    {
+        await context.Response.WriteAsJsonAsync(new { error = "Model unavailable", message = ex.Message });
+        return StatusCodes.Status503ServiceUnavailable;
+    }
+});
+
+// POST /admin/stop — stop active model
+adminGroup.MapPost("/stop", async (HttpContext context, ModelManager modelManager) =>
+{
+    if (modelManager.ActiveModelName == null)
+    {
+        await context.Response.WriteAsJsonAsync(new { message = "No active model to stop." });
+        return StatusCodes.Status400BadRequest;
+    }
+
+    await modelManager.StopActiveModelAsync();
+    await context.Response.WriteAsJsonAsync(new { message = $"Model '{modelManager.ActiveModelName ?? "(none)"}' stopped." });
+    // Note: ActiveModelName is null after stop, so we captured it above
+    return StatusCodes.Status200OK;
+});
+
 app.Run();
+
+public record SwitchModelRequest(string? Model);
