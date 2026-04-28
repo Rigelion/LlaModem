@@ -2,26 +2,27 @@
 
 ## Goal
 
-Align all PowerShell-related calls to use a single shared `powershell.exe` resolution logic, and fix the process stop logic to kill child processes (tree kill).
+Fix the false "insufficient VRAM" error on subsequent requests by adding a backend URL health check as an additional process detection mechanism, and move the VRAM check to only fire when we're truly starting fresh.
 
 ## Tasks
 
-### 1. Align PowerShell resolution — always use powershell.exe
+### 1. Force new PowerShell window for model output
 
-- [x] Remove `PowerShellResolver.cs` entirely (it's superseded by the unified approach)
-- [x] Replace the old `ResolvePowerShellExe()` method with a simple `const string PowerShellExe = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe";`
-- [x] Update `DefaultModelLauncher.StartAsync()` to use the unified constant
-- [x] Update `DefaultModelLauncher.IsModelRunning()` to only check `Process.GetProcessesByName("powershell")` (remove pwsh)
+- [x] In `DefaultModelLauncher.StartAsync()`, set `UseShellExecute = true` so the PowerShell process opens its own console window and outputs go there (not captured by parent)
 
-### 2. Fix process stop logic — kill child processes tree
+### 2. Add IsModelRunningV2 — backend URL health check
 
-- [x] In `DefaultModelLauncher.StopAsync()`, before killing the main PowerShell process, enumerate and kill all descendant processes (children, grandchildren, etc.) of the process being stopped
-- [x] Use `Win32_Process` WMI queries to find and kill child/grandchild processes recursively
-- [x] After killing all children, kill the parent PowerShell process gracefully (5s wait), then force kill if needed
+- [x] Add `IsModelRunningV2(string backendUrl)` method to `DefaultModelLauncher` that checks if the backend URL responds to a health check (GET `/health`), returning true if the model's llama-server is actually running and healthy
+
+### 2. Fix EnsureModelAsync — only check VRAM when truly starting fresh
+
+- [x] In `EnsureModelAsync`, add a second early-exit check using `IsModelRunningV2` that verifies the backend URL is responding before attempting to start
+- [x] Move the VRAM resource check from `StartModelAsync` into a path that only executes when we're certain no model process is running (i.e., only after both `IsModelRunning` and `IsModelRunningV2` return false)
+- [x] If either `IsModelRunning` or `IsModelRunningV2` returns true, skip starting and just return as already active
 
 ## Notes
 
-- Target environment is Windows — do not validate by running on this machine
-- Window title in StartAsync arguments remains hardcoded as `"qwen-smart"`
-- The hardcoded script path and model name in `StartAsync` arguments are NOT changed yet
-- `nvidia-smi` logic in `GpuMemoryChecker` is out of scope
+- `IsModelRunning` (PowerShell window title check) stays as-is with hardcoded `'qwen-smart'`
+- `IsModelRunningV2` is added but not yet used — user will test it first before enabling it in the flow
+- VRAM check should only trigger when we're actually launching a new model, not when an existing one is already running
+- `UseShellExecute = true` means stdout/stderr capture via `OutputDataReceived` won't work — those handlers can be removed or left as no-op

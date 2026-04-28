@@ -18,6 +18,11 @@ public interface IModelLauncher
     bool IsModelRunning(string modelName);
 
     /// <summary>
+    /// Checks whether the backend URL responds to a health check, indicating the model's llama-server is running.
+    /// </summary>
+    Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Stops the given process gracefully, with force-kill fallback after 5 seconds.
     /// </summary>
     Task StopAsync(Process process, string modelName, ILogger logger);

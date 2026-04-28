@@ -45,13 +45,27 @@ public class ModelManager : IDisposable
                 $"Model '{modelName}' not found. Available models: {available}");
         }
 
-        // Check if a PowerShell window with this model title is already open
+        // Check 1: Is a PowerShell window with this model title already open?
         if (_launcher.IsModelRunning(modelName))
         {
             _logger.LogDebug("PowerShell window for model '{Model}' is already running", modelName);
             return;
         }
 
+        // Check 2: Is the backend URL responding? (llama-server may be running but title check missed it)
+        var backendHealthy = await _launcher.IsModelRunningV2(modelConfig.BackendUrl);
+        if (backendHealthy)
+        {
+            _logger.LogDebug("Backend for model '{Model}' at {Url} is healthy", modelName, modelConfig.BackendUrl);
+            lock (_lock)
+            {
+                _activeProcess = null; // Will be refreshed on next request
+                _activeModelName = modelName;
+            }
+            return;
+        }
+
+        // Check 3: Internal state — process still tracked and alive?
         lock (_lock)
         {
             if (_activeModelName == modelName && _activeProcess is not null && !_activeProcess.HasExited)
@@ -61,7 +75,7 @@ public class ModelManager : IDisposable
             }
         }
 
-        // Switch or start — outside lock to avoid holding it during async operations
+        // All checks failed — model needs to be started
         await SwitchModelAsync(modelName, modelConfig);
     }
 
@@ -102,7 +116,7 @@ public class ModelManager : IDisposable
 
     private async Task StartModelAsync(string modelName, ModelConfig modelConfig)
     {
-        // Check available resources before launching
+        // VRAM check — only reached when no model is running (all detection checks failed above)
         var (isSufficient, errorMessage) = _gpuChecker.CheckAvailableResources();
         if (!isSufficient)
         {

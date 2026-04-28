@@ -23,8 +23,8 @@ public class DefaultModelLauncher : IModelLauncher
             FileName = PowerShellExe,
             Arguments = arguments,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
-            UseShellExecute = false,
-            CreateNoWindow = false
+            UseShellExecute = true,
+            CreateNoWindow = true
         };
 
         return Process.Start(psi);
@@ -35,6 +35,21 @@ public class DefaultModelLauncher : IModelLauncher
         // Only check powershell.exe processes (never pwsh)
         var psProcesses = Process.GetProcessesByName("powershell");
         return psProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public async Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var healthUrl = $"{backendUrl.TrimEnd('/')}/health";
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+            var response = await client.GetAsync(healthUrl, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
