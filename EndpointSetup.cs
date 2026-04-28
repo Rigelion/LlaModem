@@ -25,7 +25,7 @@ public static class EndpointSetup
 
     private static void MapV1ProxyEndpoint(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.Map("/v1/**", async (
+        endpoints.Map("/v1/{**path}", async (
             HttpContext context,
             HttpRequest request,
             ModelManager modelManager,
