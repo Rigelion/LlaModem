@@ -2,6 +2,12 @@ namespace LlaModem.Config;
 
 public class ModelConfig
 {
-    public string StartScript { get; set; } = string.Empty;
+    private string _startScript = string.Empty;
+
+    public string StartScript
+    {
+        get => Environment.ExpandEnvironmentVariables(_startScript);
+        set => _startScript = value;
+    }
     public string BackendUrl { get; set; } = string.Empty;
 }

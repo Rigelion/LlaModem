@@ -6,7 +6,6 @@ public class DefaultModelLauncher : IModelLauncher
 {
     public async Task<Process?> StartAsync(string scriptPath)
     {
-        scriptPath = Environment.ExpandEnvironmentVariables(scriptPath);
         var workingDir = Path.GetDirectoryName(scriptPath);
 
         var psi = new ProcessStartInfo
