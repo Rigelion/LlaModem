@@ -1,9 +1,15 @@
 using System.Diagnostics;
+using System.Management;
 
 namespace LlaModem.Services;
 
 public class DefaultModelLauncher : IModelLauncher
 {
+    /// <summary>
+    /// Always uses Windows PowerShell (powershell.exe) from the system directory.
+    /// </summary>
+    private const string PowerShellExe = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe";
+
     public async Task<Process?> StartAsync(string modelName, string scriptPath)
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
@@ -12,10 +18,9 @@ public class DefaultModelLauncher : IModelLauncher
         var escapedScript = scriptPath.Replace("'", "''");
         var arguments =
             "-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = 'qwen-smart'; & 'F:/llama/llama-qwen36-SMART.ps1'\"";
-        var ps = ResolvePowerShellExe();
         var psi = new ProcessStartInfo
         {
-            FileName = ResolvePowerShellExe(),
+            FileName = PowerShellExe,
             Arguments = arguments,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
@@ -24,28 +29,11 @@ public class DefaultModelLauncher : IModelLauncher
 
         return Process.Start(psi);
     }
-    
-    
-    static string ResolvePowerShellExe()
-    {
-        var pwsh = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
-
-        if (File.Exists(pwsh))
-            return pwsh;
-
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.System),
-            "WindowsPowerShell",
-            "v1.0",
-            "powershell.exe"
-        );
-    }
 
     public bool IsModelRunning(string modelName)
     {
-        // Check both pwsh and powershell processes since either could be used
-        var psProcesses = Process.GetProcessesByName("pwsh")
-            .Concat(Process.GetProcessesByName("powershell"));
+        // Only check powershell.exe processes (never pwsh)
+        var psProcesses = Process.GetProcessesByName("powershell");
         return psProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -57,14 +45,38 @@ public class DefaultModelLauncher : IModelLauncher
         {
             if (!process.HasExited)
             {
-                process.Kill(false);
-
-                var exited = process.WaitForExit(5000);
-                if (!exited)
+                // Kill all descendant processes first (tree kill)
+                var descendants = GetDescendantProcessIds(process.Id);
+                foreach (var pid in descendants)
                 {
-                    logger.LogWarning("Model '{Model}' did not exit gracefully within 5s, force killing", modelName);
-                    process.Kill(true);
-                    process.WaitForExit();
+                    try
+                    {
+                        var descendantProcess = Process.GetProcessById(pid);
+                        if (!descendantProcess.HasExited)
+                        {
+                            logger.LogDebug("Killing child process PID: {Pid}", pid);
+                            descendantProcess.Kill(false);
+                            descendantProcess.WaitForExit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
+                    }
+                }
+
+                // Now kill the main PowerShell process
+                if (!process.HasExited)
+                {
+                    process.Kill(false);
+
+                    var exited = process.WaitForExit(5000);
+                    if (!exited)
+                    {
+                        logger.LogWarning("Model '{Model}' did not exit gracefully within 5s, force killing", modelName);
+                        process.Kill(true);
+                        process.WaitForExit();
+                    }
                 }
             }
         }
@@ -74,5 +86,41 @@ public class DefaultModelLauncher : IModelLauncher
         }
 
         logger.LogInformation("Model '{Model}' stopped", modelName);
+    }
+
+    /// <summary>
+    /// Recursively finds all descendant process IDs for a given parent PID using WMI.
+    /// </summary>
+    private static HashSet<int> GetDescendantProcessIds(int parentPid)
+    {
+        var descendantIds = new HashSet<int>();
+        try
+        {
+            var query = $"SELECT ProcessId FROM Win32_Process WHERE ParentProcessId = {parentPid}";
+            using var searcher = new ManagementObjectSearcher(query);
+            using var results = searcher.Get();
+
+            foreach (var obj in results)
+            {
+                var pid = Convert.ToInt32(obj["ProcessId"]);
+                if (!descendantIds.Contains(pid))
+                {
+                    descendantIds.Add(pid);
+                    // Recursively find grandchildren
+                    var grandchildren = GetDescendantProcessIds(pid);
+                    foreach (var gpId in grandchildren)
+                    {
+                        descendantIds.Add(gpId);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // WMI may not be available on all systems — log and continue without tree kill
+            // This is a best-effort operation
+        }
+
+        return descendantIds;
     }
 }
