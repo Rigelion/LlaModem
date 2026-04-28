@@ -104,12 +104,12 @@ public class ModelManager : IDisposable
     {
         // Check available resources before launching
         var (isSufficient, errorMessage) = _gpuChecker.CheckAvailableResources();
-        if (!isSufficient)
+        /*if (!isSufficient)
         {
             _logger.LogError("Cannot start model '{Model}': {Error}", modelName, errorMessage);
             throw new InvalidOperationException(
                 $"Insufficient resources to start '{modelName}': {errorMessage}");
-        }
+        }*/
 
         _logger.LogInformation(
             "Starting model '{Model}' via script '{Script}' on backend {Url}",

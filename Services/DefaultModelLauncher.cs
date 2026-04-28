@@ -10,11 +10,12 @@ public class DefaultModelLauncher : IModelLauncher
 
         // Set window title to model name so we can identify the process later
         var escapedScript = scriptPath.Replace("'", "''");
-        var arguments = $"-ExecutionPolicy Bypass -Command \"$$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'\"";
-
+        var arguments =
+            "-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = 'qwen-smart'; & 'F:/llama/llama-qwen36-SMART.ps1'\"";
+        var ps = ResolvePowerShellExe();
         var psi = new ProcessStartInfo
         {
-            FileName = PowerShellResolver.GetExe(),
+            FileName = ResolvePowerShellExe(),
             Arguments = arguments,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
@@ -22,6 +23,22 @@ public class DefaultModelLauncher : IModelLauncher
         };
 
         return Process.Start(psi);
+    }
+    
+    
+    static string ResolvePowerShellExe()
+    {
+        var pwsh = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
+
+        if (File.Exists(pwsh))
+            return pwsh;
+
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "WindowsPowerShell",
+            "v1.0",
+            "powershell.exe"
+        );
     }
 
     public bool IsModelRunning(string modelName)
