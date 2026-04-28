@@ -1,4 +1,4 @@
-# LlamaDem — Local Llama Router
+# LlaModem — Local Llama Router
 
 ## Overview
 
@@ -15,7 +15,7 @@ A local Windows application that exposes an OpenAI-compatible API through a cust
 ## Architecture
 
 ```
-Client → ngrok → LlamaDem Router (:9000) → llama-server backend (:8001 / :8002)
+Client → ngrok → LlaModem Router (:9000) → llama-server backend (:8001 / :8002)
 ```
 
 The router:
@@ -77,7 +77,7 @@ All configuration lives in `appsettings.json`:
 ## Project Structure
 
 ```
-LlamaDem/
+LlaModem/
 ├── Config/
 │   ├── AppConfig.cs          # Root config (Router + Models)
 │   ├── ModelConfig.cs        # Individual model config
@@ -91,8 +91,8 @@ LlamaDem/
 │   └── RequestTracker.cs      # Last-request timestamp tracking
 ├── Program.cs                 # Entry point, route mapping, DI wiring
 ├── appsettings.json           # Configuration file
-├── LlamaDem.csproj            # Project file
-├── LlamaDem.sln               # Solution file
+├── LlaModem.csproj            # Project file
+├── LlaModem.sln               # Solution file
 └── docs/
     └── INIT.md                # This file
 ```

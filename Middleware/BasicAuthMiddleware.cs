@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using LlamaDem.Config;
+using LlaModem.Config;
 
-namespace LlamaDem.Middleware;
+namespace LlaModem.Middleware;
 
 public class BasicAuthMiddleware
 {
@@ -84,7 +84,7 @@ public class BasicAuthMiddleware
     private static async Task SendUnauthorizedAsync(HttpContext context)
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        context.Response.Headers.WWWAuthenticate = "Basic realm=\"LlamaDem Router\", charset=\"UTF-8\"";
+        context.Response.Headers.WWWAuthenticate = "Basic realm=\"LlaModem Router\", charset=\"UTF-8\"";
         await context.Response.WriteAsJsonAsync(new { error = "Unauthorized", message = "Provide valid Basic Auth credentials." });
     }
 }

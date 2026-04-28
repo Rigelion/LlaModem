@@ -1,4 +1,4 @@
-namespace LlamaDem.Config;
+namespace LlaModem.Config;
 
 public class ModelConfig
 {

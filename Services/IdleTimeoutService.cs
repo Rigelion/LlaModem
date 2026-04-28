@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
-using LlamaDem.Config;
-using LlamaDem.Services;
+using LlaModem.Config;
+using LlaModem.Services;
 
-namespace LlamaDem.Services;
+namespace LlaModem.Services;
 
 public class IdleTimeoutService : BackgroundService
 {

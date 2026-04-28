@@ -1,6 +1,6 @@
-using LlamaDem.Config;
-using LlamaDem.Middleware;
-using LlamaDem.Services;
+using LlaModem.Config;
+using LlaModem.Middleware;
+using LlaModem.Services;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);

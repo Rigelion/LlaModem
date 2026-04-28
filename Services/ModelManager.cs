@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
-using LlamaDem.Config;
+using LlaModem.Config;
 
-namespace LlamaDem.Services;
+namespace LlaModem.Services;
 
 public class ModelManager : IDisposable
 {

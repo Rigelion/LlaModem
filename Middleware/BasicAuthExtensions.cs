@@ -1,4 +1,4 @@
-using LlamaDem.Middleware;
+using LlaModem.Middleware;
 
 namespace Microsoft.AspNetCore.Builder;
 
