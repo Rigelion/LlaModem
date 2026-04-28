@@ -159,16 +159,29 @@ public class GpuMemoryChecker : IGpuMemoryChecker
 
     private string? TryRunPowerShell(string command)
     {
+        // Try pwsh (PowerShell Core) first, then fall back to powershell.exe
+        foreach (var ps in new[] { "pwsh", "powershell" })
+        {
+            var result = TryRunPowerShellCommand(ps, command);
+            if (!string.IsNullOrEmpty(result))
+                return result;
+        }
+        return null;
+    }
+
+    private string? TryRunPowerShellCommand(string psExe, string command)
+    {
         try
         {
             var psi = new ProcessStartInfo
             {
-                FileName = "pwsh",
+                FileName = psExe,
                 Arguments = $"-NoProfile -NonInteractive -Command \"{command}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = Environment.CurrentDirectory
             };
 
             using var process = Process.Start(psi);
