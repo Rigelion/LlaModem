@@ -10,6 +10,7 @@ public class ModelManager : IDisposable
     private readonly ILogger<ModelManager> _logger;
     private readonly HttpClient _httpClient;
     private readonly IModelLauncher _launcher;
+    private readonly IGpuMemoryChecker _gpuChecker;
     private readonly object _lock = new();
 
     private string? _activeModelName;
@@ -21,12 +22,14 @@ public class ModelManager : IDisposable
     public ModelManager(
         IOptions<AppConfig> config,
         ILogger<ModelManager> logger,
-        IModelLauncher? launcher = null)
+        IModelLauncher? launcher = null,
+        IGpuMemoryChecker? gpuChecker = null)
     {
         _config = config.Value;
         _logger = logger;
         _httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
         _launcher = launcher ?? new DefaultModelLauncher();
+        _gpuChecker = gpuChecker ?? new GpuMemoryChecker();
     }
 
     /// <summary>
@@ -99,6 +102,15 @@ public class ModelManager : IDisposable
 
     private async Task StartModelAsync(string modelName, ModelConfig modelConfig)
     {
+        // Check available resources before launching
+        var (isSufficient, errorMessage) = _gpuChecker.CheckAvailableResources();
+        if (!isSufficient)
+        {
+            _logger.LogError("Cannot start model '{Model}': {Error}", modelName, errorMessage);
+            throw new InvalidOperationException(
+                $"Insufficient resources to start '{modelName}': {errorMessage}");
+        }
+
         _logger.LogInformation(
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
             modelName, modelConfig.StartScript, modelConfig.BackendUrl);

@@ -30,6 +30,7 @@ public class Program
 
         // Register services
         builder.Services.AddSingleton<IModelLauncher, DefaultModelLauncher>();
+        builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
         builder.Services.AddSingleton<IRequestTracker, RequestTracker>();
         builder.Services.AddHostedService<IdleTimeoutService>();
