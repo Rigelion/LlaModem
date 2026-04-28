@@ -1,10 +1,14 @@
 using LlamaDem.Config;
+using LlamaDem.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Bind configuration
 builder.Services.Configure<AppConfig>(builder.Configuration);
 builder.Services.AddOptions<AppConfig>().Bind(builder.Configuration).ValidateOnStart();
+
+// Register services
+builder.Services.AddSingleton<ModelManager>();
 
 var app = builder.Build();
 
