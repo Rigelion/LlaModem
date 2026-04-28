@@ -26,4 +26,9 @@ public interface IModelLauncher
     /// Stops the given process gracefully, with force-kill fallback after 5 seconds.
     /// </summary>
     Task StopAsync(Process process, string modelName, ILogger logger);
+
+    /// <summary>
+    /// Shuts down all tracked PowerShell windows (used on application shutdown).
+    /// </summary>
+    Task ShutdownAllAsync(ILogger logger);
 }

@@ -10,6 +10,16 @@ public class DefaultModelLauncher : IModelLauncher
     /// </summary>
     private const string PowerShellExe = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe";
 
+    /// <summary>
+    /// Thread-safe collection of all PowerShell processes tracked by LlaModem.
+    /// </summary>
+    private readonly HashSet<Process> _trackedProcesses = new();
+
+    /// <summary>
+    /// Lock for protecting the tracked processes collection.
+    /// </summary>
+    private readonly object _lock = new();
+
     public async Task<Process?> StartAsync(string modelName, string scriptPath)
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
@@ -27,7 +37,18 @@ public class DefaultModelLauncher : IModelLauncher
             CreateNoWindow = true
         };
 
-        return Process.Start(psi);
+        var process = Process.Start(psi);
+
+        // Track the process for shutdown cleanup
+        if (process is not null)
+        {
+            lock (_lock)
+            {
+                _trackedProcesses.Add(process);
+            }
+        }
+
+        return process;
     }
 
     public bool IsModelRunning(string modelName)
@@ -100,7 +121,98 @@ public class DefaultModelLauncher : IModelLauncher
             logger.LogError(ex, "Error stopping model '{Model}'", modelName);
         }
 
+        // Remove from tracked processes
+        lock (_lock)
+        {
+            _trackedProcesses.Remove(process);
+        }
+
         logger.LogInformation("Model '{Model}' stopped", modelName);
+    }
+
+    /// <summary>
+    /// Shuts down all tracked PowerShell windows on application shutdown.
+    /// Kills each process gracefully with a 5-second timeout, then force-kills if needed.
+    /// </summary>
+    public async Task ShutdownAllAsync(ILogger logger)
+    {
+        Process[] processesToKill;
+
+        lock (_lock)
+        {
+            // Snapshot the current set of tracked processes
+            processesToKill = _trackedProcesses.ToArray();
+            _trackedProcesses.Clear();
+        }
+
+        if (processesToKill.Length == 0)
+        {
+            logger.LogInformation("No tracked PowerShell windows to shut down");
+            return;
+        }
+
+        logger.LogInformation("Shutting down {Count} tracked PowerShell window(s)", processesToKill.Length);
+
+        // Kill all descendant processes first (tree kill) for each process
+        foreach (var process in processesToKill)
+        {
+            try
+            {
+                if (process.HasExited)
+                    continue;
+
+                var descendants = GetDescendantProcessIds(process.Id);
+                foreach (var pid in descendants)
+                {
+                    try
+                    {
+                        var descendantProcess = Process.GetProcessById(pid);
+                        if (!descendantProcess.HasExited)
+                        {
+                            logger.LogDebug("Killing child process PID: {Pid}", pid);
+                            descendantProcess.Kill(false);
+                            descendantProcess.WaitForExit();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "Error getting descendants for PID: {Pid}", process.Id);
+            }
+        }
+
+        // Now kill the main PowerShell processes
+        foreach (var process in processesToKill)
+        {
+            try
+            {
+                if (process.HasExited)
+                    continue;
+
+                logger.LogInformation("Shutting down PowerShell window PID: {Pid}", process.Id);
+                process.Kill(false);
+
+                var exited = process.WaitForExit(5000);
+                if (!exited)
+                {
+                    logger.LogWarning("PowerShell window (PID: {Pid}) did not exit gracefully within 5s, force killing",
+                        process.Id);
+                    process.Kill(true);
+                    process.WaitForExit();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error shutting down PowerShell window PID: {Pid}", process.Id);
+            }
+        }
+
+        logger.LogInformation("All tracked PowerShell windows shut down");
     }
 
     /// <summary>

@@ -37,6 +37,16 @@ public class Program
 
         var app = builder.Build();
 
+        // Register shutdown handler to kill all tracked PowerShell windows
+        var launcher = app.Services.GetRequiredService<IModelLauncher>();
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        var appLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+        appLifetime.ApplicationStopping.Register(async () =>
+        {
+            logger.LogInformation("Application shutdown initiated — shutting down all tracked PowerShell windows");
+            await launcher.ShutdownAllAsync(logger);
+        });
+
         // Apply Basic Auth to /v1/* routes
         app.UseBasicAuthWhen("/v1");
 
