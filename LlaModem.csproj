@@ -16,5 +16,9 @@
   <ItemGroup>
     <Compile Remove="LlaModem.Tests\**" />
   </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="LlaModem.Tests\obj\LlaModem.Tests.csproj.nuget.dgspec.json" />
+    <_ContentIncludedByDefault Remove="LlaModem.Tests\obj\project.assets.json" />
+  </ItemGroup>
 
 </Project>

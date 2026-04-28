@@ -1,6 +1,4 @@
-using LlaModem.Middleware;
-
-namespace Microsoft.AspNetCore.Builder;
+namespace LlaModem.Middleware;
 
 public static class BasicAuthExtensions
 {
