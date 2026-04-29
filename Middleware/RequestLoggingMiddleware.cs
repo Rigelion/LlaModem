@@ -1,3 +1,4 @@
+using LlaModem.Config;
 using LlaModem.Utilities;
 
 namespace LlaModem.Middleware;
@@ -25,10 +26,10 @@ public class RequestLoggingMiddleware
         var path = context.Request.Path;
         var queryString = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : string.Empty;
         var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var modelName = context.Request.Headers["X-Llama-Model"].FirstOrDefault() ?? "(none)";
-        var temperature = context.Request.Headers["X-Llama-Temperature"].FirstOrDefault();
-        var topP = context.Request.Headers["X-Llama-TopP"].FirstOrDefault();
-        var presencePenalty = context.Request.Headers["X-Llama-PresencePenalty"].FirstOrDefault();
+        var modelName = context.Request.Headers[ProxyHeaders.Model].FirstOrDefault() ?? "(none)";
+        var temperature = context.Request.Headers[ProxyHeaders.Temperature].FirstOrDefault();
+        var topP = context.Request.Headers[ProxyHeaders.TopP].FirstOrDefault();
+        var presencePenalty = context.Request.Headers[ProxyHeaders.PresencePenalty].FirstOrDefault();
         var hasAuth = context.Request.Headers.ContainsKey("Authorization") ? "yes" : "no";
 
         _logger.LogInformation(

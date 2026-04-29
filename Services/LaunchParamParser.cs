@@ -1,10 +1,9 @@
+using LlaModem.Config;
+
 namespace LlaModem.Services;
 
 public class LaunchParamParser : ILaunchParamParser
 {
-    private const string TemperatureHeader = "X-Llama-Temperature";
-    private const string TopPHeader = "X-Llama-TopP";
-    private const string PresencePenaltyHeader = "X-Llama-PresencePenalty";
 
     public async Task<ModelLaunchParams?> ParseAsync(HttpContext context, HttpRequest request)
     {
@@ -13,15 +12,15 @@ public class LaunchParamParser : ILaunchParamParser
         double? presencePenalty = null;
         bool hasLaunchParams = false;
 
-        var tempResult = await TryParseDoubleHeader(context, request, TemperatureHeader);
+        var tempResult = await TryParseDoubleHeader(context, request, ProxyHeaders.Temperature);
         if (tempResult.Parsed.HasValue) { temperature = tempResult.Parsed.Value; hasLaunchParams = true; }
         else if (tempResult.Error) return null;
 
-        var topPResult = await TryParseDoubleHeader(context, request, TopPHeader);
+        var topPResult = await TryParseDoubleHeader(context, request, ProxyHeaders.TopP);
         if (topPResult.Parsed.HasValue) { topP = topPResult.Parsed.Value; hasLaunchParams = true; }
         else if (topPResult.Error) return null;
 
-        var ppResult = await TryParseDoubleHeader(context, request, PresencePenaltyHeader);
+        var ppResult = await TryParseDoubleHeader(context, request, ProxyHeaders.PresencePenalty);
         if (ppResult.Parsed.HasValue) { presencePenalty = ppResult.Parsed.Value; hasLaunchParams = true; }
         else if (ppResult.Error) return null;
 

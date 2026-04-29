@@ -33,7 +33,7 @@ public class ModelProxyHandler
 
     public async Task ProxyAsync(HttpContext context, HttpRequest request)
     {
-        var modelName = request.Headers["X-Llama-Model"].FirstOrDefault();
+        var modelName = request.Headers[ProxyHeaders.Model].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(modelName))
         {
             await WriteErrorAsync(context, 400, "Missing header",
