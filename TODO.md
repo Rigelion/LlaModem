@@ -2,23 +2,43 @@
 
 ## Goal
 
-Fix hardcoded window title and script path in DefaultModelLauncher so each model launches with its own PowerShell window title matching the model name, and update IsModelRunning to correctly identify models by their window titles.
+Replace the current basic logging with Serilog, add rolling file support, and create a request logging middleware that logs full incoming request details for all endpoints.
 
 ## Tasks
 
-### 1. Fix StartAsync — use dynamic window title and script path
+### 1. Add Serilog Dependencies
 
-- [x] Replace hardcoded `'qwen-smart'` in `$Host.UI.RawUI.WindowTitle` with the actual `modelName` parameter
-- [x] Replace hardcoded `'F:/llama/llama-qwen36-SMART.ps1'` with the actual `scriptPath` parameter (properly escaped)
+- [x] Add `Serilog`, `Serilog.Extensions.Logging`, `Serilog.Sinks.Async`, `Serilog.Sinks.File`, and `Serilog.Sinks.Console` package references to `LlaModem.csproj`
+- [x] Add Serilog-related settings to `appsettings.json`: `Serilog.MinimumLevel` (default "Debug"), `Serilog.WriteTo.Console`, `Serilog.WriteTo.File` (path, rolling enabled, maxFileSize, retainedFileCountLimit)
 
-### 2. Verify IsModelRunning works correctly after title fix
+### 2. Create Serilog Configuration in Program.cs
 
-- [x] Confirm `IsModelRunning(string modelName)` already searches by model name in MainWindowTitle — no code change needed, just verify it matches the new window title format
-- [x] Update the TODO.md note about the hardcoded `'qwen-smart'` to reflect the fix
+- [x] Replace `WebApplication.CreateBuilder(args)` default logger with Serilog-based logging in `Program.cs`
+- [x] Configure Serilog to read settings from `appsettings.json` (`MinimumLevel`, Console sink, Async File sink with rolling)
+- [x] Wire Serilog as the logging provider via `builder.Host.UseSerilog()`
+
+### 3. Create RequestLoggingMiddleware
+
+- [x] Create `Middleware/RequestLoggingMiddleware.cs` with a class that implements `InvokeAsync(HttpContext)`
+- [x] Log at `Information` level: HTTP method, scheme, path, query string, client IP, `X-Llama-Model` header (if present), Authorization header presence (but NOT the credentials)
+- [x] Log at `Debug` level: full request body (read and buffer it, then re-enable the body stream for downstream consumption)
+- [x] Log at `Information` level after response: status code, elapsed time (ms), total request size
+- [x] Handle body buffering carefully: use `DisableBuffering()` + re-enable buffering so downstream code can still read the body
+
+### 4. Wire Up Middleware and Register in Pipeline
+
+- [x] Create `Middleware/RequestLoggingExtensions.cs` with an extension method `UseRequestLogging()`
+- [x] Register the middleware in `Program.cs` **before** `UseBasicAuthWhen` so request logs capture all requests including auth failures
+- [x] Ensure the middleware is applied to all routes (not scoped to a path prefix)
+
+### 5. Test and Verify
+
+- [x] Build the project to confirm no compilation errors
+- [ ] Run the application and verify: console logs show request details at Debug level, rolling log file is created under `logs/` directory, body content appears in debug-level output
 
 ## Notes
 
-- The `modelName` parameter is already passed through from `StartAsync` and `IsModelRunning` — only the launcher implementation was ignoring them
-- Models defined in appsettings.json: `qwen-smart`, `qwen-fast` — each should have its own uniquely titled PowerShell window
-- The `scriptPath` parameter comes from `ModelConfig.StartScript` which is already configured per-model in appsettings.json
-- `IsModelRunning` was already correct (uses `modelName` param) — the bug was only in `StartAsync` hardcoding the title
+- The middleware must re-enable request body buffering after reading it, so downstream endpoints can still consume the body
+- Authorization header presence should be logged (e.g., "Auth: present/absent") but NEVER the actual credentials
+- Serilog async sink should be used for file writing to avoid blocking request processing
+- Minimum log level is Debug, so Information-level logs (method, path, status, latency) will always appear

@@ -1,6 +1,8 @@
 using LlaModem.Config;
 using LlaModem.Middleware;
 using LlaModem.Services;
+using Serilog;
+using Serilog.Events;
 
 namespace LlaModem;
 
@@ -11,6 +13,12 @@ public class Program
         LogProjectEnvironment();
 
         var builder = WebApplication.CreateBuilder(args);
+        var logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(builder.Configuration)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .CreateLogger();
+        builder.Host.UseSerilog(logger);
 
         // Bind configuration
         builder.Services.Configure<AppConfig>(builder.Configuration);
@@ -39,13 +47,16 @@ public class Program
 
         // Register shutdown handler to kill all tracked PowerShell windows
         var launcher = app.Services.GetRequiredService<IModelLauncher>();
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        var appLogger = app.Services.GetRequiredService<ILogger<Program>>();
         var appLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         appLifetime.ApplicationStopping.Register(async () =>
         {
-            logger.LogInformation("Application shutdown initiated — shutting down all tracked PowerShell windows");
-            await launcher.ShutdownAllAsync(logger);
+            appLogger.LogInformation("Application shutdown initiated — shutting down all tracked PowerShell windows");
+            await launcher.ShutdownAllAsync(appLogger);
         });
+
+        // Request logging middleware (first, before auth)
+        app.UseRequestLogging();
 
         // Apply Basic Auth to /v1/* routes
         app.UseBasicAuthWhen("/v1");
