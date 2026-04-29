@@ -113,6 +113,10 @@ public static class EndpointSetup
             using var httpClient = httpClientFactory.CreateClient();
             httpClient.Timeout = TimeSpan.FromMinutes(5);
 
+            // Explicitly capture the (possibly modified) body so forwarding is independent of middleware ordering
+            request.EnableBuffering();
+            var buffer = await ReadRequestBodyAsync(request);
+
             try
             {
                 var method = System.Net.Http.HttpMethod.Parse(request.Method);
@@ -125,9 +129,9 @@ public static class EndpointSetup
                     forwardedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value.ToString());
                 }
 
-                if (request.Body != null && request.Body.CanRead)
+                if (buffer.Length > 0)
                 {
-                    forwardedRequest.Content = new StreamContent(request.Body);
+                    forwardedRequest.Content = new ByteArrayContent(buffer);
                     foreach (var header in request.Headers)
                     {
                         if (header.Key is "Content-Length")
@@ -163,6 +167,17 @@ public static class EndpointSetup
                 await context.Response.WriteAsJsonAsync(new { error = "Backend error", message = $"Failed to reach backend: {ex.Message}" });
             }
         });
+    }
+
+    /// <summary>
+    /// Reads the request body into a byte array and resets the stream position to 0.
+    /// </summary>
+    private static async Task<byte[]> ReadRequestBodyAsync(HttpRequest request)
+    {
+        using var ms = new MemoryStream();
+        await request.Body.CopyToAsync(ms);
+        request.Body.Position = 0;
+        return ms.ToArray();
     }
 
     /// <summary>
