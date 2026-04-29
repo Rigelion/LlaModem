@@ -16,6 +16,18 @@ $env:CUDA_CACHE_MAXSIZE = "8147483648"
 
 New-Item -ItemType Directory -Force F:\Temp, F:\llama-cache, F:\hf-cache, F:\NVIDIA-cache | Out-Null
 
+# Display parameters before starting
+Write-Host "`n=== Qwen Smart Server Configuration ===" -ForegroundColor Cyan
+Write-Host "Temperature:       $Temperature"
+Write-Host "TopP:              $TopP"
+Write-Host "PresencePenalty:   $PresencePenalty"
+Write-Host "Port:              8001"
+Write-Host "Context Length:    131072"
+Write-Host "Predictions:       4096"
+Write-Host "Threads:           6"
+Write-Host "Model Path:        F:\models\models--unsloth--Qwen3.6-35B-A3B-GGUF\snapshots\a483e9e6cbd595906af30beda3187c2663a1118c\Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+Write-Host "========================================`n" -ForegroundColor Cyan
+
 llama-server `
     --model "F:\models\models--unsloth--Qwen3.6-35B-A3B-GGUF\snapshots\a483e9e6cbd595906af30beda3187c2663a1118c\Qwen3.6-35B-A3B-UD-Q4_K_M.gguf" `
     --port 8001 `
