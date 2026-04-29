@@ -38,6 +38,7 @@ public static class EndpointSetup
             IRequestTracker requestTracker,
             IOptions<AppConfig> config,
             IHeaderValueInjector headerValueInjector,
+            IHttpClientFactory httpClientFactory,
             ILogger<Program> logger) =>
         {
             var modelName = request.Headers["X-Llama-Model"].FirstOrDefault();
@@ -106,10 +107,11 @@ public static class EndpointSetup
             if (request.QueryString.HasValue)
                 targetUrl += request.QueryString.Value;
 
-            var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-
             // Inject configured header values into the JSON request body
             await headerValueInjector.InjectAsync(context, logger);
+
+            using var httpClient = httpClientFactory.CreateClient();
+            httpClient.Timeout = TimeSpan.FromMinutes(5);
 
             try
             {
@@ -159,10 +161,6 @@ public static class EndpointSetup
             {
                 context.Response.StatusCode = 503;
                 await context.Response.WriteAsJsonAsync(new { error = "Backend error", message = $"Failed to reach backend: {ex.Message}" });
-            }
-            finally
-            {
-                httpClient.Dispose();
             }
         });
     }

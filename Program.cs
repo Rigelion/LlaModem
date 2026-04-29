@@ -38,6 +38,7 @@ public class Program
         });
 
         // Register services
+        builder.Services.AddHttpClient();
         builder.Services.AddSingleton<IModelLauncher, DefaultModelLauncher>();
         builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
