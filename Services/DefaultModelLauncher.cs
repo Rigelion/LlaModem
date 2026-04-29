@@ -20,14 +20,22 @@ public class DefaultModelLauncher : IModelLauncher
     /// </summary>
     private readonly object _lock = new();
 
-    public async Task<Process?> StartAsync(string modelName, string scriptPath)
+    public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
 
         // Set window title to the model name so we can identify the process later
         var escapedScript = scriptPath.Replace("'", "''");
+
+        // Build optional launch params suffix
+        var paramParts = new List<string>();
+        if (launchParams?.Temperature.HasValue == true) paramParts.Add($"-Temperature {launchParams.Temperature}");
+        if (launchParams?.TopP.HasValue == true) paramParts.Add($"-TopP {launchParams.TopP}");
+        if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
+        var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
+
         var arguments =
-            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'\"";
+            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'{paramSuffix}\"";
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,

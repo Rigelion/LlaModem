@@ -51,9 +51,64 @@ public static class EndpointSetup
                 return;
             }
 
+            // Extract optional launch params from headers
+            double? temperature = null;
+            double? topP = null;
+            double? presencePenalty = null;
+            bool hasLaunchParams = false;
+
+            var tempHeader = request.Headers["X-Llama-Temperature"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(tempHeader) && double.TryParse(tempHeader, out var tempVal))
+            {
+                temperature = tempVal;
+                hasLaunchParams = true;
+            }
+            else if (!string.IsNullOrEmpty(tempHeader))
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid X-Llama-Temperature value: '{tempHeader}'" });
+                return;
+            }
+
+            var topPHeader = request.Headers["X-Llama-TopP"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(topPHeader) && double.TryParse(topPHeader, out var topPVal))
+            {
+                topP = topPVal;
+                hasLaunchParams = true;
+            }
+            else if (!string.IsNullOrEmpty(topPHeader))
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid X-Llama-TopP value: '{topPHeader}'" });
+                return;
+            }
+
+            var ppHeader = request.Headers["X-Llama-PresencePenalty"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(ppHeader) && double.TryParse(ppHeader, out var ppVal))
+            {
+                presencePenalty = ppVal;
+                hasLaunchParams = true;
+            }
+            else if (!string.IsNullOrEmpty(ppHeader))
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid X-Llama-PresencePenalty value: '{ppHeader}'" });
+                return;
+            }
+
+            var launchParams = hasLaunchParams ? new ModelLaunchParams(temperature, topP, presencePenalty) : null;
+
+            // Warn if model is already running but different header values were provided
+            if (launchParams is not null && modelManager.ActiveModelName == modelName)
+            {
+                logger.LogWarning(
+                    "Model '{Model}' is already running — header launch params will be ignored (only the first start uses them)",
+                    modelName);
+            }
+
             try
             {
-                await modelManager.EnsureModelAsync(modelName);
+                await modelManager.EnsureModelAsync(modelName, launchParams);
             }
             catch (Exception ex)
             {

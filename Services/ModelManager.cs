@@ -35,7 +35,7 @@ public class ModelManager : IDisposable
     /// <summary>
     /// Ensures the requested model is running. Starts it if needed, switches if different model is active.
     /// </summary>
-    public async Task EnsureModelAsync(string modelName)
+    public async Task EnsureModelAsync(string modelName, ModelLaunchParams? launchParams = null)
     {
         var modelConfig = _config.Models.GetValueOrDefault(modelName);
         if (modelConfig is null)
@@ -76,7 +76,7 @@ public class ModelManager : IDisposable
         }
 
         // All checks failed — model needs to be started
-        await SwitchModelAsync(modelName, modelConfig);
+        await SwitchModelAsync(modelName, modelConfig, launchParams);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public class ModelManager : IDisposable
         await _launcher.StopAsync(process, modelName, _logger);
     }
 
-    private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig)
+    private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null)
     {
         // Stop current model if different
         if (_activeModelName != modelName)
@@ -111,10 +111,10 @@ public class ModelManager : IDisposable
             await StopActiveModelAsync();
         }
 
-        await StartModelAsync(modelName, modelConfig);
+        await StartModelAsync(modelName, modelConfig, launchParams);
     }
 
-    private async Task StartModelAsync(string modelName, ModelConfig modelConfig)
+    private async Task StartModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null)
     {
         // VRAM check — only reached when no model is running (all detection checks failed above)
         var (isSufficient, errorMessage) = _gpuChecker.CheckAvailableResources();
@@ -129,7 +129,7 @@ public class ModelManager : IDisposable
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
             modelName, modelConfig.StartScript, modelConfig.BackendUrl);
 
-        var process = await _launcher.StartAsync(modelName, modelConfig.StartScript);
+        var process = await _launcher.StartAsync(modelName, modelConfig.StartScript, launchParams);
         if (process is null)
         {
             _logger.LogError("Failed to launch process for model '{Model}'", modelName);

@@ -10,7 +10,7 @@ public interface IModelLauncher
     /// <summary>
     /// Starts the model via its start script. Returns the process, or null if launch failed.
     /// </summary>
-    Task<Process?> StartAsync(string modelName, string scriptPath);
+    Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null);
 
     /// <summary>
     /// Checks whether a PowerShell window with the given model name title is currently running.
