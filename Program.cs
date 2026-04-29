@@ -44,6 +44,7 @@ public class Program
             client.Timeout = TimeSpan.FromMinutes(5);
         });
         builder.Services.AddSingleton<IHealthChecker, HealthChecker>();
+        builder.Services.AddSingleton<IProcessKiller, ProcessKiller>();
         builder.Services.AddSingleton<IModelLauncher, DefaultModelLauncher>();
         builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();

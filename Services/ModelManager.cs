@@ -10,6 +10,7 @@ public class ModelManager : IDisposable
     private readonly ILogger<ModelManager> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHealthChecker _healthChecker;
+    private readonly IProcessKiller _processKiller;
     private readonly IModelLauncher _launcher;
     private readonly IGpuMemoryChecker _gpuChecker;
     private readonly object _lock = new();
@@ -25,6 +26,7 @@ public class ModelManager : IDisposable
         ILogger<ModelManager> logger,
         IHttpClientFactory httpClientFactory,
         IHealthChecker healthChecker,
+        IProcessKiller processKiller,
         IModelLauncher? launcher = null,
         IGpuMemoryChecker? gpuChecker = null)
     {
@@ -32,7 +34,8 @@ public class ModelManager : IDisposable
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
-        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory, healthChecker);
+        _processKiller = processKiller;
+        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory, healthChecker, processKiller);
         _gpuChecker = gpuChecker ?? new GpuMemoryChecker();
     }
 
@@ -104,7 +107,7 @@ public class ModelManager : IDisposable
             _activeModelName = null;
         }
 
-        await _launcher.StopAsync(process, modelName, _logger);
+        await _processKiller.StopAsync(process, modelName, _logger);
     }
 
     private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null)

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Management;
 
 namespace LlaModem.Services;
 
@@ -16,16 +15,21 @@ public class DefaultModelLauncher : IModelLauncher
     private readonly HashSet<Process> _trackedProcesses = new();
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHealthChecker _healthChecker;
+    private readonly IProcessKiller _processKiller;
 
     /// <summary>
     /// Lock for protecting the tracked processes collection.
     /// </summary>
     private readonly object _lock = new();
 
-    public DefaultModelLauncher(IHttpClientFactory httpClientFactory, IHealthChecker healthChecker)
+    public DefaultModelLauncher(
+        IHttpClientFactory httpClientFactory,
+        IHealthChecker healthChecker,
+        IProcessKiller processKiller)
     {
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
+        _processKiller = processKiller;
     }
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
@@ -82,155 +86,25 @@ public class DefaultModelLauncher : IModelLauncher
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
     {
-        logger.LogInformation("Stopping model '{Model}' (PID: {Pid})", modelName, process.Id);
-
-        try
-        {
-            if (!process.HasExited)
-            {
-                await KillProcessTreeAsync(process.Id, logger);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error stopping model '{Model}'", modelName);
-        }
-
-        // Remove from tracked processes
+        // Remove from tracked processes before stopping
         lock (_lock)
         {
             _trackedProcesses.Remove(process);
         }
 
-        logger.LogInformation("Model '{Model}' stopped", modelName);
+        await _processKiller.StopAsync(process, modelName, logger);
     }
 
-    /// <summary>
-    /// Shuts down all tracked PowerShell windows on application shutdown.
-    /// Kills each process gracefully with a 5-second timeout, then force-kills if needed.
-    /// </summary>
     public async Task ShutdownAllAsync(ILogger logger)
     {
         Process[] processesToKill;
 
         lock (_lock)
         {
-            // Snapshot the current set of tracked processes
             processesToKill = _trackedProcesses.ToArray();
             _trackedProcesses.Clear();
         }
 
-        if (processesToKill.Length == 0)
-        {
-            logger.LogInformation("No tracked PowerShell windows to shut down");
-            return;
-        }
-
-        logger.LogInformation("Shutting down {Count} tracked PowerShell window(s)", processesToKill.Length);
-
-        // Kill all descendant processes first (tree kill) for each process
-        foreach (var process in processesToKill)
-        {
-            try
-            {
-                if (process.HasExited)
-                    continue;
-
-                logger.LogInformation("Shutting down PowerShell window PID: {Pid}", process.Id);
-                await KillProcessTreeAsync(process.Id, logger);
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Error shutting down PowerShell window PID: {Pid}", process.Id);
-            }
-        }
-
-        logger.LogInformation("All tracked PowerShell windows shut down");
-    }
-
-    /// <summary>
-    /// Recursively finds all descendant process IDs for a given parent PID using WMI.
-    /// </summary>
-    private static HashSet<int> GetDescendantProcessIds(int parentPid)
-    {
-#pragma warning disable CA1416 // Validate platform compatibility
-        var descendantIds = new HashSet<int>();
-        try
-        {
-            var query = $"SELECT ProcessId FROM Win32_Process WHERE ParentProcessId = {parentPid}";
-            using var searcher = new ManagementObjectSearcher(query);
-            using var results = searcher.Get();
-
-            foreach (var obj in results)
-            {
-                var pid = Convert.ToInt32(obj["ProcessId"]);
-                if (!descendantIds.Contains(pid))
-                {
-                    descendantIds.Add(pid);
-                    // Recursively find grandchildren
-                    var grandchildren = GetDescendantProcessIds(pid);
-                    foreach (var gpId in grandchildren)
-                    {
-                        descendantIds.Add(gpId);
-                    }
-                }
-            }
-        }
-        catch
-        {
-            // WMI may not be available on all systems — log and continue without tree kill
-            // This is a best-effort operation
-        }
-#pragma warning restore CA1416 // Validate platform compatibility
-
-        return descendantIds;
-    }
-
-    /// <summary>
-    /// Kills a process tree: descendants first (graceful), then the main process
-    /// (5s graceful timeout, then force kill).
-    /// </summary>
-    private static async Task KillProcessTreeAsync(int parentPid, ILogger logger)
-    {
-        // Kill all descendant processes first
-        var descendants = GetDescendantProcessIds(parentPid);
-        foreach (var pid in descendants)
-        {
-            try
-            {
-                var descendantProcess = Process.GetProcessById(pid);
-                if (!descendantProcess.HasExited)
-                {
-                    logger.LogDebug("Killing child process PID: {Pid}", pid);
-                    descendantProcess.Kill(false);
-                    descendantProcess.WaitForExit();
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
-            }
-        }
-
-        // Now kill the main process with graceful timeout
-        try
-        {
-            var mainProcess = Process.GetProcessById(parentPid);
-            if (!mainProcess.HasExited)
-            {
-                mainProcess.Kill(false);
-                var exited = mainProcess.WaitForExit(5000);
-                if (!exited)
-                {
-                    logger.LogWarning("Process (PID: {Pid}) did not exit gracefully within 5s, force killing", parentPid);
-                    mainProcess.Kill(true);
-                    mainProcess.WaitForExit();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogDebug(ex, "Error killing main process PID: {Pid}", parentPid);
-        }
+        await _processKiller.ShutdownAllAsync(processesToKill, logger);
     }
 }
