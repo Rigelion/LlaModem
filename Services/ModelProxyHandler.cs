@@ -115,15 +115,14 @@ public class ModelProxyHandler
         return targetUrl;
     }
 
-    private static async Task ForwardRequestAsync(
+    private async Task ForwardRequestAsync(
         HttpContext context,
         HttpRequest request,
         HttpClient httpClient,
         string targetUrl)
     {
         // Inject configured header values into the JSON request body
-        await context.RequestServices.GetRequiredService<IHeaderValueInjector>()
-            .InjectAsync(context, context.RequestServices.GetRequiredService<ILogger<ModelProxyHandler>>());
+        await _headerValueInjector.InjectAsync(context, _logger);
 
         // Explicitly capture the (possibly modified) body so forwarding is independent of middleware ordering
         var buffer = await HttpRequestExtensions.ReadBodyAsync(request);
