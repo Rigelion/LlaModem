@@ -15,15 +15,17 @@ public class DefaultModelLauncher : IModelLauncher
     /// </summary>
     private readonly HashSet<Process> _trackedProcesses = new();
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHealthChecker _healthChecker;
 
     /// <summary>
     /// Lock for protecting the tracked processes collection.
     /// </summary>
     private readonly object _lock = new();
 
-    public DefaultModelLauncher(IHttpClientFactory httpClientFactory)
+    public DefaultModelLauncher(IHttpClientFactory httpClientFactory, IHealthChecker healthChecker)
     {
         _httpClientFactory = httpClientFactory;
+        _healthChecker = healthChecker;
     }
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
@@ -74,18 +76,8 @@ public class DefaultModelLauncher : IModelLauncher
 
     public async Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var healthUrl = $"{backendUrl.TrimEnd('/')}/health";
-            using var client = _httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(3);
-            var response = await client.GetAsync(healthUrl, cancellationToken);
-            return response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            return false;
-        }
+        var healthUrl = $"{backendUrl.TrimEnd('/')}/health";
+        return await _healthChecker.CheckAsync(healthUrl, cancellationToken);
     }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
@@ -96,39 +88,7 @@ public class DefaultModelLauncher : IModelLauncher
         {
             if (!process.HasExited)
             {
-                // Kill all descendant processes first (tree kill)
-                var descendants = GetDescendantProcessIds(process.Id);
-                foreach (var pid in descendants)
-                {
-                    try
-                    {
-                        var descendantProcess = Process.GetProcessById(pid);
-                        if (!descendantProcess.HasExited)
-                        {
-                            logger.LogDebug("Killing child process PID: {Pid}", pid);
-                            descendantProcess.Kill(false);
-                            descendantProcess.WaitForExit();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
-                    }
-                }
-
-                // Now kill the main PowerShell process
-                if (!process.HasExited)
-                {
-                    process.Kill(false);
-
-                    var exited = process.WaitForExit(5000);
-                    if (!exited)
-                    {
-                        logger.LogWarning("Model '{Model}' did not exit gracefully within 5s, force killing", modelName);
-                        process.Kill(true);
-                        process.WaitForExit();
-                    }
-                }
+                await KillProcessTreeAsync(process.Id, logger);
             }
         }
         catch (Exception ex)
@@ -176,54 +136,12 @@ public class DefaultModelLauncher : IModelLauncher
                 if (process.HasExited)
                     continue;
 
-                var descendants = GetDescendantProcessIds(process.Id);
-                foreach (var pid in descendants)
-                {
-                    try
-                    {
-                        var descendantProcess = Process.GetProcessById(pid);
-                        if (!descendantProcess.HasExited)
-                        {
-                            logger.LogDebug("Killing child process PID: {Pid}", pid);
-                            descendantProcess.Kill(false);
-                            descendantProcess.WaitForExit();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Error getting descendants for PID: {Pid}", process.Id);
-            }
-        }
-
-        // Now kill the main PowerShell processes
-        foreach (var process in processesToKill)
-        {
-            try
-            {
-                if (process.HasExited)
-                    continue;
-
                 logger.LogInformation("Shutting down PowerShell window PID: {Pid}", process.Id);
-                process.Kill(false);
-
-                var exited = process.WaitForExit(5000);
-                if (!exited)
-                {
-                    logger.LogWarning("PowerShell window (PID: {Pid}) did not exit gracefully within 5s, force killing",
-                        process.Id);
-                    process.Kill(true);
-                    process.WaitForExit();
-                }
+                await KillProcessTreeAsync(process.Id, logger);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error shutting down PowerShell window PID: {Pid}", process.Id);
+                logger.LogDebug(ex, "Error shutting down PowerShell window PID: {Pid}", process.Id);
             }
         }
 
@@ -266,5 +184,53 @@ public class DefaultModelLauncher : IModelLauncher
 #pragma warning restore CA1416 // Validate platform compatibility
 
         return descendantIds;
+    }
+
+    /// <summary>
+    /// Kills a process tree: descendants first (graceful), then the main process
+    /// (5s graceful timeout, then force kill).
+    /// </summary>
+    private static async Task KillProcessTreeAsync(int parentPid, ILogger logger)
+    {
+        // Kill all descendant processes first
+        var descendants = GetDescendantProcessIds(parentPid);
+        foreach (var pid in descendants)
+        {
+            try
+            {
+                var descendantProcess = Process.GetProcessById(pid);
+                if (!descendantProcess.HasExited)
+                {
+                    logger.LogDebug("Killing child process PID: {Pid}", pid);
+                    descendantProcess.Kill(false);
+                    descendantProcess.WaitForExit();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
+            }
+        }
+
+        // Now kill the main process with graceful timeout
+        try
+        {
+            var mainProcess = Process.GetProcessById(parentPid);
+            if (!mainProcess.HasExited)
+            {
+                mainProcess.Kill(false);
+                var exited = mainProcess.WaitForExit(5000);
+                if (!exited)
+                {
+                    logger.LogWarning("Process (PID: {Pid}) did not exit gracefully within 5s, force killing", parentPid);
+                    mainProcess.Kill(true);
+                    mainProcess.WaitForExit();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Error killing main process PID: {Pid}", parentPid);
+        }
     }
 }

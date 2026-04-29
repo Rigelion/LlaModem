@@ -9,6 +9,7 @@ public class ModelManager : IDisposable
     private readonly AppConfig _config;
     private readonly ILogger<ModelManager> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHealthChecker _healthChecker;
     private readonly IModelLauncher _launcher;
     private readonly IGpuMemoryChecker _gpuChecker;
     private readonly object _lock = new();
@@ -23,13 +24,15 @@ public class ModelManager : IDisposable
         IOptions<AppConfig> config,
         ILogger<ModelManager> logger,
         IHttpClientFactory httpClientFactory,
+        IHealthChecker healthChecker,
         IModelLauncher? launcher = null,
         IGpuMemoryChecker? gpuChecker = null)
     {
         _config = config.Value;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory);
+        _healthChecker = healthChecker;
+        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory, healthChecker);
         _gpuChecker = gpuChecker ?? new GpuMemoryChecker();
     }
 
@@ -174,31 +177,7 @@ public class ModelManager : IDisposable
     {
         var healthPath = "/health";
         var url = $"{backendUrl.TrimEnd('/')}{healthPath}";
-        var timeout = TimeSpan.FromMinutes(2);
-        var delay = TimeSpan.FromMilliseconds(500);
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-
-        while (sw.Elapsed < timeout)
-        {
-            try
-            {
-                using var client = _httpClientFactory.CreateClient();
-                client.Timeout = TimeSpan.FromMinutes(5);
-                var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-            }
-            catch
-            {
-                // Backend not ready yet — retry
-            }
-
-            await Task.Delay(delay);
-        }
-
-        return false;
+        return await _healthChecker.PollAsync(url, TimeSpan.FromMinutes(2), TimeSpan.FromMilliseconds(500));
     }
 
     public void Dispose()
