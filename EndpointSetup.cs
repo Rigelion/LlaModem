@@ -204,21 +204,16 @@ public static class EndpointSetup
         {
             var body = await System.Text.Json.JsonSerializer.DeserializeAsync<SwitchModelRequest>(context.Request.Body);
             if (body?.Model == null)
-            {
-                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = "Provide a 'model' field in the request body." });
-                return 400;
-            }
+                return Results.Json(new { error = "Bad request", message = "Provide a 'model' field in the request body." }, statusCode: 400);
 
             try
             {
                 await modelManager.EnsureModelAsync(body.Model);
-                await context.Response.WriteAsJsonAsync(new { activeModel = modelManager.ActiveModelName });
-                return 200;
+                return Results.Json(new { activeModel = modelManager.ActiveModelName });
             }
             catch (Exception ex)
             {
-                await context.Response.WriteAsJsonAsync(new { error = "Model unavailable", message = ex.Message });
-                return 503;
+                return Results.Json(new { error = "Model unavailable", message = ex.Message }, statusCode: 503);
             }
         });
 
@@ -226,14 +221,10 @@ public static class EndpointSetup
         {
             var stopped = modelManager.ActiveModelName;
             if (modelManager.ActiveModelName == null)
-            {
-                await context.Response.WriteAsJsonAsync(new { message = "No active model to stop." });
-                return 400;
-            }
+                return Results.Json(new { message = "No active model to stop." }, statusCode: 400);
 
             await modelManager.StopActiveModelAsync();
-            await context.Response.WriteAsJsonAsync(new { message = $"Model '{stopped}' stopped." });
-            return 200;
+            return Results.Json(new { message = $"Model '{stopped}' stopped." });
         });
     }
 }
