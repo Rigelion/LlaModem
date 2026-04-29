@@ -1,6 +1,7 @@
 using LlaModem.Config;
 using LlaModem.Middleware;
 using LlaModem.Services;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;
 
@@ -42,6 +43,13 @@ public class Program
         builder.Services.AddSingleton<ModelManager>();
         builder.Services.AddSingleton<IRequestTracker, RequestTracker>();
         builder.Services.AddHostedService<IdleTimeoutService>();
+
+        // Register header value injector with configured mappings
+        builder.Services.AddSingleton<IHeaderValueInjector>(sp =>
+        {
+            var routerConfig = sp.GetRequiredService<IOptions<RouterConfig>>().Value;
+            return new HeaderValueInjector(routerConfig.EnableBodyHeaderInjection, routerConfig.BodyHeaderMappings);
+        });
 
         var app = builder.Build();
 

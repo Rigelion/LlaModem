@@ -31,6 +31,7 @@ public static class EndpointSetup
             ModelManager modelManager,
             IRequestTracker requestTracker,
             IOptions<AppConfig> config,
+            IHeaderValueInjector headerValueInjector,
             ILogger<Program> logger) =>
         {
             var modelName = request.Headers["X-Llama-Model"].FirstOrDefault();
@@ -127,6 +128,9 @@ public static class EndpointSetup
                 targetUrl += request.QueryString.Value;
 
             var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+
+            // Inject configured header values into the JSON request body
+            headerValueInjector.Inject(context, logger);
 
             try
             {
