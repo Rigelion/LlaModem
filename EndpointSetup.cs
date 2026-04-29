@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using LlaModem.Config;
 using LlaModem.Middleware;
 using LlaModem.Services;
@@ -7,6 +8,11 @@ namespace LlaModem;
 
 public static class EndpointSetup
 {
+    private static readonly HashSet<string> ExcludedHeaders = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Host", "Connection", "Keep-Alive", "Transfer-Encoding", "Upgrade"
+    };
+
     public static void ConfigureEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapHealthEndpoint();
@@ -139,7 +145,7 @@ public static class EndpointSetup
 
                 foreach (var header in request.Headers)
                 {
-                    if (header.Key is "Host" or "Connection" or "Keep-Alive" or "Transfer-Encoding" or "Upgrade")
+                    if (ExcludedHeaders.Contains(header.Key))
                         continue;
                     forwardedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value.ToString());
                 }
@@ -149,7 +155,9 @@ public static class EndpointSetup
                     forwardedRequest.Content = new StreamContent(request.Body);
                     foreach (var header in request.Headers)
                     {
-                        if (header.Key is "Host" or "Connection" or "Keep-Alive" or "Transfer-Encoding" or "Upgrade" or "Content-Length")
+                        if (header.Key is "Content-Length")
+                            continue;
+                        if (ExcludedHeaders.Contains(header.Key))
                             continue;
                         if (header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
                         {
@@ -169,6 +177,8 @@ public static class EndpointSetup
                         continue;
                     context.Response.Headers[header.Key] = header.Value.ToArray();
                 }
+
+                // Note: Transfer-Encoding is excluded from both request forwarding and response copying.
                 context.Response.StatusCode = (int)response.StatusCode;
                 await response.Content.CopyToAsync(context.Response.Body);
             }
