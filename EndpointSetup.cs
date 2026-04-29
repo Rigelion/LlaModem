@@ -64,44 +64,17 @@ public static class EndpointSetup
             double? presencePenalty = null;
             bool hasLaunchParams = false;
 
-            var tempHeader = request.Headers["X-Llama-Temperature"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(tempHeader) && double.TryParse(tempHeader, out var tempVal))
-            {
-                temperature = tempVal;
-                hasLaunchParams = true;
-            }
-            else if (!string.IsNullOrEmpty(tempHeader))
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid X-Llama-Temperature value: '{tempHeader}'" });
-                return;
-            }
+            var tempResult = await TryParseDoubleHeader(context, request, "X-Llama-Temperature");
+            if (tempResult.Parsed.HasValue) { temperature = tempResult.Parsed.Value; hasLaunchParams = true; }
+            else if (tempResult.Error) return;
 
-            var topPHeader = request.Headers["X-Llama-TopP"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(topPHeader) && double.TryParse(topPHeader, out var topPVal))
-            {
-                topP = topPVal;
-                hasLaunchParams = true;
-            }
-            else if (!string.IsNullOrEmpty(topPHeader))
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid X-Llama-TopP value: '{topPHeader}'" });
-                return;
-            }
+            var topPResult = await TryParseDoubleHeader(context, request, "X-Llama-TopP");
+            if (topPResult.Parsed.HasValue) { topP = topPResult.Parsed.Value; hasLaunchParams = true; }
+            else if (topPResult.Error) return;
 
-            var ppHeader = request.Headers["X-Llama-PresencePenalty"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(ppHeader) && double.TryParse(ppHeader, out var ppVal))
-            {
-                presencePenalty = ppVal;
-                hasLaunchParams = true;
-            }
-            else if (!string.IsNullOrEmpty(ppHeader))
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid X-Llama-PresencePenalty value: '{ppHeader}'" });
-                return;
-            }
+            var ppResult = await TryParseDoubleHeader(context, request, "X-Llama-PresencePenalty");
+            if (ppResult.Parsed.HasValue) { presencePenalty = ppResult.Parsed.Value; hasLaunchParams = true; }
+            else if (ppResult.Error) return;
 
             var launchParams = hasLaunchParams ? new ModelLaunchParams(temperature, topP, presencePenalty) : null;
 
@@ -192,6 +165,26 @@ public static class EndpointSetup
                 httpClient.Dispose();
             }
         });
+    }
+
+    /// <summary>
+    /// Parses a double-valued header. Returns a tuple of (Value, Error).
+    /// Value is null when the header is absent (no error). Error is true when the header is present but invalid.
+    /// </summary>
+    private static async Task<(double? Parsed, bool Error)> TryParseDoubleHeader(HttpContext context, HttpRequest request, string headerName)
+    {
+        var headerValue = request.Headers[headerName].FirstOrDefault();
+        if (string.IsNullOrEmpty(headerValue))
+            return (null, false);
+
+        if (!double.TryParse(headerValue, out var parsed))
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsJsonAsync(new { error = "Bad request", message = $"Invalid {headerName} value: '{headerValue}'" });
+            return (null, true);
+        }
+
+        return (parsed, false);
     }
 
     private static void MapAdminEndpoints(this IEndpointRouteBuilder endpoints)
