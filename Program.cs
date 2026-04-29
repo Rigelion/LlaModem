@@ -43,6 +43,7 @@ public class Program
         builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
         builder.Services.AddSingleton<IRequestTracker, RequestTracker>();
+        builder.Services.AddSingleton<ModelProxyHandler>();
         builder.Services.AddHostedService<IdleTimeoutService>();
 
         // Register header value injector with configured mappings
