@@ -39,6 +39,10 @@ public class Program
 
         // Register services
         builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient("ModelManager", client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(5);
+        });
         builder.Services.AddSingleton<IModelLauncher, DefaultModelLauncher>();
         builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();

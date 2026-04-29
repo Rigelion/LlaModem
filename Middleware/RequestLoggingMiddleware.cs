@@ -1,3 +1,5 @@
+using LlaModem.Utilities;
+
 namespace LlaModem.Middleware;
 
 public class RequestLoggingMiddleware
@@ -37,7 +39,7 @@ public class RequestLoggingMiddleware
         // Log full request body at Debug level
         if (context.Request.Body.CanRead)
         {
-            var buffer = await ReadRequestBodyAsync(context.Request);
+            var buffer = await HttpRequestExtensions.ReadBodyAsync(context.Request);
             if (buffer.Length > 0)
             {
                 var bodyString = System.Text.Encoding.UTF8.GetString(buffer);
@@ -76,20 +78,5 @@ public class RequestLoggingMiddleware
         }
     }
 
-    private static async Task<byte[]> ReadRequestBodyAsync(HttpRequest request)
-    {
-        request.EnableBuffering();
 
-        byte[] buffer;
-        using (var ms = new MemoryStream())
-        {
-            await request.Body.CopyToAsync(ms);
-            buffer = ms.ToArray();
-        }
-
-        // Reset the position so downstream middleware/endpoints can read the body
-        request.Body.Position = 0;
-
-        return buffer;
-    }
 }

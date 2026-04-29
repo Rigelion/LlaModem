@@ -8,7 +8,7 @@ public class ModelManager : IDisposable
 {
     private readonly AppConfig _config;
     private readonly ILogger<ModelManager> _logger;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IModelLauncher _launcher;
     private readonly IGpuMemoryChecker _gpuChecker;
     private readonly object _lock = new();
@@ -22,13 +22,14 @@ public class ModelManager : IDisposable
     public ModelManager(
         IOptions<AppConfig> config,
         ILogger<ModelManager> logger,
+        IHttpClientFactory httpClientFactory,
         IModelLauncher? launcher = null,
         IGpuMemoryChecker? gpuChecker = null)
     {
         _config = config.Value;
         _logger = logger;
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-        _launcher = launcher ?? new DefaultModelLauncher();
+        _httpClientFactory = httpClientFactory;
+        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory);
         _gpuChecker = gpuChecker ?? new GpuMemoryChecker();
     }
 
@@ -181,7 +182,9 @@ public class ModelManager : IDisposable
         {
             try
             {
-                var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                using var client = _httpClientFactory.CreateClient();
+                client.Timeout = TimeSpan.FromMinutes(5);
+                var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
                 if (response.IsSuccessStatusCode)
                 {
                     return true;
@@ -200,7 +203,7 @@ public class ModelManager : IDisposable
 
     public void Dispose()
     {
-        _httpClient?.Dispose();
+        // No HttpClient to dispose — IHttpClientFactory manages pool lifecycle
         StopActiveModelAsync().GetAwaiter().GetResult();
     }
 }

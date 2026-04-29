@@ -14,11 +14,17 @@ public class DefaultModelLauncher : IModelLauncher
     /// Thread-safe collection of all PowerShell processes tracked by LlaModem.
     /// </summary>
     private readonly HashSet<Process> _trackedProcesses = new();
+    private readonly IHttpClientFactory _httpClientFactory;
 
     /// <summary>
     /// Lock for protecting the tracked processes collection.
     /// </summary>
     private readonly object _lock = new();
+
+    public DefaultModelLauncher(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
     {
@@ -71,7 +77,8 @@ public class DefaultModelLauncher : IModelLauncher
         try
         {
             var healthUrl = $"{backendUrl.TrimEnd('/')}/health";
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+            using var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(3);
             var response = await client.GetAsync(healthUrl, cancellationToken);
             return response.IsSuccessStatusCode;
         }

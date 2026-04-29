@@ -1,4 +1,5 @@
 using LlaModem.Config;
+using LlaModem.Utilities;
 using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
@@ -66,8 +67,7 @@ public class ModelProxyHandler
 
         var targetUrl = BuildTargetUrl(modelConfig, request);
 
-        using var httpClient = _httpClientFactory.CreateClient();
-        httpClient.Timeout = TimeSpan.FromMinutes(5);
+        using var httpClient = _httpClientFactory.CreateClient("ModelManager");
 
         await ForwardRequestAsync(context, request, httpClient, targetUrl);
     }
@@ -126,8 +126,7 @@ public class ModelProxyHandler
             .InjectAsync(context, context.RequestServices.GetRequiredService<ILogger<ModelProxyHandler>>());
 
         // Explicitly capture the (possibly modified) body so forwarding is independent of middleware ordering
-        request.EnableBuffering();
-        var buffer = await ReadRequestBodyAsync(request);
+        var buffer = await HttpRequestExtensions.ReadBodyAsync(request);
 
         var method = System.Net.Http.HttpMethod.Parse(request.Method);
         var forwardedRequest = new HttpRequestMessage(method, targetUrl);
@@ -171,13 +170,7 @@ public class ModelProxyHandler
         await response.Content.CopyToAsync(context.Response.Body);
     }
 
-    private static async Task<byte[]> ReadRequestBodyAsync(HttpRequest request)
-    {
-        using var ms = new MemoryStream();
-        await request.Body.CopyToAsync(ms);
-        request.Body.Position = 0;
-        return ms.ToArray();
-    }
+
 
     private static async Task<(double? Parsed, bool Error)> TryParseDoubleHeader(
         HttpContext context, HttpRequest request, string headerName)
