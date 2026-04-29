@@ -130,7 +130,7 @@ public static class EndpointSetup
             var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
 
             // Inject configured header values into the JSON request body
-            headerValueInjector.Inject(context, logger);
+            await headerValueInjector.InjectAsync(context, logger);
 
             try
             {

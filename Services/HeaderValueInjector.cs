@@ -10,10 +10,10 @@ public interface IHeaderValueInjector
 {
     /// <summary>
     /// Injects configured header values into the request body at root level.
-    /// Modifies the body stream in-place and resets position to 0.
+    /// Replaces the body stream with modified content and resets position to 0.
     /// Only processes application/json bodies with a parseable JSON object.
     /// </summary>
-    void Inject(HttpContext context, ILogger logger);
+    Task InjectAsync(HttpContext context, ILogger logger);
 }
 
 public class HeaderValueInjector : IHeaderValueInjector
@@ -27,7 +27,7 @@ public class HeaderValueInjector : IHeaderValueInjector
         _mappings = mappings;
     }
 
-    public void Inject(HttpContext context, ILogger logger)
+    public async Task InjectAsync(HttpContext context, ILogger logger)
     {
         // Feature switch
         if (!_enabled)
@@ -44,8 +44,7 @@ public class HeaderValueInjector : IHeaderValueInjector
 
         // Read the body (already buffered by RequestLoggingMiddleware)
         context.Request.EnableBuffering();
-        using var reader = new StreamReader(context.Request.Body, leaveOpen: true);
-        var bodyText = reader.ReadToEnd();
+        var bodyText = await new StreamReader(context.Request.Body).ReadToEndAsync();
         context.Request.Body.Position = 0;
 
         // Try to parse as JSON object
@@ -77,12 +76,11 @@ public class HeaderValueInjector : IHeaderValueInjector
         if (!hasInjection)
             return;
 
-        // Serialize back to JSON and write to body stream
+        // Serialize back to JSON and replace the body stream
         var modifiedJson = jsonObject.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
         var modifiedBytes = System.Text.Encoding.UTF8.GetBytes(modifiedJson);
-        context.Request.Body.Position = 0;
-        context.Request.Body.Write(modifiedBytes, 0, modifiedBytes.Length);
-        context.Request.Body.SetLength(modifiedBytes.LongLength);
+        context.Request.Body = new MemoryStream(modifiedBytes);
+        context.Request.ContentLength = modifiedBytes.Length;
     }
 
     private static JsonNode ConvertHeaderValue(string value)
