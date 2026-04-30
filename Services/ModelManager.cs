@@ -4,7 +4,7 @@ using LlaModem.Config;
 
 namespace LlaModem.Services;
 
-public class ModelManager : IDisposable
+public class ModelManager
 {
     private readonly AppConfig _config;
     private readonly ILogger<ModelManager> _logger;
@@ -183,9 +183,6 @@ public class ModelManager : IDisposable
         return await _healthChecker.PollAsync(url, TimeSpan.FromMinutes(2), TimeSpan.FromMilliseconds(500));
     }
 
-    public void Dispose()
-    {
-        // No HttpClient to dispose — IHttpClientFactory manages pool lifecycle
-        StopActiveModelAsync().GetAwaiter().GetResult();
-    }
+    // No explicit disposal needed. The DI container handles the lifecycle,
+    // and Program.cs calls launcher.ShutdownAllAsync() on application shutdown.
 }

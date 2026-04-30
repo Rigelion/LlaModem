@@ -7,19 +7,19 @@ namespace LlaModem.Services;
 public class IdleTimeoutService : BackgroundService
 {
     private readonly ModelManager _modelManager;
-    private readonly IRequestTracker _requestTracker;
+    private readonly ISystemIdleTracker _systemIdleTracker;
     private readonly RouterConfig _config;
     private readonly ILogger<IdleTimeoutService> _logger;
     private readonly PeriodicTimer _timer;
 
     public IdleTimeoutService(
         ModelManager modelManager,
-        IRequestTracker requestTracker,
+        ISystemIdleTracker systemIdleTracker,
         IOptions<RouterConfig> config,
         ILogger<IdleTimeoutService> logger)
     {
         _modelManager = modelManager;
-        _requestTracker = requestTracker;
+        _systemIdleTracker = systemIdleTracker;
         _config = config.Value;
         _logger = logger;
         _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
@@ -38,7 +38,7 @@ public class IdleTimeoutService : BackgroundService
                 if (stoppingToken.IsCancellationRequested)
                     break;
 
-                var elapsed = DateTimeOffset.UtcNow - _requestTracker.LastRequest;
+                var elapsed = DateTimeOffset.UtcNow - _systemIdleTracker.LastRequest;
                 if (elapsed.TotalSeconds >= _config.IdleTimeoutSeconds)
                 {
                     _logger.LogInformation(

@@ -7,7 +7,7 @@ public class ModelProxyHandler
 {
     private readonly IOptions<AppConfig> _config;
     private readonly ModelManager _modelManager;
-    private readonly IRequestTracker _requestTracker;
+    private readonly ISystemIdleTracker _systemIdleTracker;
     private readonly ILaunchParamParser _paramParser;
     private readonly IRequestForwarder _forwarder;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -16,7 +16,7 @@ public class ModelProxyHandler
     public ModelProxyHandler(
         IOptions<AppConfig> config,
         ModelManager modelManager,
-        IRequestTracker requestTracker,
+        ISystemIdleTracker systemIdleTracker,
         ILaunchParamParser paramParser,
         IRequestForwarder forwarder,
         IHttpClientFactory httpClientFactory,
@@ -24,7 +24,7 @@ public class ModelProxyHandler
     {
         _config = config;
         _modelManager = modelManager;
-        _requestTracker = requestTracker;
+        _systemIdleTracker = systemIdleTracker;
         _paramParser = paramParser;
         _forwarder = forwarder;
         _httpClientFactory = httpClientFactory;
@@ -36,7 +36,7 @@ public class ModelProxyHandler
         var modelName = request.Headers[ProxyHeaders.Model].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(modelName))
         {
-            await WriteErrorAsync(context, 400, "Missing header",
+            await ErrorResponseWriter.WriteAsync(context, 400, "Missing header",
                 $"The 'X-Llama-Model' header is required. Available models: {string.Join(", ", _config.Value.Models.Keys)}");
             return;
         }
@@ -44,7 +44,7 @@ public class ModelProxyHandler
         var modelConfig = _config.Value.Models.GetValueOrDefault(modelName);
         if (modelConfig is null)
         {
-            await WriteErrorAsync(context, 400, "Unknown model",
+            await ErrorResponseWriter.WriteAsync(context, 400, "Unknown model",
                 $"Model '{modelName}' not found. Available models: {string.Join(", ", _config.Value.Models.Keys)}");
             return;
         }
@@ -61,11 +61,11 @@ public class ModelProxyHandler
         }
         catch (Exception ex)
         {
-            await WriteErrorAsync(context, 503, "Model unavailable", ex.Message);
+            await ErrorResponseWriter.WriteAsync(context, 503, "Model unavailable", ex.Message);
             return;
         }
 
-        _requestTracker.RecordRequest();
+        _systemIdleTracker.RecordRequest();
 
         var targetUrl = RequestForwarder.BuildTargetUrl(modelConfig, request);
 
@@ -84,10 +84,5 @@ public class ModelProxyHandler
         }
     }
 
-    private static async Task WriteErrorAsync(
-        HttpContext context, int statusCode, string error, string message)
-    {
-        context.Response.StatusCode = statusCode;
-        await context.Response.WriteAsJsonAsync(new { error, message });
-    }
+
 }

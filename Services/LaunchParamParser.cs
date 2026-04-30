@@ -36,7 +36,7 @@ public class LaunchParamParser : ILaunchParamParser
 
         if (!double.TryParse(headerValue, out var parsed))
         {
-            await WriteErrorAsync(context, 400, "Bad request",
+            await ErrorResponseWriter.WriteAsync(context, 400, "Bad request",
                 $"Invalid {headerName} value: '{headerValue}'");
             return (null, true);
         }
@@ -44,10 +44,5 @@ public class LaunchParamParser : ILaunchParamParser
         return (parsed, false);
     }
 
-    private static async Task WriteErrorAsync(
-        HttpContext context, int statusCode, string error, string message)
-    {
-        context.Response.StatusCode = statusCode;
-        await context.Response.WriteAsJsonAsync(new { error, message });
-    }
+
 }

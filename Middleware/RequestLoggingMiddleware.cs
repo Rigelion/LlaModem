@@ -48,10 +48,20 @@ public class RequestLoggingMiddleware
             }
         }
 
-        // Capture the response body for logging status after response
-        var originalBodyStream = context.Response.Body;
-        using var responseBody = new MemoryStream();
-        context.Response.Body = responseBody;
+        // Only buffer response body for non-streaming responses.
+        // Streaming responses (SSE, chunked) would be held in memory until disconnect.
+        var isStreaming = context.Response.Headers.ContentType.ToString().Contains("stream", StringComparison.OrdinalIgnoreCase)
+                       || context.Response.Headers.TransferEncoding.Any();
+
+        Stream? originalBodyStream = null;
+        MemoryStream? responseBody = null;
+
+        if (!isStreaming)
+        {
+            originalBodyStream = context.Response.Body;
+            responseBody = new MemoryStream();
+            context.Response.Body = responseBody;
+        }
 
         try
         {
@@ -67,15 +77,18 @@ public class RequestLoggingMiddleware
             sw.Stop();
 
             var statusCode = context.Response.StatusCode;
-            var responseSize = responseBody.Length;
+            var responseSize = responseBody?.Length ?? 0;
 
             _logger.LogInformation(
                 "[RESPONSE] {Method} {Path} | Status: {StatusCode} | Duration: {Duration}ms | ResponseSize: {ResponseSize} bytes",
                 method, path, statusCode, sw.ElapsedMilliseconds, responseSize);
 
-            // Copy the response body back to the original stream
-            responseBody.Seek(0, SeekOrigin.Begin);
-            await responseBody.CopyToAsync(originalBodyStream);
+            // Copy the response body back to the original stream (only if we buffered it)
+            if (responseBody != null && originalBodyStream != null)
+            {
+                responseBody.Seek(0, SeekOrigin.Begin);
+                await responseBody.CopyToAsync(originalBodyStream);
+            }
         }
     }
 

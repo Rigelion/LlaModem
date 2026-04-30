@@ -33,7 +33,7 @@ public class RequestForwarder : IRequestForwarder
 
         foreach (var header in request.Headers)
         {
-            if (EndpointSetup.ExcludedHeaders.Contains(header.Key))
+            if (HttpConstants.ExcludedHeaders.Contains(header.Key))
                 continue;
             forwardedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value.ToString());
         }
@@ -45,7 +45,7 @@ public class RequestForwarder : IRequestForwarder
             {
                 if (header.Key is "Content-Length")
                     continue;
-                if (EndpointSetup.ExcludedHeaders.Contains(header.Key))
+                if (HttpConstants.ExcludedHeaders.Contains(header.Key))
                     continue;
                 if (header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
                 {

@@ -48,7 +48,9 @@ public class Program
         builder.Services.AddSingleton<IModelLauncher, DefaultModelLauncher>();
         builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
-        builder.Services.AddSingleton<IRequestTracker, RequestTracker>();
+        builder.Services.AddSingleton<ISystemIdleTracker, SystemIdleTracker>();
+        builder.Services.AddSingleton<ILaunchParamParser, LaunchParamParser>();
+        builder.Services.AddSingleton<IRequestForwarder, RequestForwarder>();
         builder.Services.AddSingleton<ModelProxyHandler>();
         builder.Services.AddHostedService<IdleTimeoutService>();
 

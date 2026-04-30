@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using LlaModem.Config;
 using LlaModem.Middleware;
 using LlaModem.Services;
@@ -8,11 +7,6 @@ namespace LlaModem;
 
 public static class EndpointSetup
 {
-    internal static readonly HashSet<string> ExcludedHeaders = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Host", "Connection", "Keep-Alive", "Transfer-Encoding", "Upgrade"
-    };
-
     public static void ConfigureEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapHealthEndpoint();

@@ -5,9 +5,10 @@ namespace LlaModem.Services;
 public class DefaultModelLauncher : IModelLauncher
 {
     /// <summary>
-    /// Always uses Windows PowerShell (powershell.exe) from the system directory.
+    /// Uses 'powershell' and lets the OS resolve it via PATH.
+    /// This works on standard Windows installs and is testable.
     /// </summary>
-    private const string PowerShellExe = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe";
+    private const string PowerShellExe = "powershell";
 
     /// <summary>
     /// Thread-safe collection of all PowerShell processes tracked by LlaModem.

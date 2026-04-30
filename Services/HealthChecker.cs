@@ -33,12 +33,15 @@ public class HealthChecker : IHealthChecker
     {
         var sw = Stopwatch.StartNew();
 
+        // Reuse a single HttpClient across the polling loop to avoid creating
+        // a new client (and underlying socket) on every poll attempt.
+        using var client = _httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromMinutes(PollingClientTimeoutMinutes);
+
         while (sw.Elapsed < timeout)
         {
             try
             {
-                using var client = _httpClientFactory.CreateClient();
-                client.Timeout = TimeSpan.FromMinutes(PollingClientTimeoutMinutes);
                 var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
