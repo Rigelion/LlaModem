@@ -86,6 +86,8 @@ public class Program
 
     private static void LogProjectEnvironment()
     {
+        var sensitiveVars = new[] { "LLAMODEM_AUTH_PASSWORD" };
+
         var projectVars = new[]
         {
             "QWEN_SMART_START_SCRIPT",
@@ -102,7 +104,9 @@ public class Program
             var value = Environment.GetEnvironmentVariable(key);
             var displayValue = string.IsNullOrEmpty(value)
                 ? "(not set)"
-                : value.Contains(" ") || value.Contains("=") ? $"\"{value}\"" : value;
+                : sensitiveVars.Contains(key)
+                    ? "***masked***"
+                    : value.Contains(" ") || value.Contains("=") ? $"\"{value}\"" : value;
             Console.WriteLine($"  {key}={displayValue}");
         }
         Console.WriteLine();

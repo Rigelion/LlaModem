@@ -15,7 +15,7 @@ The server listens on `http://localhost:9000` (configured in `appsettings.json`)
 ## Usage
 
 ```bash
-curl -u admin:change-me \
+curl -u admin:your-password \
   -H "X-Llama-Model: qwen-smart" \
   -H "Content-Type: application/json" \
   -d '{"model":"qwen-smart","messages":[{"role":"user","content":"Hello"}]}' \
@@ -41,7 +41,7 @@ Edit `appsettings.json`:
   "Router": {
     "ListenUrl": "http://localhost:9000",
     "AuthUsername": "admin",
-    "AuthPassword": "change-me",
+    "AuthPassword": "your-password",
     "IdleTimeoutSeconds": 600
   },
   "Models": {
