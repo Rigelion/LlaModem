@@ -59,6 +59,10 @@ public class ModelManager
         if (_launcher.IsModelRunning(modelName))
         {
             _logger.LogDebug("PowerShell window for model '{Model}' is already running", modelName);
+            lock (_lock)
+            {
+                _activeModelName = modelName;
+            }
             return;
         }
 
