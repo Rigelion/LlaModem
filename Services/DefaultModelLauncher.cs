@@ -108,4 +108,23 @@ public class DefaultModelLauncher : IModelLauncher
 
         await _processKiller.ShutdownAllAsync(processesToKill, logger);
     }
+
+    public async Task StopModelByNameAsync(string modelName, ILogger logger)
+    {
+        var psProcesses = Process.GetProcessesByName("powershell");
+        var target = Array.Find(psProcesses, p =>
+            p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
+
+        if (target is null || target.HasExited)
+        {
+            logger.LogDebug("No running process found for model '{Model}'", modelName);
+            return;
+        }
+
+        logger.LogInformation(
+            "Found process for model '{Model}' (PID: {Pid}) — stopping it",
+            modelName, target.Id);
+
+        await _processKiller.StopAsync(target, modelName, logger);
+    }
 }

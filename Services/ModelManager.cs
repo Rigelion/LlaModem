@@ -99,7 +99,7 @@ public class ModelManager
 
         lock (_lock)
         {
-            if (_activeProcess is null || _activeModelName is null)
+            if (_activeModelName is null)
             {
                 _logger.LogDebug("No active model to stop");
                 return;
@@ -110,7 +110,16 @@ public class ModelManager
             _activeModelName = null;
         }
 
-        await _processKiller.StopAsync(process, modelName, _logger);
+        if (process is not null)
+        {
+            await _processKiller.StopAsync(process, modelName, _logger);
+        }
+        else
+        {
+            // Process reference was lost (e.g. backend detected healthy but process not tracked).
+            // Look it up by model name and stop it.
+            await _launcher.StopModelByNameAsync(modelName, _logger);
+        }
     }
 
     private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null)

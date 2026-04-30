@@ -7,7 +7,6 @@ public class RouterConfig
     public string ListenUrl { get; set; } = "http://localhost:9000";
     public string AuthUsername { get; set; } = string.Empty;
     public string AuthPassword { get; set; } = string.Empty;
-    public int IdleTimeoutSeconds { get; set; } = 600;
     public bool EnableBodyHeaderInjection { get; set; } = true;
     public Dictionary<string, string> BodyHeaderMappings { get; set; } = new();
 
@@ -35,6 +34,9 @@ public class RouterConfig
 
         /// <summary>Delay in milliseconds between health check polls (default: 500).</summary>
         public int HealthCheckPollDelayMs { get; set; } = 500;
+
+        /// <summary>Seconds of inactivity before stopping the active model (default: 600).</summary>
+        public int IdleTimeoutSeconds { get; set; } = 600;
 
         /// <summary>Interval in seconds for the idle-check timer (default: 30).</summary>
         public int IdleCheckIntervalSeconds { get; set; } = 30;

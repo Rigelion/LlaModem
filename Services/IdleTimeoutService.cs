@@ -29,7 +29,7 @@ public class IdleTimeoutService : BackgroundService
     {
         _logger.LogInformation(
             "Idle timeout service started (timeout: {Seconds}s)",
-            _config.IdleTimeoutSeconds);
+            _config.Timeouts.IdleTimeoutSeconds);
 
         try
         {
@@ -39,7 +39,7 @@ public class IdleTimeoutService : BackgroundService
                     break;
 
                 var elapsed = DateTimeOffset.UtcNow - _systemIdleTracker.LastRequest;
-                if (elapsed.TotalSeconds >= _config.IdleTimeoutSeconds)
+                if (elapsed.TotalSeconds >= _config.Timeouts.IdleTimeoutSeconds)
                 {
                     _logger.LogInformation(
                         "Idle timeout reached ({Elapsed}s). Stopping active model...",
