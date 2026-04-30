@@ -1,11 +1,18 @@
 using System.Diagnostics;
 using System.Management;
+using LlaModem.Config;
+using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
 
 public class ProcessKiller : IProcessKiller
 {
-    private const int GracefulShutdownTimeoutMs = 5000;
+    private readonly int _gracefulShutdownTimeoutMs;
+
+    public ProcessKiller(IOptions<RouterConfig> config)
+    {
+        _gracefulShutdownTimeoutMs = config.Value.Timeouts.GracefulShutdownTimeoutSeconds * 1000;
+    }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
     {
@@ -57,7 +64,7 @@ public class ProcessKiller : IProcessKiller
         logger.LogInformation("All tracked PowerShell windows shut down");
     }
 
-    private static async Task KillProcessTreeAsync(int parentPid, ILogger logger)
+    private async Task KillProcessTreeAsync(int parentPid, ILogger logger)
     {
         // Kill all descendant processes first
         var descendants = GetDescendantProcessIds(parentPid);
@@ -86,11 +93,11 @@ public class ProcessKiller : IProcessKiller
             if (!mainProcess.HasExited)
             {
                 mainProcess.Kill(false);
-                var exited = mainProcess.WaitForExit(GracefulShutdownTimeoutMs);
+                var exited = mainProcess.WaitForExit(_gracefulShutdownTimeoutMs);
                 if (!exited)
                 {
                     logger.LogWarning("Process (PID: {Pid}) did not exit gracefully within {Timeout}ms, force killing",
-                        parentPid, GracefulShutdownTimeoutMs);
+                        parentPid, _gracefulShutdownTimeoutMs);
                     mainProcess.Kill(true);
                     mainProcess.WaitForExit();
                 }

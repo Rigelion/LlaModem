@@ -42,7 +42,10 @@ public class HeaderValueInjector : IHeaderValueInjector
         if (_mappings.Count == 0)
             return;
 
-        // Read the body (already buffered by RequestLoggingMiddleware)
+        // Read the body (already buffered by RequestLoggingMiddleware).
+        // EnableBuffering() is idempotent — safe to call again even if the stream
+        // was already buffered. We do this here for safety in case this class is
+        // ever used outside the full middleware pipeline.
         context.Request.EnableBuffering();
         var bodyText = await new StreamReader(context.Request.Body).ReadToEndAsync();
         context.Request.Body.Position = 0;

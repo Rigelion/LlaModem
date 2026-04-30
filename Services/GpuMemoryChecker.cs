@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
+using LlaModem.Config;
+using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
 
@@ -8,16 +10,22 @@ namespace LlaModem.Services;
 /// </summary>
 public class GpuMemoryChecker : IGpuMemoryChecker
 {
-    private const long MinimumVramBytes = 12L * 1024 * 1024 * 1024; // 12 GB
+    private readonly RouterConfig.TimeoutConfig _timeouts;
+
+    public GpuMemoryChecker(IOptions<RouterConfig> config)
+    {
+        _timeouts = config.Value.Timeouts;
+    }
 
     public (bool isSufficient, string? errorMessage) CheckAvailableResources()
     {
         var vramResult = GetFreeVramBytes();
+        var minVramBytes = (long)_timeouts.VramThresholdGb * 1024 * 1024 * 1024;
 
-        if (!vramResult.HasValue || vramResult.Value < MinimumVramBytes)
+        if (!vramResult.HasValue || vramResult.Value < minVramBytes)
         {
             var available = vramResult.HasValue ? FormatBytes(vramResult.Value) : "unknown";
-            return (false, $"Insufficient VRAM: {available} free (need at least {FormatBytes(MinimumVramBytes)})");
+            return (false, $"Insufficient VRAM: {available} free (need at least {FormatBytes(minVramBytes)})");
         }
 
         return (true, null);
@@ -44,7 +52,7 @@ public class GpuMemoryChecker : IGpuMemoryChecker
             using var process = Process.Start(psi);
             if (process is null) return null;
 
-            process.WaitForExit(5000);
+            process.WaitForExit(_timeouts.NvidiaSmiTimeoutSeconds * 1000);
             var output = process.StandardOutput.ReadToEnd().Trim();
 
             if (string.IsNullOrWhiteSpace(output)) return null;

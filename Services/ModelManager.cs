@@ -7,6 +7,7 @@ namespace LlaModem.Services;
 public class ModelManager
 {
     private readonly AppConfig _config;
+    private readonly RouterConfig.TimeoutConfig _timeouts;
     private readonly ILogger<ModelManager> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHealthChecker _healthChecker;
@@ -23,6 +24,7 @@ public class ModelManager
 
     public ModelManager(
         IOptions<AppConfig> config,
+        IOptions<RouterConfig> routerConfig,
         ILogger<ModelManager> logger,
         IHttpClientFactory httpClientFactory,
         IHealthChecker healthChecker,
@@ -31,12 +33,13 @@ public class ModelManager
         IGpuMemoryChecker? gpuChecker = null)
     {
         _config = config.Value;
+        _timeouts = routerConfig.Value.Timeouts;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
         _processKiller = processKiller;
         _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory, healthChecker, processKiller);
-        _gpuChecker = gpuChecker ?? new GpuMemoryChecker();
+        _gpuChecker = gpuChecker ?? new GpuMemoryChecker(routerConfig);
     }
 
     /// <summary>
@@ -180,7 +183,10 @@ public class ModelManager
     {
         var healthPath = "/health";
         var url = $"{backendUrl.TrimEnd('/')}{healthPath}";
-        return await _healthChecker.PollAsync(url, TimeSpan.FromMinutes(2), TimeSpan.FromMilliseconds(500));
+        return await _healthChecker.PollAsync(
+            url,
+            TimeSpan.FromMinutes(_timeouts.HealthCheckPollTimeoutMinutes),
+            TimeSpan.FromMilliseconds(_timeouts.HealthCheckPollDelayMs));
     }
 
     // No explicit disposal needed. The DI container handles the lifecycle,

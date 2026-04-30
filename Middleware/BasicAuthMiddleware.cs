@@ -61,7 +61,8 @@ public class BasicAuthMiddleware
         if (!CompareConstantTime(username, _config.AuthUsername) ||
             !CompareConstantTime(password, _config.AuthPassword))
         {
-            _logger.LogWarning("Authentication failed for user '{User}' on {Path}", username, context.Request.Path);
+            var safeUsername = username.Length > 32 ? username[..32] + "..." : username;
+            _logger.LogWarning("Authentication failed for user '{User}' on {Path}", safeUsername, context.Request.Path);
             await SendUnauthorizedAsync(context);
             return;
         }

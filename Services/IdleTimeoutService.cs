@@ -22,7 +22,7 @@ public class IdleTimeoutService : BackgroundService
         _systemIdleTracker = systemIdleTracker;
         _config = config.Value;
         _logger = logger;
-        _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(_config.Timeouts.IdleCheckIntervalSeconds));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
