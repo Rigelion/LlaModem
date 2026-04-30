@@ -12,6 +12,14 @@ public class IdleTimeoutService : BackgroundService
     private readonly ILogger<IdleTimeoutService> _logger;
     private readonly PeriodicTimer _timer;
 
+    /// <summary>
+    /// Derives the idle-check polling interval from the configured timeout.
+    /// Scales proportionally (timeout / 20) with a floor of 15s and ceiling of 60s,
+    /// so the check is never too aggressive on short timeouts or too lazy on long ones.
+    /// </summary>
+    private int CheckInterval =>
+        Math.Min(60, Math.Max(15, _config.Timeouts.IdleTimeoutSeconds / 20));
+
     public IdleTimeoutService(
         ModelManager modelManager,
         ISystemIdleTracker systemIdleTracker,
@@ -22,7 +30,7 @@ public class IdleTimeoutService : BackgroundService
         _systemIdleTracker = systemIdleTracker;
         _config = config.Value;
         _logger = logger;
-        _timer = new PeriodicTimer(TimeSpan.FromSeconds(_config.Timeouts.IdleCheckIntervalSeconds));
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(CheckInterval));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

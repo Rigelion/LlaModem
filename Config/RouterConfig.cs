@@ -37,8 +37,5 @@ public class RouterConfig
 
         /// <summary>Seconds of inactivity before stopping the active model (default: 600).</summary>
         public int IdleTimeoutSeconds { get; set; } = 600;
-
-        /// <summary>Interval in seconds for the idle-check timer (default: 30).</summary>
-        public int IdleCheckIntervalSeconds { get; set; } = 30;
     }
 }
