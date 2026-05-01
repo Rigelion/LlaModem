@@ -44,7 +44,10 @@ public class DefaultModelLauncher : IModelLauncher
         var paramParts = new List<string>();
         if (launchParams?.Temperature.HasValue == true) paramParts.Add($"-Temperature {launchParams.Temperature}");
         if (launchParams?.TopP.HasValue == true) paramParts.Add($"-TopP {launchParams.TopP}");
+        if (launchParams?.TopK.HasValue == true) paramParts.Add($"-TopK {launchParams.TopK}");
+        if (launchParams?.MinP.HasValue == true) paramParts.Add($"-MinP {launchParams.MinP}");
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
+        if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
         var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
 
         var arguments =
