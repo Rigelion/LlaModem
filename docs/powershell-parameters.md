@@ -10,11 +10,14 @@ LlaModem launches local `llama-server` instances via Windows PowerShell (`powers
 
 The following request headers are read from **all requests** (`/v1/{**path}`) and passed to the PowerShell start script **only on first launch**. Subsequent requests with different header values are logged as warnings (parameters are only applied when the model is started).
 
-| Header                    | Type     | Default | Description                                                                                                     |
-| ------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------- |
-| `X-Llama-Temperature`     | `double` | `0.6`   | Sampling temperature for text generation. Lower = more deterministic, higher = more creative.                   |
-| `X-Llama-TopP`            | `double` | `0.95`  | Nucleus sampling threshold. Only tokens with cumulative probability ≤ this value are considered.                |
-| `X-Llama-PresencePenalty` | `double` | `0.00`  | Penalty for reusing tokens that have already appeared in the output. Positive values encourage topic diversity. |
+| Header                        | Type     | Default  | Description                                                                                                     |
+| ----------------------------- | -------- | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `X-Llama-Temperature`         | `double` | script   | Sampling temperature for text generation. Lower = more deterministic, higher = more creative.                   |
+| `X-Llama-TopP`                | `double` | script   | Nucleus sampling threshold. Only tokens with cumulative probability ≤ this value are considered.                |
+| `X-Llama-MinP`                | `double` | script   | Min-p probability threshold. Filters tokens below a probability relative to the most likely token.              |
+| `X-Llama-TopK`                | `double` | script   | Limits sampling to the top K most probable tokens.                                                              |
+| `X-Llama-PresencePenalty`     | `double` | script   | Penalty for reusing tokens that have already appeared in the output. Positive values encourage topic diversity. |
+| `X-Llama-RepetitionPenalty`   | `double` | script   | Penalty applied to token probabilities based on how many times they've been generated.                          |
 
 ### Example Request
 
@@ -25,7 +28,10 @@ Authorization: Basic YWRtaW46Y2hhbmdlLW1l
 X-Llama-Model: qwen-smart
 X-Llama-Temperature: 0.8
 X-Llama-TopP: 0.9
+X-Llama-MinP: 0.05
+X-Llama-TopK: 20
 X-Llama-PresencePenalty: 0.5
+X-Llama-RepetitionPenalty: 1.05
 
 {
   "model": "qwen-smart",
@@ -61,11 +67,14 @@ powershell.exe -ExecutionPolicy Bypass -Command "
 
 ### Script Parameters
 
-| Parameter          | Type     | Default | Passed via Header         | Description                           |
-| ------------------ | -------- | ------- | ------------------------- | ------------------------------------- |
-| `-Temperature`     | `double` | `0.6`   | `X-Llama-Temperature`     | Sampling temperature                  |
-| `-TopP`            | `double` | `0.95`  | `X-Llama-TopP`            | Nucleus sampling threshold            |
-| `-PresencePenalty` | `double` | `0.00`  | `X-Llama-PresencePenalty` | Presence penalty for output diversity |
+| Parameter              | Type     | Default | Passed via Header                | Description                           |
+| ---------------------- | -------- | ------- | -------------------------------- | ------------------------------------- |
+| `-Temperature`         | `double` | script  | `X-Llama-Temperature`            | Sampling temperature                  |
+| `-TopP`                | `double` | script  | `X-Llama-TopP`                   | Nucleus sampling threshold            |
+| `-MinP`                | `double` | script  | `X-Llama-MinP`                   | Min-p probability threshold           |
+| `-TopK`                | `double` | script  | `X-Llama-TopK`                   | Top-K sampling limit                  |
+| `-PresencePenalty`     | `double` | script  | `X-Llama-PresencePenalty`        | Presence penalty for output diversity |
+| `-RepetitionPenalty`   | `double` | script  | `X-Llama-RepetitionPenalty`      | Penalty for repeated tokens           |
 
 ### Environment Variables Set by the Script
 
@@ -127,10 +136,11 @@ Config/Models → appsettings.json "StartScript" → PowerShell launch
 
 To expose a new llama-server argument as an overridable parameter:
 
-1. **Add to `ModelLaunchParams.cs`** — add the new property (e.g., `double? TopK`)
-2. **Update `DefaultModelLauncher.StartAsync()`** — append the new param to `paramParts`
-3. **Update the PowerShell script** — accept the parameter and pass it to `llama-server`
-4. **Update `EndpointSetup.cs`** — read the new header (e.g., `X-Llama-TopK`)
+1. **Add constant to `Config/ProxyHeaders.cs`** — define the header name (e.g., `public const string TopK = "X-Llama-TopK";`)
+2. **Add to `ModelLaunchParams.cs`** — add the new nullable property (e.g., `double? TopK`)
+3. **Update `Services/DefaultModelLauncher.StartAsync()`** — append the new param to `paramParts`
+4. **Update `Services/LaunchParamParser.ParseAsync()`** — parse the header via `TryParseDoubleHeader` with the constant
+5. **Update the PowerShell script** — accept the parameter and pass it to `llama-server`
 
 ---
 
@@ -142,4 +152,4 @@ LlaModem tracks PowerShell processes by:
 2. `IsModelRunning()` checks for `powershell.exe` processes whose `MainWindowTitle` contains the model name
 3. `StopAsync()` performs a **tree kill**: kills child processes first (via WMI), then the PowerShell process with a 5s grace period
 
-> **Note:** Only `powershell.exe` (Windows PowerShell) is tracked — `pwsh` (PowerShell Core) is never used or monitored.
+> **Note:** Only `powershell.exe` (Windows PowerShell) is tracked -- `pwsh` (PowerShell Core) is never used or monitored.

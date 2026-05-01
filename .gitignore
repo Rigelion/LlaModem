@@ -52,3 +52,9 @@ logs/
 pi-session-*.html
 *.tmp
 *.temp
+
+# Planning/tracking artifacts
+*.plan.md
+findings.md
+progress.md
+task_plan.md
