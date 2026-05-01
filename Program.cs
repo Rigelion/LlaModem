@@ -28,6 +28,10 @@ public class Program
         builder.Services.Configure<RouterConfig>(builder.Configuration.GetSection("Router"));
         builder.Services.AddOptions<RouterConfig>().Bind(builder.Configuration.GetSection("Router")).ValidateOnStart();
 
+        builder.Services.Configure<UsageConfig>(builder.Configuration.GetSection(UsageConfig.SectionName));
+        builder.Services.AddOptions<UsageConfig>().Bind(builder.Configuration.GetSection(UsageConfig.SectionName)).ValidateOnStart();
+        builder.Services.AddSingleton<IUsageService, UsageService>();
+
         // Configure Kestrel to listen on the configured URL
         var routerConfig = builder.Configuration.GetSection("Router");
         var listenUrl = routerConfig["ListenUrl"] ?? "http://localhost:9000";
@@ -72,6 +76,11 @@ public class Program
             appLogger.LogInformation("Application shutdown initiated — shutting down all tracked PowerShell windows");
             await launcher.ShutdownAllAsync(appLogger);
         });
+
+        // Usage capture middleware (before request logging, to see full responses)
+        var usageConfig = app.Configuration.GetSection(UsageConfig.SectionName).Get<UsageConfig>();
+        if (usageConfig?.Enabled == true)
+            app.UseUsageCapture();
 
         // Request logging middleware (first, before auth)
         app.UseRequestLogging();
