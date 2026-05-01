@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace LlaModem.Services;
 
 /// <summary>
-/// Checks available VRAM (via nvidia-smi) on Windows.
+/// Checks available VRAM via nvidia-smi.
 /// </summary>
 public class GpuMemoryChecker : IGpuMemoryChecker
 {

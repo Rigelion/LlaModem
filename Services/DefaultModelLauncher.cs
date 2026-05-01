@@ -82,10 +82,18 @@ public class DefaultModelLauncher : IModelLauncher
         return psProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
     }
 
+    private static Process? FindProcessByTitle(string title)
+    {
+        var psProcesses = Process.GetProcessesByName("powershell");
+        return Array.Find(psProcesses, p =>
+            p.MainWindowTitle.Contains(title, StringComparison.OrdinalIgnoreCase));
+    }
+
     public async Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default)
     {
         var healthUrl = $"{backendUrl.TrimEnd('/')}/health";
-        return await _healthChecker.CheckAsync(healthUrl, cancellationToken);
+        var (success, _) = await _healthChecker.CheckAsync(healthUrl, cancellationToken);
+        return success;
     }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
@@ -114,9 +122,7 @@ public class DefaultModelLauncher : IModelLauncher
 
     public async Task StopModelByNameAsync(string modelName, ILogger logger)
     {
-        var psProcesses = Process.GetProcessesByName("powershell");
-        var target = Array.Find(psProcesses, p =>
-            p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
+        var target = FindProcessByTitle(modelName);
 
         if (target is null || target.HasExited)
         {

@@ -6,6 +6,10 @@ namespace LlaModem.Services;
 
 public class IdleTimeoutService : BackgroundService
 {
+    private const int MinCheckIntervalSec = 15;
+    private const int MaxCheckIntervalSec = 60;
+    private const int CheckIntervalDivisor = 20;
+
     private readonly ModelManager _modelManager;
     private readonly ISystemIdleTracker _systemIdleTracker;
     private readonly RouterConfig _config;
@@ -14,11 +18,11 @@ public class IdleTimeoutService : BackgroundService
 
     /// <summary>
     /// Derives the idle-check polling interval from the configured timeout.
-    /// Scales proportionally (timeout / 20) with a floor of 15s and ceiling of 60s,
+    /// Scales proportionally (timeout / divisor) with a floor and ceiling,
     /// so the check is never too aggressive on short timeouts or too lazy on long ones.
     /// </summary>
     private int CheckInterval =>
-        Math.Min(60, Math.Max(15, _config.Timeouts.IdleTimeoutSeconds / 20));
+        Math.Min(MaxCheckIntervalSec, Math.Max(MinCheckIntervalSec, _config.Timeouts.IdleTimeoutSeconds / CheckIntervalDivisor));
 
     public IdleTimeoutService(
         ModelManager modelManager,

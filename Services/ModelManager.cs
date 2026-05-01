@@ -29,8 +29,8 @@ public class ModelManager
         IHttpClientFactory httpClientFactory,
         IHealthChecker healthChecker,
         IProcessKiller processKiller,
-        IModelLauncher? launcher = null,
-        IGpuMemoryChecker? gpuChecker = null)
+        IModelLauncher launcher,
+        IGpuMemoryChecker gpuChecker)
     {
         _config = config.Value;
         _timeouts = routerConfig.Value.Timeouts;
@@ -38,8 +38,8 @@ public class ModelManager
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
         _processKiller = processKiller;
-        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory, healthChecker, processKiller);
-        _gpuChecker = gpuChecker ?? new GpuMemoryChecker(routerConfig);
+        _launcher = launcher;
+        _gpuChecker = gpuChecker;
     }
 
     /// <summary>
@@ -196,10 +196,13 @@ public class ModelManager
     {
         var healthPath = "/health";
         var url = $"{backendUrl.TrimEnd('/')}{healthPath}";
-        return await _healthChecker.PollAsync(
+        var (success, reason) = await _healthChecker.PollAsync(
             url,
             TimeSpan.FromMinutes(_timeouts.HealthCheckPollTimeoutMinutes),
             TimeSpan.FromMilliseconds(_timeouts.HealthCheckPollDelayMs));
+        if (!success)
+            _logger.LogWarning("Health check failed for {Url}: {Reason}", url, reason);
+        return success;
     }
 
     // No explicit disposal needed. The DI container handles the lifecycle,
