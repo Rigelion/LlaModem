@@ -95,7 +95,7 @@ public sealed class UsageCaptureMiddleware
                     route,
                     usage));
 
-                _logger.LogDebug(
+                _logger.LogInformation(
                     "[USAGE] {Model} {Route} — Prompt: {PromptTokens}, Completion: {CompletionTokens}, Total: {TotalTokens}",
                     model, route, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens);
             }
