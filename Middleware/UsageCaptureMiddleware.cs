@@ -37,10 +37,9 @@ public sealed class UsageCaptureMiddleware
             return;
         }
 
-        var isStreaming = context.Response.Headers.ContentType.ToString().Contains("stream", StringComparison.OrdinalIgnoreCase)
-                       || context.Response.Headers.TransferEncoding.Any();
+        // Detect streaming from the request body (stream: true) — response headers aren't set yet at this point
+        var isStreaming = await IsStreamingRequestAsync(context.Request);
 
-        // Only capture usage from non-streaming responses
         if (!isStreaming)
         {
             var originalBody = context.Response.Body;
@@ -66,27 +65,53 @@ public sealed class UsageCaptureMiddleware
         }
     }
 
+    private static async Task<bool> IsStreamingRequestAsync(HttpRequest request)
+    {
+        if (request.Body is null || request.Body.Length == 0)
+            return false;
+
+        var originalPosition = request.Body.Position;
+        try
+        {
+            using var reader = new StreamReader(request.Body, System.Text.Encoding.UTF8, leaveOpen: true);
+            var body = await reader.ReadToEndAsync();
+
+            // Check for "stream": true in the JSON body
+            if (body.Contains("\"stream\"", StringComparison.OrdinalIgnoreCase)
+                && body.Contains("true", StringComparison.OrdinalIgnoreCase))
+            {
+                // Verify it's actually stream:true, not some other field named stream
+                var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("stream", out var streamProp) && streamProp.GetBoolean())
+                    return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            request.Body.Position = originalPosition;
+        }
+    }
+
     private async Task ExtractAndRecordUsage(HttpContext context, MemoryStream bodyStream, Stream originalBody)
     {
         try
         {
-            var json = System.Text.Encoding.UTF8.GetString(bodyStream.ToArray());
+            var raw = System.Text.Encoding.UTF8.GetString(bodyStream.ToArray());
 
-            if (string.IsNullOrWhiteSpace(json))
+            if (string.IsNullOrWhiteSpace(raw))
             {
                 await WriteBufferedBody(bodyStream, originalBody);
                 return;
             }
 
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            // Extract usage object — supports both OpenAI and Ollama response shapes
-            var usage = TryExtractUsage(root);
+            // Try to find usage — handle standard JSON, SSE (data: prefix), and NDJSON
+            var usage = TryExtractUsageFromRaw(raw);
 
             if (usage is not null)
             {
-                var model = TryGetString(root, "model") ?? "(unknown)";
+                var model = TryExtractModel(raw) ?? "(unknown)";
                 var route = context.Request.Path.Value ?? context.Request.Path.ToString();
 
                 _usageService.Record(new SessionEntry(
@@ -108,6 +133,103 @@ public sealed class UsageCaptureMiddleware
         {
             await WriteBufferedBody(bodyStream, originalBody);
         }
+    }
+
+    private static TokenUsage? TryExtractUsageFromRaw(string raw)
+    {
+        // Strip SSE data: prefix if present (llama-server SSE format)
+        var cleaned = StripSseFormat(raw);
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+            return null;
+
+        // Try parsing as single JSON object first (standard OpenAI response)
+        try
+        {
+            using var doc = JsonDocument.Parse(cleaned);
+            return TryExtractUsage(doc.RootElement);
+        }
+        catch
+        {
+            // Fall through to NDJSON parsing
+        }
+
+        // Parse as NDJSON — one JSON object per line
+        var lines = cleaned.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        TokenUsage? lastUsage = null;
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed == "[DONE]" || trimmed.Length == 0)
+                continue;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed);
+                var usage = TryExtractUsage(doc.RootElement);
+                if (usage is not null)
+                    lastUsage = usage;
+            }
+            catch
+            {
+                // Skip unparseable lines
+            }
+        }
+
+        return lastUsage;
+    }
+
+    private static string? TryExtractModel(string raw)
+    {
+        var cleaned = StripSseFormat(raw);
+        if (string.IsNullOrWhiteSpace(cleaned))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(cleaned);
+            return TryGetString(doc.RootElement, "model");
+        }
+        catch
+        {
+            // NDJSON fallback — check each line
+            var lines = cleaned.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines.Reverse())
+            {
+                var trimmed = line.Trim();
+                if (trimmed == "[DONE]" || trimmed.Length == 0)
+                    continue;
+                try
+                {
+                    using var doc = JsonDocument.Parse(trimmed);
+                    var model = TryGetString(doc.RootElement, "model");
+                    if (!string.IsNullOrEmpty(model))
+                        return model;
+                }
+                catch { /* skip */ }
+            }
+        }
+
+        return null;
+    }
+
+    private static string StripSseFormat(string raw)
+    {
+        // Handle SSE format: "data: {...}\n\ndata: {...}\n\ndata: [DONE]"
+        var sb = new System.Text.StringBuilder(raw.Length);
+        var lines = raw.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.StartsWith("data: ", StringComparison.Ordinal))
+                sb.AppendLine(trimmed[6..]);
+            else if (trimmed.Length > 0)
+                sb.AppendLine(trimmed);
+        }
+
+        return sb.ToString().Trim();
     }
 
     private static TokenUsage? TryExtractUsage(JsonElement root)
