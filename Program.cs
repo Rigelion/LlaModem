@@ -85,6 +85,9 @@ public class Program
         // Request logging middleware (first, before auth)
         app.UseRequestLogging();
 
+        // Response logging middleware (after request, before auth)
+        app.UseResponseLogging();
+
         // Apply Basic Auth to /v1/* routes
         app.UseBasicAuthWhen("/v1");
 
