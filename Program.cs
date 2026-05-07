@@ -26,6 +26,15 @@ public class Program
         builder.Services.AddOptions<RouterConfig>().Bind(builder.Configuration.GetSection("Router")).ValidateOnStart();
         builder.Services.AddOptions<UsageConfig>().Bind(builder.Configuration.GetSection(UsageConfig.SectionName)).ValidateOnStart();
         builder.Services.AddSingleton<IUsageService, UsageService>();
+        builder.Services.AddSingleton<IStatsService, StatsService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<UsageConfig>>().Value;
+            var basePath = config.Path;
+            var fullPath = Path.IsPathRooted(basePath)
+                ? basePath
+                : Path.Combine(AppContext.BaseDirectory, basePath);
+            return new StatsService($"Data Source={fullPath}");
+        });
 
         // Configure Kestrel to listen on the configured URL
         var routerConfig = builder.Configuration.GetSection("Router");
@@ -84,6 +93,7 @@ public class Program
         app.UseBasicAuthWhen("/v1");
 
         app.ConfigureEndpoints();
+        app.MapStatsEndpoints();
 
         app.Run();
     }

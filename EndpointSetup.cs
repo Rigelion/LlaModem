@@ -14,6 +14,26 @@ public static class EndpointSetup
         endpoints.MapAdminEndpoints();
     }
 
+    public static void MapStatsEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        var statsGroup = endpoints.MapGroup("/admin/stats");
+
+        statsGroup.MapGet("/usage", async (IStatsService stats, int days = 30, string? model = null) =>
+        {
+            days = Math.Clamp(days, 1, 365);
+            var response = await stats.GetDailyUsageAsync(days, model);
+            return Results.Json(response);
+        }).WithName("GetDailyUsage");
+
+        statsGroup.MapGet("/requests", async (IStatsService stats, int limit = 50, int offset = 0, string? model = null) =>
+        {
+            limit = Math.Clamp(limit, 1, 500);
+            offset = Math.Max(offset, 0);
+            var response = await stats.GetRecentRequestsAsync(limit, offset, model);
+            return Results.Json(response);
+        }).WithName("GetRecentRequests");
+    }
+
     private static void MapHealthEndpoint(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/health", (ModelManager modelManager) =>
