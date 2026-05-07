@@ -12,6 +12,7 @@ public sealed class UsageService : IUsageService, IDisposable
 {
     private readonly string _basePath;
     private readonly string _filenamePattern;
+    private readonly UsageConfig _config;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public UsageService(IOptions<UsageConfig> config)
@@ -21,6 +22,7 @@ public sealed class UsageService : IUsageService, IDisposable
             ? basePath
             : Path.Combine(AppContext.BaseDirectory, basePath);
         _filenamePattern = config.Value.FilenamePattern;
+        _config = config.Value;
     }
 
     public void Record(SessionEntry entry)
@@ -29,7 +31,8 @@ public sealed class UsageService : IUsageService, IDisposable
         var fileName = _filenamePattern.Replace("{date}", dateStr);
         var filePath = Path.Combine(_basePath, fileName);
 
-        var line = FormatLine(entry);
+        var includeTimings = _config.IncludeTimings;
+        var line = FormatLine(entry, includeTimings);
 
         _semaphore.Wait();
         try
@@ -38,7 +41,7 @@ public sealed class UsageService : IUsageService, IDisposable
 
             if (!File.Exists(filePath))
             {
-                File.WriteAllText(filePath, FormatHeader(dateStr));
+                File.WriteAllText(filePath, FormatHeader(dateStr, includeTimings));
             }
 
             File.AppendAllText(filePath, line);
@@ -49,13 +52,44 @@ public sealed class UsageService : IUsageService, IDisposable
         }
     }
 
-    private static string FormatHeader(string date) =>
-        $"# Usage Report — {date}\n\n" +
-        "| Timestamp | Model | Route | Prompt Tokens | Completion Tokens | Total Tokens |\n" +
-        "|-----------|-------|-------|---------------|-------------------|--------------|\n";
+    private string FormatHeader(string date, bool includeTimings)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"# Usage Report — {date}\n\n");
+        sb.Append("| Timestamp | Model | Route | Prompt Tokens | Completion Tokens | Total Tokens |");
 
-    private static string FormatLine(SessionEntry entry) =>
-        $"| {entry.Timestamp:yyyy-MM-dd HH:mm:ss} | {entry.Model} | {entry.Route} | {entry.Usage.PromptTokens} | {entry.Usage.CompletionTokens} | {entry.Usage.TotalTokens} |\n";
+        if (includeTimings)
+        {
+            sb.Append(" | Prompt Ms | Completion Ms | Cache Hits");
+        }
+
+        sb.Append("\n");
+        sb.Append("|-----------|-------|-------|---------------|-------------------|--------------|");
+
+        if (includeTimings)
+        {
+            sb.Append(" |-----------|-------------|------------|");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string FormatLine(SessionEntry entry, bool includeTimings)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"| {entry.Timestamp:yyyy-MM-dd HH:mm:ss} | {entry.Model} | {entry.Route} | {entry.Usage.PromptTokens} | {entry.Usage.CompletionTokens} | {entry.Usage.TotalTokens} |");
+
+        if (includeTimings && entry.Timings is { } t)
+        {
+            var promptMs = t.PromptMs.HasValue && !double.IsNaN(t.PromptMs.Value) ? $"{t.PromptMs.Value:F1}" : "";
+            var completionMs = t.CompletionMs.HasValue && !double.IsNaN(t.CompletionMs.Value) ? $"{t.CompletionMs.Value:F1}" : "";
+            var cacheHits = t.CacheHits?.ToString() ?? "";
+            sb.Append($" | {promptMs} | {completionMs} | {cacheHits}");
+        }
+
+        sb.Append("|\n");
+        return sb.ToString();
+    }
 
     public void Dispose() => _semaphore.Dispose();
 }

@@ -7,4 +7,7 @@ public record SessionEntry(
     DateTime Timestamp,
     string Model,
     string Route,
-    TokenUsage Usage);
+    TokenUsage Usage)
+{
+    public Timings? Timings => Usage.Timings;
+}

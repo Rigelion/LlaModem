@@ -120,9 +120,13 @@ public sealed class UsageCaptureMiddleware
                     route,
                     usage));
 
+                var timingInfo = usage.Timings is { } t && (t.PromptMs.HasValue || t.CompletionMs.HasValue)
+                    ? $", Prompt: {t.PromptMs:F1}ms, Completion: {t.CompletionMs:F1}ms"
+                    : string.Empty;
+
                 _logger.LogInformation(
-                    "[USAGE] {Model} {Route} — Prompt: {PromptTokens}, Completion: {CompletionTokens}, Total: {TotalTokens}",
-                    model, route, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens);
+                    "[USAGE] {Model} {Route} — Prompt: {PromptTokens}, Completion: {CompletionTokens}, Total: {TotalTokens}{Timing}",
+                    model, route, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens, timingInfo);
             }
         }
         catch (Exception ex)
@@ -241,7 +245,30 @@ public sealed class UsageCaptureMiddleware
         var completionTokens = TryGetInt32(usageElement, "completion_tokens");
         var totalTokens = TryGetInt32(usageElement, "total_tokens");
 
-        return new TokenUsage(promptTokens, completionTokens, totalTokens);
+        var timings = TryExtractTimings(root);
+
+        return new TokenUsage(
+            promptTokens,
+            completionTokens,
+            totalTokens,
+            timings.PromptMs,
+            timings.CompletionMs,
+            timings.PromptPerTokenMs,
+            timings.CompletionPerTokenMs,
+            timings.CacheHits);
+    }
+
+    private static Timings TryExtractTimings(JsonElement root)
+    {
+        if (!root.TryGetProperty("timings", out var timingsElement) || timingsElement.ValueKind != JsonValueKind.Object)
+            return new Timings();
+
+        return new Timings(
+            TryGetDouble(timingsElement, "prompt_ms"),
+            TryGetDouble(timingsElement, "predicted_ms"),
+            TryGetDouble(timingsElement, "prompt_per_token_ms"),
+            TryGetDouble(timingsElement, "predicted_per_token_ms"),
+            TryGetInt32Nullable(timingsElement, "cache_n"));
     }
 
     private static async Task WriteBufferedBody(MemoryStream bodyStream, Stream originalBody)
@@ -255,6 +282,20 @@ public sealed class UsageCaptureMiddleware
         if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number)
             return value.GetInt32();
         return 0;
+    }
+
+    private static double? TryGetDouble(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number)
+            return value.GetDouble();
+        return null;
+    }
+
+    private static int? TryGetInt32Nullable(JsonElement element, string propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number)
+            return value.GetInt32();
+        return null;
     }
 
     private static string? TryGetString(JsonElement element, string propertyName)

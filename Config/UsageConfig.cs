@@ -15,4 +15,7 @@ public class UsageConfig
 
     /// <summary>Filename pattern, e.g. "usage-{date}.md". {date} is replaced with yyyy-MM-dd.</summary>
     public string FilenamePattern { get; set; } = "usage-{date}.md";
+
+    /// <summary>Whether to include timing data in usage reports. Default: true.</summary>
+    public bool IncludeTimings { get; set; } = true;
 }

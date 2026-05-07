@@ -123,6 +123,71 @@ public class UsageServiceTests : IDisposable
         Assert.Contains("/v1/completions", content);
     }
 
+    [Fact]
+    public void Record_IncludesTimingColumns_WhenEnabled()
+    {
+        // Arrange
+        var config = Options.Create(new UsageConfig { Path = _tempDir, FilenamePattern = "usage-{date}.md", IncludeTimings = true });
+        var service = new UsageService(config);
+
+        // Act
+        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+            new TokenUsage(10, 50, 60, 120.5, 450.3, null, null, 15)));
+
+        // Assert
+        var filePath = Path.Combine(_tempDir, "usage-2026-05-01.md");
+        var content = File.ReadAllText(filePath);
+        Assert.Contains("Prompt Ms", content);
+        Assert.Contains("Completion Ms", content);
+        Assert.Contains("Cache Hits", content);
+        Assert.Contains("120.5", content);
+        Assert.Contains("450.3", content);
+        Assert.Contains("15", content);
+    }
+
+    [Fact]
+    public void Record_OmitsTimingColumns_WhenDisabled()
+    {
+        // Arrange
+        var config = Options.Create(new UsageConfig { Path = _tempDir, FilenamePattern = "usage-{date}.md", IncludeTimings = false });
+        var service = new UsageService(config);
+
+        // Act
+        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+            new TokenUsage(10, 50, 60)));
+
+        // Assert
+        var filePath = Path.Combine(_tempDir, "usage-2026-05-01.md");
+        var content = File.ReadAllText(filePath);
+        Assert.DoesNotContain("Prompt Ms", content);
+        Assert.DoesNotContain("Completion Ms", content);
+        Assert.DoesNotContain("Cache Hits", content);
+    }
+
+    [Fact]
+    public void Record_HandlesNullTimingsInOutput()
+    {
+        // Arrange
+        var config = Options.Create(new UsageConfig { Path = _tempDir, FilenamePattern = "usage-{date}.md", IncludeTimings = true });
+        var service = new UsageService(config);
+
+        // Act
+        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+            new TokenUsage(10, 50, 60)));
+
+        // Assert
+        var filePath = Path.Combine(_tempDir, "usage-2026-05-01.md");
+        var content = File.ReadAllText(filePath);
+        // Header should have timing columns
+        Assert.Contains("Prompt Ms", content);
+        // Data row should have empty timing cells (no values between the last total tokens and final |)
+        var lines = content.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var dataLine = lines.First(l => l.Contains("llama3.2"));
+        // Data row should have timing columns with empty values
+        Assert.Contains("llama3.2", dataLine);
+        Assert.Contains("| 10 | 50 | 60 |", dataLine);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDir))

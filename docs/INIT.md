@@ -95,7 +95,8 @@ LlaModem/
 │   └── UsageCaptureMiddleware.cs    # Token usage extraction from proxy responses
 ├── Models/
 │   ├── SessionEntry.cs       # Per-request usage data record
-│   └── TokenUsage.cs         # Token count record (prompt/completion/total)
+│   ├── Timings.cs            # Per-request timing data record struct
+│   └── TokenUsage.cs         # Token count + timing record
 ├── Services/
 │   ├── DefaultModelLauncher.cs      # PowerShell process launcher for models
 │   ├── ErrorResponseWriter.cs        # JSON error response utility
@@ -121,8 +122,27 @@ LlaModem/
 ├── LlaModem.sln                 # Solution file
 └── docs/
     ├── INIT.md                  # This file (project overview)
-    └── powershell-parameters.md # Generation parameter documentation
+    ├── powershell-parameters.md # Generation parameter documentation
+    └── usage-tracking.md        # Usage statistics & timing capture documentation
 ```
+
+## Usage Tracking
+
+LlaModem captures token usage and timing statistics from proxied LLM responses, writing daily markdown reports.
+
+Configuration (in `appsettings.json`):
+```json
+{
+  "Usage": {
+    "Enabled": true,
+    "Path": "usage",
+    "FilenamePattern": "usage-{date}.md",
+    "IncludeTimings": true
+  }
+}
+```
+
+Captured data includes token counts (`prompt_tokens`, `completion_tokens`, `total_tokens`) and timing metrics (`prompt_ms`, `completion_ms`, `cache_hits`). See `docs/usage-tracking.md` for full details.
 
 ## Key Behaviors
 
