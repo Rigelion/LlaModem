@@ -13,35 +13,35 @@ Replace raw ADO.NET boilerplate in `StatsService` with Dapper for auto-mapping a
 ## Phases
 
 ### Phase 1: Add Dependencies
-- [ ] `dotnet add package Dapper`
-- [ ] `dotnet add package Dapper.SqlBuilder`
-- **Status:** not_started
+- [x] `dotnet add package Dapper`
+- [x] `dotnet add package Dapper.SqlBuilder`
+- **Status:** complete
 
 ### Phase 2: Refactor GetDailyUsageAsync
-- [ ] Use `SqlBuilder` with `AddTemplate("/**where**/")` for dynamic WHERE
-- [ ] Replace `while (reader.ReadAsync())` with `conn.QueryAsync<DailyUsageRow>(sql, params)`
-- [ ] Replace `ExecuteScalar` with `conn.ExecuteScalarAsync<int>(sql, params)`
-- [ ] Remove `GetModelClause()` and `AddModelParam()` helpers
-- **Status:** not_started
+- [x] Use `SqlBuilder` with `AddTemplate("/**where**/")` for dynamic WHERE
+- [x] Replace `while (reader.ReadAsync())` with `conn.QueryAsync<DailyUsageRow>(sql, params)`
+- [x] Replace `ExecuteScalar` with `conn.ExecuteScalarAsync<long>(sql, params)`
+- [x] Remove `GetModelClause()` and `AddModelParam()` helpers
+- **Status:** complete
 
 ### Phase 3: Refactor GetRecentRequestsAsync
-- [ ] Use `SqlBuilder` for count and data queries
-- [ ] Replace manual reader loop with `QueryAsync<UsageRow>`
-- [ ] Use `ExecuteScalarAsync<long>` for count
-- **Status:** not_started
+- [x] Use `SqlBuilder` for count and data queries
+- [x] Replace manual reader loop with `QueryAsync<UsageRow>`
+- [x] Use `ExecuteScalarAsync<long>` for count
+- **Status:** complete
 
 ### Phase 4: Clean Up
-- [ ] Remove `EnsureTableCreatedAsync()` — table creation belongs in `UsageDbContext.EnsureCreated()`
-- [ ] Remove `GetModelClause()` and `AddModelParam()` static methods
-- [ ] Remove `using` boilerplate — Dapper handles command lifecycle
-- [ ] Simplify `Dispose()` (no-op remains fine)
-- **Status:** not_started
+- [x] Remove `EnsureTableCreatedAsync()` — table creation belongs in `UsageDbContext.EnsureCreated()`
+- [x] Remove `GetModelClause()` and `AddModelParam()` static methods
+- [x] Remove `using` boilerplate — Dapper handles command lifecycle
+- [x] Simplify `Dispose()` (no-op removed)
+- **Status:** complete
 
 ### Phase 5: Build & Test
-- [ ] `dotnet build` — 0 warnings, 0 errors
-- [ ] `dotnet test` — all 52 pass
-- [ ] Smoke test both endpoints
-- **Status:** not_started
+- [x] `dotnet build` — 0 warnings, 0 errors
+- [x] `dotnet test` — all 52 pass
+- [x] Smoke test both endpoints
+- **Status:** complete
 
 ## Decision Log
 | Decision | Rationale |
