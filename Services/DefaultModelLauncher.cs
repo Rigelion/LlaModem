@@ -4,11 +4,8 @@ namespace LlaModem.Services;
 
 public class DefaultModelLauncher : IModelLauncher
 {
-    /// <summary>
-    /// Uses 'powershell' and lets the OS resolve it via PATH.
-    /// This works on standard Windows installs and is testable.
-    /// </summary>
     private const string PowerShellExe = "powershell";
+    private const string PowerShellTitle = "LlaModem";
 
     /// <summary>
     /// Thread-safe collection of all PowerShell processes tracked by LlaModem.
@@ -37,7 +34,7 @@ public class DefaultModelLauncher : IModelLauncher
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
 
-        // Set window title to the model name so we can identify the process later
+        // Set window title to a constant so we can identify the process later
         var escapedScript = scriptPath.Replace("'", "''");
 
         // Build optional launch params suffix
@@ -51,7 +48,7 @@ public class DefaultModelLauncher : IModelLauncher
         var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
 
         var arguments =
-            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'{paramSuffix}\"";
+            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{PowerShellTitle}'; & '{escapedScript}'{paramSuffix}\"";
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,
@@ -75,18 +72,18 @@ public class DefaultModelLauncher : IModelLauncher
         return process;
     }
 
-    public bool IsModelRunning(string modelName)
+    public bool IsModelRunning(string _ = "")
     {
         // Only check powershell.exe processes (never pwsh)
         var psProcesses = Process.GetProcessesByName("powershell");
-        return psProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
+        return psProcesses.Any(p => p.MainWindowTitle.Contains(PowerShellTitle, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static Process? FindProcessByTitle(string title)
+    private static Process? FindProcessByTitle(string _ = "")
     {
         var psProcesses = Process.GetProcessesByName("powershell");
         return Array.Find(psProcesses, p =>
-            p.MainWindowTitle.Contains(title, StringComparison.OrdinalIgnoreCase));
+            p.MainWindowTitle.Contains(PowerShellTitle, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default)

@@ -96,6 +96,7 @@ public class Program
         {
             "QWEN_SMART_START_SCRIPT",
             "QWEN_FAST_START_SCRIPT",
+            "LLAMODEM_BACKEND_URL",
             "LLAMODEM_LISTEN_URL",
             "LLAMODEM_AUTH_USERNAME",
             "LLAMODEM_AUTH_PASSWORD",

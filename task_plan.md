@@ -58,3 +58,25 @@
 | Error | Attempt | Resolution |
 |-------|---------|------------|
 |       |         |            |
+
+## Implementation Progress
+
+### Phase 1: appsettings.json
+**Status:** ✅ Done
+
+### Phase 2: AppConfig — Move BackendUrl out of per-model
+**Status:** ✅ Done
+
+### Phase 3: Constant PowerShell title
+**Status:** ✅ Done
+
+### Phase 4: Update all consumers
+**Status:** ✅ Done
+
+### Phase 5: Tests
+**Status:** ✅ Done
+
+### Phase 6: Build & Test
+**Status:** ✅ Done
+- Build: 0 warnings, 0 errors
+- Tests: 50 passed, 0 failed
