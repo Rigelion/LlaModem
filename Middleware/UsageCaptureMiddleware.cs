@@ -67,8 +67,24 @@ public sealed class UsageCaptureMiddleware
 
     private static async Task<bool> IsStreamingRequestAsync(HttpRequest request)
     {
-        if (request.Body is null || request.Body.Length == 0)
+        if (request.Body is null || !request.Body.CanRead)
             return false;
+
+        if (request.Body.CanSeek)
+        {
+            if (request.Body.Length == 0)
+                return false;
+        }
+        else
+        {
+            // PipeStream (default ASP.NET Core body) doesn't support Length.
+            // Read all content, then replace Body with a seekable MemoryStream.
+            var content = await ReadAllBytesAsync(request.Body);
+            if (content.Length == 0)
+                return false;
+
+            request.Body = new MemoryStream(content);
+        }
 
         var originalPosition = request.Body.Position;
         try
@@ -269,6 +285,13 @@ public sealed class UsageCaptureMiddleware
             TryGetDouble(timingsElement, "prompt_per_token_ms"),
             TryGetDouble(timingsElement, "predicted_per_token_ms"),
             TryGetInt32Nullable(timingsElement, "cache_n"));
+    }
+
+    private static async Task<byte[]> ReadAllBytesAsync(Stream stream)
+    {
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        return ms.ToArray();
     }
 
     private static async Task WriteBufferedBody(MemoryStream bodyStream, Stream originalBody)
