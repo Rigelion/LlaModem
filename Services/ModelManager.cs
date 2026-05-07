@@ -67,10 +67,10 @@ public class ModelManager
         }
 
         // Check 2: Is the backend URL responding? (llama-server may be running but title check missed it)
-        var backendHealthy = await _launcher.IsModelRunningV2(modelConfig.BackendUrl);
+        var backendHealthy = await _launcher.IsModelRunningV2(_config.BackendUrl);
         if (backendHealthy)
         {
-            _logger.LogDebug("Backend for model '{Model}' at {Url} is healthy", modelName, modelConfig.BackendUrl);
+            _logger.LogDebug("Backend is healthy for model '{Model}'", modelName);
             lock (_lock)
             {
                 _activeProcess = null; // Will be refreshed on next request
@@ -84,7 +84,7 @@ public class ModelManager
         {
             if (_activeModelName == modelName && _activeProcess is not null && !_activeProcess.HasExited)
             {
-                _logger.LogDebug("Model '{Model}' is already running on {Url}", modelName, modelConfig.BackendUrl);
+                _logger.LogDebug("Model '{Model}' is already running", modelName);
                 return;
             }
         }
@@ -150,7 +150,7 @@ public class ModelManager
 
         _logger.LogInformation(
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
-            modelName, modelConfig.StartScript, modelConfig.BackendUrl);
+            modelName, modelConfig.StartScript, _config.BackendUrl);
 
         var process = await _launcher.StartAsync(modelName, modelConfig.StartScript, launchParams);
         if (process is null)
@@ -180,16 +180,16 @@ public class ModelManager
         }
 
         // Wait for health check
-        var healthy = await WaitForHealthCheckAsync(modelConfig.BackendUrl);
+        var healthy = await WaitForHealthCheckAsync(_config.BackendUrl);
         if (!healthy)
         {
-            _logger.LogError("Model '{Model}' failed health check on {Url}", modelName, modelConfig.BackendUrl);
+            _logger.LogError("Model '{Model}' failed health check on {Url}", modelName, _config.BackendUrl);
             await StopActiveModelAsync();
             throw new InvalidOperationException(
-                $"Model '{modelName}' failed to become healthy within timeout on {modelConfig.BackendUrl}");
+                $"Model '{modelName}' failed to become healthy within timeout on {_config.BackendUrl}");
         }
 
-        _logger.LogInformation("Model '{Model}' is now active and healthy on {Url}", modelName, modelConfig.BackendUrl);
+        _logger.LogInformation("Model '{Model}' is now active and healthy on {Url}", modelName, _config.BackendUrl);
     }
 
     private async Task<bool> WaitForHealthCheckAsync(string backendUrl)

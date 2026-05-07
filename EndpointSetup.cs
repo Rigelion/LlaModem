@@ -38,10 +38,7 @@ public static class EndpointSetup
         adminGroup.MapGet("/status", (ModelManager modelManager, IOptions<AppConfig> config) =>
         {
             var activeModel = modelManager.ActiveModelName;
-            string? backendUrl = null;
-            if (activeModel != null && config.Value.Models.TryGetValue(activeModel, out var mc))
-                backendUrl = mc.BackendUrl;
-            return Results.Json(new { activeModel, backendUrl });
+            return Results.Json(new { activeModel, backendUrl = config.Value.BackendUrl });
         });
 
         adminGroup.MapPost("/model", async (HttpContext context, ModelManager modelManager) =>
