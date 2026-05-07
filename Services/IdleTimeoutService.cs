@@ -6,11 +6,23 @@ namespace LlaModem.Services;
 
 public class IdleTimeoutService : BackgroundService
 {
+    private const int MinCheckIntervalSec = 15;
+    private const int MaxCheckIntervalSec = 60;
+    private const int CheckIntervalDivisor = 20;
+
     private readonly ModelManager _modelManager;
     private readonly ISystemIdleTracker _systemIdleTracker;
     private readonly RouterConfig _config;
     private readonly ILogger<IdleTimeoutService> _logger;
     private readonly PeriodicTimer _timer;
+
+    /// <summary>
+    /// Derives the idle-check polling interval from the configured timeout.
+    /// Scales proportionally (timeout / divisor) with a floor and ceiling,
+    /// so the check is never too aggressive on short timeouts or too lazy on long ones.
+    /// </summary>
+    private int CheckInterval =>
+        Math.Min(MaxCheckIntervalSec, Math.Max(MinCheckIntervalSec, _config.Timeouts.IdleTimeoutSeconds / CheckIntervalDivisor));
 
     public IdleTimeoutService(
         ModelManager modelManager,
@@ -22,14 +34,14 @@ public class IdleTimeoutService : BackgroundService
         _systemIdleTracker = systemIdleTracker;
         _config = config.Value;
         _logger = logger;
-        _timer = new PeriodicTimer(TimeSpan.FromSeconds(_config.Timeouts.IdleCheckIntervalSeconds));
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(CheckInterval));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
             "Idle timeout service started (timeout: {Seconds}s)",
-            _config.IdleTimeoutSeconds);
+            _config.Timeouts.IdleTimeoutSeconds);
 
         try
         {
@@ -39,7 +51,7 @@ public class IdleTimeoutService : BackgroundService
                     break;
 
                 var elapsed = DateTimeOffset.UtcNow - _systemIdleTracker.LastRequest;
-                if (elapsed.TotalSeconds >= _config.IdleTimeoutSeconds)
+                if (elapsed.TotalSeconds >= _config.Timeouts.IdleTimeoutSeconds)
                 {
                     _logger.LogInformation(
                         "Idle timeout reached ({Elapsed}s). Stopping active model...",

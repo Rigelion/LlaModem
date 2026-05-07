@@ -15,24 +15,29 @@ public class HealthChecker : IHealthChecker
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<bool> CheckAsync(string url, CancellationToken cancellationToken = default)
+    public async Task<(bool success, string? reason)> CheckAsync(string url, CancellationToken cancellationToken = default)
     {
         try
         {
             using var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(_timeouts.HealthCheckTimeoutSeconds);
             var response = await client.GetAsync(url, cancellationToken);
-            return response.IsSuccessStatusCode;
+            return response.IsSuccessStatusCode ? (true, null) : (false, $"HTTP {(int)response.StatusCode}");
         }
-        catch
+        catch (TimeoutException)
         {
-            return false;
+            return (false, "timeout");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.GetType().Name);
         }
     }
 
-    public async Task<bool> PollAsync(string url, TimeSpan timeout, TimeSpan delay, CancellationToken cancellationToken = default)
+    public async Task<(bool success, string? reason)> PollAsync(string url, TimeSpan timeout, TimeSpan delay, CancellationToken cancellationToken = default)
     {
         var sw = Stopwatch.StartNew();
+        var attempts = 0;
 
         // Reuse a single HttpClient across the polling loop to avoid creating
         // a new client (and underlying socket) on every poll attempt.
@@ -41,12 +46,13 @@ public class HealthChecker : IHealthChecker
 
         while (sw.Elapsed < timeout)
         {
+            attempts++;
             try
             {
                 var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    return true;
+                    return (true, null);
                 }
             }
             catch
@@ -57,6 +63,6 @@ public class HealthChecker : IHealthChecker
             await Task.Delay(delay, cancellationToken);
         }
 
-        return false;
+        return (false, $"no response after {attempts} attempts in {timeout.TotalSeconds:F0}s");
     }
 }

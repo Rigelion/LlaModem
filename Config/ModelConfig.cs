@@ -1,18 +1,16 @@
 namespace LlaModem.Config;
 
 /// <summary>
-/// Configuration for a single model backend.
+/// Configuration for a single model.
 /// Environment variables in StartScript are expanded at assignment time.
 /// </summary>
-public class ModelConfig
+public record ModelConfig
 {
-    private string _startScript = string.Empty;
+    private readonly string? _expandedScript;
 
     public string StartScript
     {
-        get => _startScript;
-        set => _startScript = Environment.ExpandEnvironmentVariables(value);
+        get => _expandedScript ?? string.Empty;
+        init => _expandedScript = Environment.ExpandEnvironmentVariables(value ?? string.Empty);
     }
-
-    public string BackendUrl { get; set; } = string.Empty;
 }

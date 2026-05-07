@@ -4,11 +4,8 @@ namespace LlaModem.Services;
 
 public class DefaultModelLauncher : IModelLauncher
 {
-    /// <summary>
-    /// Uses 'powershell' and lets the OS resolve it via PATH.
-    /// This works on standard Windows installs and is testable.
-    /// </summary>
     private const string PowerShellExe = "powershell";
+    private const string PowerShellTitle = "LlaModem";
 
     /// <summary>
     /// Thread-safe collection of all PowerShell processes tracked by LlaModem.
@@ -37,18 +34,21 @@ public class DefaultModelLauncher : IModelLauncher
     {
         var workingDir = Path.GetDirectoryName(scriptPath);
 
-        // Set window title to the model name so we can identify the process later
+        // Set window title to a constant so we can identify the process later
         var escapedScript = scriptPath.Replace("'", "''");
 
         // Build optional launch params suffix
         var paramParts = new List<string>();
         if (launchParams?.Temperature.HasValue == true) paramParts.Add($"-Temperature {launchParams.Temperature}");
         if (launchParams?.TopP.HasValue == true) paramParts.Add($"-TopP {launchParams.TopP}");
+        if (launchParams?.TopK.HasValue == true) paramParts.Add($"-TopK {launchParams.TopK}");
+        if (launchParams?.MinP.HasValue == true) paramParts.Add($"-MinP {launchParams.MinP}");
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
+        if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
         var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
 
         var arguments =
-            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{modelName}'; & '{escapedScript}'{paramSuffix}\"";
+            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{PowerShellTitle}'; & '{escapedScript}'{paramSuffix}\"";
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,
@@ -72,17 +72,25 @@ public class DefaultModelLauncher : IModelLauncher
         return process;
     }
 
-    public bool IsModelRunning(string modelName)
+    public bool IsModelRunning(string _ = "")
     {
         // Only check powershell.exe processes (never pwsh)
         var psProcesses = Process.GetProcessesByName("powershell");
-        return psProcesses.Any(p => p.MainWindowTitle.Contains(modelName, StringComparison.OrdinalIgnoreCase));
+        return psProcesses.Any(p => p.MainWindowTitle.Contains(PowerShellTitle, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static Process? FindProcessByTitle(string _ = "")
+    {
+        var psProcesses = Process.GetProcessesByName("powershell");
+        return Array.Find(psProcesses, p =>
+            p.MainWindowTitle.Contains(PowerShellTitle, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default)
     {
         var healthUrl = $"{backendUrl.TrimEnd('/')}/health";
-        return await _healthChecker.CheckAsync(healthUrl, cancellationToken);
+        var (success, _) = await _healthChecker.CheckAsync(healthUrl, cancellationToken);
+        return success;
     }
 
     public async Task StopAsync(Process process, string modelName, ILogger logger)
@@ -107,5 +115,22 @@ public class DefaultModelLauncher : IModelLauncher
         }
 
         await _processKiller.ShutdownAllAsync(processesToKill, logger);
+    }
+
+    public async Task StopModelByNameAsync(string modelName, ILogger logger)
+    {
+        var target = FindProcessByTitle(modelName);
+
+        if (target is null || target.HasExited)
+        {
+            logger.LogDebug("No running process found for model '{Model}'", modelName);
+            return;
+        }
+
+        logger.LogInformation(
+            "Found process for model '{Model}' (PID: {Pid}) — stopping it",
+            modelName, target.Id);
+
+        await _processKiller.StopAsync(target, modelName, logger);
     }
 }

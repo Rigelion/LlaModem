@@ -31,4 +31,9 @@ public interface IModelLauncher
     /// Shuts down all tracked PowerShell windows (used on application shutdown).
     /// </summary>
     Task ShutdownAllAsync(ILogger logger);
+
+    /// <summary>
+    /// Finds and stops a model by its name (used when _activeProcess is null but the model is running).
+    /// </summary>
+    Task StopModelByNameAsync(string modelName, ILogger logger);
 }

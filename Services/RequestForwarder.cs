@@ -70,12 +70,12 @@ public class RequestForwarder : IRequestForwarder
         await response.Content.CopyToAsync(context.Response.Body);
     }
 
-    public static string BuildTargetUrl(ModelConfig modelConfig, HttpRequest request)
+    public static string BuildTargetUrl(string backendUrl, HttpRequest request)
     {
-        var backendUrl = modelConfig.BackendUrl.TrimEnd('/');
+        var url = backendUrl.TrimEnd('/');
         var path = request.Path.Value!;
         var targetPath = path.StartsWith("/v1", StringComparison.OrdinalIgnoreCase) ? path[3..] : path;
-        var targetUrl = $"{backendUrl}{targetPath}";
+        var targetUrl = $"{url}{targetPath}";
         if (request.QueryString.HasValue)
             targetUrl += request.QueryString.Value;
         return targetUrl;

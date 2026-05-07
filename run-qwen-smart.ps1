@@ -1,7 +1,10 @@
 param(
     [double]$Temperature = 0.6,
     [double]$TopP = 0.95,
-    [double]$PresencePenalty = 0.00
+    [double]$TopK = 20,
+    [double]$MinP = 0.0,
+    [double]$PresencePenalty = 0.00,
+    [double]$RepetitionPenalty = 1.05
 )
 
 $env:TEMP = "F:\Temp"
@@ -20,7 +23,10 @@ New-Item -ItemType Directory -Force F:\Temp, F:\llama-cache, F:\hf-cache, F:\NVI
 Write-Host "`n=== Qwen Smart Server Configuration ===" -ForegroundColor Cyan
 Write-Host "Temperature:       $Temperature"
 Write-Host "TopP:              $TopP"
+Write-Host "TopK:              $TopK"
+Write-Host "MinP:              $MinP"
 Write-Host "PresencePenalty:   $PresencePenalty"
+Write-Host "RepetitionPenalty: $RepetitionPenalty"
 Write-Host "Port:              8001"
 Write-Host "Context Length:    131072"
 Write-Host "Predictions:       4096"
@@ -38,9 +44,10 @@ llama-server `
     --temp $Temperature `
     --slot-save-path "F:\models\llamacache" `
     --top-p $TopP `
-    --top-k 20 `
-    --repeat-penalty 1.05 `
+    --top-k $TopK `
+    --min-p $MinP `
     --presence-penalty $PresencePenalty `
+    --repeat-penalty $RepetitionPenalty `
     --fit on `
     --parallel 1 `
     -fa on `

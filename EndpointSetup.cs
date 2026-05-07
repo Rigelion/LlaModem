@@ -1,4 +1,5 @@
 using LlaModem.Config;
+using LlaModem.Models;
 using LlaModem.Middleware;
 using LlaModem.Services;
 using Microsoft.Extensions.Options;
@@ -12,6 +13,50 @@ public static class EndpointSetup
         endpoints.MapHealthEndpoint();
         endpoints.MapV1ProxyEndpoint();
         endpoints.MapAdminEndpoints();
+    }
+
+    public static void MapStatsEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        var statsGroup = endpoints.MapGroup("/admin/stats");
+
+        statsGroup.MapGet("/usage", async (IStatsService stats, int days = 30, string? model = null) =>
+        {
+            days = Math.Clamp(days, 1, 365);
+            var response = await stats.GetDailyUsageAsync(days, model);
+            return Results.Json(response);
+        }).WithName("GetDailyUsage");
+
+        statsGroup.MapGet("/requests", async (IStatsService stats, int limit = 50, int offset = 0, string? model = null) =>
+        {
+            limit = Math.Clamp(limit, 1, 500);
+            offset = Math.Max(offset, 0);
+            var response = await stats.GetRecentRequestsAsync(limit, offset, model);
+            return Results.Json(response);
+        }).WithName("GetRecentRequests");
+
+        statsGroup.MapGet("/cost-comparison", async (IStatsService stats, int days = 30, string? model = null) =>
+        {
+            days = Math.Clamp(days, 1, 365);
+            var usage = await stats.GetDailyUsageAsync(days, model);
+            var costs = ModelPricing.All
+                .Select(p => new ModelCost(
+                    p.Name,
+                    ModelPricing.CalculateCost(p, usage.Summary.TotalPromptTokens, 0),
+                    ModelPricing.CalculateCost(p, 0, usage.Summary.TotalCompletionTokens),
+                    ModelPricing.CalculateCost(p, usage.Summary.TotalPromptTokens, usage.Summary.TotalCompletionTokens)))
+                .OrderBy(c => c.TotalCost)
+                .ToArray();
+
+            var cheapest = costs.First();
+            var mostExpensive = costs.Last();
+
+            return Results.Json(new CostComparisonResponse(
+                usage.Period,
+                model,
+                costs,
+                cheapest,
+                mostExpensive));
+        }).WithName("GetCostComparison");
     }
 
     private static void MapHealthEndpoint(this IEndpointRouteBuilder endpoints)
@@ -38,10 +83,7 @@ public static class EndpointSetup
         adminGroup.MapGet("/status", (ModelManager modelManager, IOptions<AppConfig> config) =>
         {
             var activeModel = modelManager.ActiveModelName;
-            string? backendUrl = null;
-            if (activeModel != null && config.Value.Models.TryGetValue(activeModel, out var mc))
-                backendUrl = mc.BackendUrl;
-            return Results.Json(new { activeModel, backendUrl });
+            return Results.Json(new { activeModel, backendUrl = config.Value.BackendUrl });
         });
 
         adminGroup.MapPost("/model", async (HttpContext context, ModelManager modelManager) =>

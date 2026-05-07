@@ -29,8 +29,8 @@ public class ModelManager
         IHttpClientFactory httpClientFactory,
         IHealthChecker healthChecker,
         IProcessKiller processKiller,
-        IModelLauncher? launcher = null,
-        IGpuMemoryChecker? gpuChecker = null)
+        IModelLauncher launcher,
+        IGpuMemoryChecker gpuChecker)
     {
         _config = config.Value;
         _timeouts = routerConfig.Value.Timeouts;
@@ -38,8 +38,8 @@ public class ModelManager
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
         _processKiller = processKiller;
-        _launcher = launcher ?? new DefaultModelLauncher(httpClientFactory, healthChecker, processKiller);
-        _gpuChecker = gpuChecker ?? new GpuMemoryChecker(routerConfig);
+        _launcher = launcher;
+        _gpuChecker = gpuChecker;
     }
 
     /// <summary>
@@ -59,14 +59,18 @@ public class ModelManager
         if (_launcher.IsModelRunning(modelName))
         {
             _logger.LogDebug("PowerShell window for model '{Model}' is already running", modelName);
+            lock (_lock)
+            {
+                _activeModelName = modelName;
+            }
             return;
         }
 
         // Check 2: Is the backend URL responding? (llama-server may be running but title check missed it)
-        var backendHealthy = await _launcher.IsModelRunningV2(modelConfig.BackendUrl);
+        var backendHealthy = await _launcher.IsModelRunningV2(_config.BackendUrl);
         if (backendHealthy)
         {
-            _logger.LogDebug("Backend for model '{Model}' at {Url} is healthy", modelName, modelConfig.BackendUrl);
+            _logger.LogDebug("Backend is healthy for model '{Model}'", modelName);
             lock (_lock)
             {
                 _activeProcess = null; // Will be refreshed on next request
@@ -80,7 +84,7 @@ public class ModelManager
         {
             if (_activeModelName == modelName && _activeProcess is not null && !_activeProcess.HasExited)
             {
-                _logger.LogDebug("Model '{Model}' is already running on {Url}", modelName, modelConfig.BackendUrl);
+                _logger.LogDebug("Model '{Model}' is already running", modelName);
                 return;
             }
         }
@@ -99,7 +103,7 @@ public class ModelManager
 
         lock (_lock)
         {
-            if (_activeProcess is null || _activeModelName is null)
+            if (_activeModelName is null)
             {
                 _logger.LogDebug("No active model to stop");
                 return;
@@ -110,7 +114,16 @@ public class ModelManager
             _activeModelName = null;
         }
 
-        await _processKiller.StopAsync(process, modelName, _logger);
+        if (process is not null)
+        {
+            await _processKiller.StopAsync(process, modelName, _logger);
+        }
+        else
+        {
+            // Process reference was lost (e.g. backend detected healthy but process not tracked).
+            // Look it up by model name and stop it.
+            await _launcher.StopModelByNameAsync(modelName, _logger);
+        }
     }
 
     private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null)
@@ -137,7 +150,7 @@ public class ModelManager
 
         _logger.LogInformation(
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
-            modelName, modelConfig.StartScript, modelConfig.BackendUrl);
+            modelName, modelConfig.StartScript, _config.BackendUrl);
 
         var process = await _launcher.StartAsync(modelName, modelConfig.StartScript, launchParams);
         if (process is null)
@@ -167,26 +180,29 @@ public class ModelManager
         }
 
         // Wait for health check
-        var healthy = await WaitForHealthCheckAsync(modelConfig.BackendUrl);
+        var healthy = await WaitForHealthCheckAsync(_config.BackendUrl);
         if (!healthy)
         {
-            _logger.LogError("Model '{Model}' failed health check on {Url}", modelName, modelConfig.BackendUrl);
+            _logger.LogError("Model '{Model}' failed health check on {Url}", modelName, _config.BackendUrl);
             await StopActiveModelAsync();
             throw new InvalidOperationException(
-                $"Model '{modelName}' failed to become healthy within timeout on {modelConfig.BackendUrl}");
+                $"Model '{modelName}' failed to become healthy within timeout on {_config.BackendUrl}");
         }
 
-        _logger.LogInformation("Model '{Model}' is now active and healthy on {Url}", modelName, modelConfig.BackendUrl);
+        _logger.LogInformation("Model '{Model}' is now active and healthy on {Url}", modelName, _config.BackendUrl);
     }
 
     private async Task<bool> WaitForHealthCheckAsync(string backendUrl)
     {
         var healthPath = "/health";
         var url = $"{backendUrl.TrimEnd('/')}{healthPath}";
-        return await _healthChecker.PollAsync(
+        var (success, reason) = await _healthChecker.PollAsync(
             url,
             TimeSpan.FromMinutes(_timeouts.HealthCheckPollTimeoutMinutes),
             TimeSpan.FromMilliseconds(_timeouts.HealthCheckPollDelayMs));
+        if (!success)
+            _logger.LogWarning("Health check failed for {Url}: {Reason}", url, reason);
+        return success;
     }
 
     // No explicit disposal needed. The DI container handles the lifecycle,

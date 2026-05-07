@@ -15,19 +15,9 @@ public interface ISystemIdleTracker
 
 public class SystemIdleTracker : ISystemIdleTracker
 {
-    private readonly object _lock = new();
-    private DateTimeOffset _lastRequest = DateTimeOffset.UtcNow;
+    private long _lastRequestTicks;
 
-    public DateTimeOffset LastRequest
-    {
-        get
-        {
-            lock (_lock) { return _lastRequest; }
-        }
-    }
+    public DateTimeOffset LastRequest => DateTimeOffset.FromUnixTimeMilliseconds(Interlocked.Read(ref _lastRequestTicks));
 
-    public void RecordRequest()
-    {
-        lock (_lock) { _lastRequest = DateTimeOffset.UtcNow; }
-    }
+    public void RecordRequest() => Interlocked.Exchange(ref _lastRequestTicks, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 }

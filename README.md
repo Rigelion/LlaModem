@@ -33,23 +33,54 @@ curl -u admin:your-password \
   -H "X-Llama-Model: qwen-smart" \
   -H "X-Llama-Temperature: 0.7" \
   -H "X-Llama-TopP: 0.9" \
+  -H "X-Llama-MinP: 0.05" \
+  -H "X-Llama-TopK: 20" \
   -H "X-Llama-PresencePenalty: -0.5" \
+  -H "X-Llama-RepetitionPenalty: 1.05" \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"Hello"}]}' \
   http://localhost:9000/v1/chat/completions
 ```
 
-See `BodyHeaderMappings` in the configuration section for the full list of supported headers.
+Supported headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-Llama-Temperature` | Sampling temperature (default: script-defined) |
+| `X-Llama-TopP` | Nucleus sampling threshold |
+| `X-Llama-MinP` | Min-p probability threshold |
+| `X-Llama-TopK` | Top-K sampling limit |
+| `X-Llama-PresencePenalty` | Penalty for token reuse (positive = encourage diversity) |
+| `X-Llama-RepetitionPenalty` | Penalty for repeating tokens |
 
 ## Endpoints
 
+### Proxy (authenticated)
+
 | Path | Auth | Description |
 |------|------|-------------|
-| `POST /v1/**` | Basic Auth | Proxy to selected model (`X-Llama-Model`) |
-| `GET /health` | — | Router health + active model |
-| `GET /admin/status` | — | Current active model info |
-| `POST /admin/model` | — | Switch model: `{ "model": "qwen-smart" }` |
-| `POST /admin/stop` | — | Stop the active model |
+| `POST /v1/**` | Basic Auth | Forward OpenAI-compatible requests to selected model (`X-Llama-Model`) |
+
+### Admin (unauthenticated)
+
+| Path | Auth | Description |
+|------|------|-------------|
+| `GET /health` | — | Router health + active model name |
+| `GET /admin/status` | — | Current active model and backend URL |
+| `POST /admin/model` | — | Switch to specified model: `{ "model": "qwen-smart" }` |
+| `POST /admin/stop` | — | Stop the currently running model |
+
+### Usage Statistics (unauthenticated)
+
+Usage statistics are persisted to a SQLite database at `usage/usage.db`. Each record contains: timestamp, model name, route, prompt/completion/total token counts, and optional timing data (prompt_ms, completion_ms, cache_hits).
+
+Query the database with `sqlite3 usage/usage.db` for ad-hoc analysis.
+
+| Path | Auth | Description |
+|------|------|-------------|
+| `GET /admin/stats/usage` | — | Daily aggregated usage (`?days=30&model=qwen-smart`) |
+| `GET /admin/stats/requests` | — | Paginated recent requests (`?limit=50&offset=0&model=qwen-smart`) |
+| `GET /admin/stats/cost-comparison` | — | Cloud model cost comparison (`?days=30&model=qwen-smart`) — estimates what the same token usage would cost on Claude Opus 4.6, Claude Sonnet 4.5, GPT-5.1 Codex Max, Gemini 3 Pro, Gemini 3 Flash, and Qwen 3 Max |
 
 ## Configuration
 
@@ -61,14 +92,10 @@ Edit `appsettings.json`:
     "ListenUrl": "http://localhost:9000",
     "AuthUsername": "admin",
     "AuthPassword": "your-password",
-    "IdleTimeoutSeconds": 600,
     "EnableBodyHeaderInjection": true,
     "BodyHeaderMappings": {
       "x-client-id": "clientId",
-      "x-debug": "debug",
-      "x-llama-temperature": "temperature",
-      "X-Llama-TopP": "top_p",
-      "X-Llama-PresencePenalty": "presence_penalty"
+      "x-debug": "debug"
     },
     "Timeouts": {
       "VramThresholdGb": 12,
@@ -77,8 +104,12 @@ Edit `appsettings.json`:
       "HealthCheckTimeoutSeconds": 3,
       "HealthCheckPollTimeoutMinutes": 5,
       "HealthCheckPollDelayMs": 500,
-      "IdleCheckIntervalSeconds": 30
+      "IdleTimeoutSeconds": 600
     }
+  },
+  "Usage": {
+    "Enabled": true,
+    "Path": "usage/usage.db"
   },
   "Models": {
     "qwen-smart": { "StartScript": "%QWEN_SMART_START_SCRIPT%", "BackendUrl": "http://localhost:8001" },
@@ -91,8 +122,9 @@ Edit `appsettings.json`:
 
 - **Environment variables**: Model start scripts can reference environment variables using `%VAR_NAME%` syntax (expanded at startup). Set them via `LLAMODEM_AUTH_USERNAME`, `LLAMODEM_AUTH_PASSWORD`, `QWEN_SMART_START_SCRIPT`, `QWEN_FAST_START_SCRIPT`, or `ASPNETCORE_ENVIRONMENT`.
 - **Header injection**: When enabled, LlaModem reads configured HTTP headers and injects their values into the JSON request body at the root level. Values are auto-typed (boolean, integer, double, or string).
-- **Idle timeout**: The active model shuts down automatically after `IdleTimeoutSeconds` of no requests.
-- **Timeouts**: All thresholds in `Timeouts` are configurable per deployment — VRAM requirements, health check timing, graceful shutdown, and idle check interval.
+- **Idle timeout**: The active model shuts down automatically after `Timeouts.IdleTimeoutSeconds` of no requests.
+- **Usage statistics**: When enabled in the `Usage` section, token consumption is recorded per-request to a SQLite database at `usage/usage.db`. Supports all OpenAI-compatible completion and chat-completion endpoints.
+- **Timeouts**: All thresholds are configurable — VRAM requirements (`VramThresholdGb`), nvidia-smi query timeout, graceful shutdown duration, health check timing (poll interval + delay), and idle threshold.
 
 ## PowerShell Start Scripts
 
@@ -150,12 +182,13 @@ Client → LlaModem (:9000) → llama-server backend (:8001 / :8002)
 
 ### Request Flow
 
-1. **Request Logging** — logs method, path, headers, and body (debug level)
-2. **Basic Auth** — validates credentials on `/v1/*` routes only
-3. **Header Injection** — maps HTTP headers to JSON body fields (configurable)
-4. **Model Routing** — selects the target backend via `X-Llama-Model` header
-5. **Lazy Start** — model auto-starts on first request if not running
-6. **Forwarding** — proxies request to the selected `llama-server` backend
+1. **Usage Capture** — intercepts non-streaming responses, extracts token usage stats (if enabled)
+2. **Request Logging** — logs method, path, headers, and body (debug level)
+3. **Basic Auth** — validates credentials on `/v1/*` routes only
+4. **Header Injection** — maps HTTP headers to JSON body fields (configurable)
+5. **Model Routing** — selects the target backend via `X-Llama-Model` header
+6. **Lazy Start** — model auto-starts on first request if not running
+7. **Forwarding** — proxies request to the selected `llama-server` backend
 
 ### Model Lifecycle
 

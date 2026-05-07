@@ -1,10 +1,11 @@
 namespace LlaModem.Config;
 
 /// <summary>
-/// Root application configuration bound from "Models" section.
+/// Root application configuration bound from the root section.
 /// Router settings are configured separately via RouterConfig.
 /// </summary>
-public class AppConfig
+public record AppConfig
 {
-    public Dictionary<string, ModelConfig> Models { get; set; } = new();
+    public string BackendUrl { get; init; } = string.Empty;
+    public Dictionary<string, ModelConfig> Models { get; init; } = new();
 }

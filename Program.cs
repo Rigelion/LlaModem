@@ -21,12 +21,20 @@ public class Program
             .CreateLogger();
         builder.Host.UseSerilog(logger);
 
-        // Bind configuration
-        builder.Services.Configure<AppConfig>(builder.Configuration);
+        // Bind configuration (AddOptions + Bind replaces Configure — no duplication)
         builder.Services.AddOptions<AppConfig>().Bind(builder.Configuration).ValidateOnStart();
-
-        builder.Services.Configure<RouterConfig>(builder.Configuration.GetSection("Router"));
         builder.Services.AddOptions<RouterConfig>().Bind(builder.Configuration.GetSection("Router")).ValidateOnStart();
+        builder.Services.AddOptions<UsageConfig>().Bind(builder.Configuration.GetSection(UsageConfig.SectionName)).ValidateOnStart();
+        builder.Services.AddSingleton<IUsageService, UsageService>();
+        builder.Services.AddSingleton<IStatsService, StatsService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<UsageConfig>>().Value;
+            var basePath = config.Path;
+            var fullPath = Path.IsPathRooted(basePath)
+                ? basePath
+                : Path.Combine(AppContext.BaseDirectory, basePath);
+            return new StatsService($"Data Source={fullPath}");
+        });
 
         // Configure Kestrel to listen on the configured URL
         var routerConfig = builder.Configuration.GetSection("Router");
@@ -73,13 +81,19 @@ public class Program
             await launcher.ShutdownAllAsync(appLogger);
         });
 
-        // Request logging middleware (first, before auth)
+        // Response logging + usage capture middleware (combined — single buffer pass)
+        var usageConfig = app.Configuration.GetSection(UsageConfig.SectionName).Get<UsageConfig>();
+        if (usageConfig?.Enabled == true)
+            app.UseResponseUsageCapture();
+
+        // Request logging middleware (after response capture, so response size is available)
         app.UseRequestLogging();
 
         // Apply Basic Auth to /v1/* routes
         app.UseBasicAuthWhen("/v1");
 
         app.ConfigureEndpoints();
+        app.MapStatsEndpoints();
 
         app.Run();
     }
@@ -92,6 +106,7 @@ public class Program
         {
             "QWEN_SMART_START_SCRIPT",
             "QWEN_FAST_START_SCRIPT",
+            "LLAMODEM_BACKEND_URL",
             "LLAMODEM_LISTEN_URL",
             "LLAMODEM_AUTH_USERNAME",
             "LLAMODEM_AUTH_PASSWORD",
