@@ -5,15 +5,13 @@ using Microsoft.Extensions.Options;
 namespace LlaModem.Services;
 
 /// <summary>
-/// Persists token usage to daily markdown files.
-/// One file per day: usage-2026-05-01.md
+/// Persists token usage to a SQLite database.
 /// </summary>
 public sealed class UsageService : IUsageService, IDisposable
 {
     private readonly string _basePath;
-    private readonly string _filenamePattern;
-    private readonly UsageConfig _config;
-    private readonly SemaphoreSlim _semaphore = new(1, 1);
+    private readonly bool _includeTimings;
+    private readonly string _connectionString;
 
     public UsageService(IOptions<UsageConfig> config)
     {
@@ -21,75 +19,42 @@ public sealed class UsageService : IUsageService, IDisposable
         _basePath = Path.IsPathRooted(basePath)
             ? basePath
             : Path.Combine(AppContext.BaseDirectory, basePath);
-        _filenamePattern = config.Value.FilenamePattern;
-        _config = config.Value;
+        _includeTimings = config.Value.IncludeTimings;
+        _connectionString = $"Data Source={_basePath}";
+    }
+
+    private UsageDbContext CreateContext()
+    {
+        var dir = Path.GetDirectoryName(_basePath);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
+
+        return new UsageDbContext(_connectionString);
     }
 
     public void Record(SessionEntry entry)
     {
-        var dateStr = entry.Timestamp.ToString("yyyy-MM-dd");
-        var fileName = _filenamePattern.Replace("{date}", dateStr);
-        var filePath = Path.Combine(_basePath, fileName);
+        using var ctx = CreateContext();
+        ctx.EnsureCreated();
 
-        var includeTimings = _config.IncludeTimings;
-        var line = FormatLine(entry, includeTimings);
+        var timings = _includeTimings ? entry.Timings : null;
 
-        _semaphore.Wait();
-        try
-        {
-            Directory.CreateDirectory(_basePath);
-
-            if (!File.Exists(filePath))
-            {
-                File.WriteAllText(filePath, FormatHeader(dateStr, includeTimings));
-            }
-
-            File.AppendAllText(filePath, line);
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
+        ctx.Insert(
+            timestamp: entry.Timestamp.ToString("o"),
+            model: entry.Model,
+            route: entry.Route,
+            promptTokens: entry.Usage.PromptTokens,
+            completionTokens: entry.Usage.CompletionTokens,
+            totalTokens: entry.Usage.TotalTokens,
+            promptMs: timings?.PromptMs,
+            completionMs: timings?.CompletionMs,
+            promptPerTokenMs: timings?.PromptPerTokenMs,
+            completionPerTokenMs: timings?.CompletionPerTokenMs,
+            cacheHits: timings?.CacheHits);
     }
 
-    private string FormatHeader(string date, bool includeTimings)
+    public void Dispose()
     {
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"# Usage Report — {date}\n\n");
-        sb.Append("| Timestamp | Model | Route | Prompt Tokens | Completion Tokens | Total Tokens |");
-
-        if (includeTimings)
-        {
-            sb.Append(" | Prompt Ms | Completion Ms | Cache Hits");
-        }
-
-        sb.Append("\n");
-        sb.Append("|-----------|-------|-------|---------------|-------------------|--------------|");
-
-        if (includeTimings)
-        {
-            sb.Append(" |-----------|-------------|------------|");
-        }
-
-        return sb.ToString();
+        // Contexts are disposed per-call; nothing to clean up.
     }
-
-    private static string FormatLine(SessionEntry entry, bool includeTimings)
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"| {entry.Timestamp:yyyy-MM-dd HH:mm:ss} | {entry.Model} | {entry.Route} | {entry.Usage.PromptTokens} | {entry.Usage.CompletionTokens} | {entry.Usage.TotalTokens} |");
-
-        if (includeTimings && entry.Timings is { } t)
-        {
-            var promptMs = t.PromptMs.HasValue && !double.IsNaN(t.PromptMs.Value) ? $"{t.PromptMs.Value:F1}" : "";
-            var completionMs = t.CompletionMs.HasValue && !double.IsNaN(t.CompletionMs.Value) ? $"{t.CompletionMs.Value:F1}" : "";
-            var cacheHits = t.CacheHits?.ToString() ?? "";
-            sb.Append($" | {promptMs} | {completionMs} | {cacheHits}");
-        }
-
-        sb.Append("|\n");
-        return sb.ToString();
-    }
-
-    public void Dispose() => _semaphore.Dispose();
 }

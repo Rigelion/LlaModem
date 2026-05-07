@@ -72,11 +72,9 @@ Supported headers:
 
 ### Usage Statistics (unauthenticated)
 
-| Path | Auth | Description |
-|------|------|-------------|
-| `GET /usage/*.md` | — | Daily token usage reports (if enabled) |
+Usage statistics are persisted to a SQLite database at `usage/usage.db`. Each record contains: timestamp, model name, route, prompt/completion/total token counts, and optional timing data (prompt_ms, completion_ms, cache_hits).
 
-Usage statistics are persisted to `/usage/usage-{date}.md` files. Each file contains a markdown table with per-request token counts: prompt tokens, completion tokens, and total tokens for every proxy request.
+Query the database with `sqlite3 usage/usage.db` for ad-hoc analysis.
 
 ## Configuration
 
@@ -105,8 +103,7 @@ Edit `appsettings.json`:
   },
   "Usage": {
     "Enabled": true,
-    "Path": "usage",
-    "FilenamePattern": "usage-{date}.md"
+    "Path": "usage/usage.db"
   },
   "Models": {
     "qwen-smart": { "StartScript": "%QWEN_SMART_START_SCRIPT%", "BackendUrl": "http://localhost:8001" },
@@ -120,7 +117,7 @@ Edit `appsettings.json`:
 - **Environment variables**: Model start scripts can reference environment variables using `%VAR_NAME%` syntax (expanded at startup). Set them via `LLAMODEM_AUTH_USERNAME`, `LLAMODEM_AUTH_PASSWORD`, `QWEN_SMART_START_SCRIPT`, `QWEN_FAST_START_SCRIPT`, or `ASPNETCORE_ENVIRONMENT`.
 - **Header injection**: When enabled, LlaModem reads configured HTTP headers and injects their values into the JSON request body at the root level. Values are auto-typed (boolean, integer, double, or string).
 - **Idle timeout**: The active model shuts down automatically after `Timeouts.IdleTimeoutSeconds` of no requests.
-- **Usage statistics**: When enabled in the `Usage` section, token consumption is recorded per-request to daily markdown files under `/usage/`. Supports all OpenAI-compatible completion and chat-completion endpoints.
+- **Usage statistics**: When enabled in the `Usage` section, token consumption is recorded per-request to a SQLite database at `usage/usage.db`. Supports all OpenAI-compatible completion and chat-completion endpoints.
 - **Timeouts**: All thresholds are configurable — VRAM requirements (`VramThresholdGb`), nvidia-smi query timeout, graceful shutdown duration, health check timing (poll interval + delay), and idle threshold.
 
 ## PowerShell Start Scripts

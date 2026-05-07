@@ -3,7 +3,7 @@ using LlaModem.Models;
 namespace LlaModem.Services;
 
 /// <summary>
-/// Service for persisting token usage statistics to daily markdown files.
+/// Service for persisting token usage statistics to a SQLite database.
 /// </summary>
 public interface IUsageService
 {

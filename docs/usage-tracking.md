@@ -2,7 +2,7 @@
 
 ## Overview
 
-LlaModem captures token usage statistics from all proxied LLM API responses and persists them to daily markdown files. The middleware intercepts non-streaming responses, extracts `usage` and `timings` data from the JSON body, and writes a formatted report to disk.
+LlaModem captures token usage statistics from all proxied LLM API responses and persists them to a SQLite database. The middleware intercepts non-streaming responses, extracts `usage` and `timings` data from the JSON body, and writes structured records to disk.
 
 ## Configuration
 
@@ -12,19 +12,17 @@ Add a `Usage` section to `appsettings.json`:
 {
   "Usage": {
     "Enabled": true,
-    "Path": "usage",
-    "FilenamePattern": "usage-{date}.md",
+    "Path": "usage/usage.db",
     "IncludeTimings": true
   }
 }
 ```
 
-| Property           | Type    | Default     | Description                                           |
-|--------------------|---------|-------------|-------------------------------------------------------|
-| `Enabled`          | `bool`  | `true`      | Whether to capture and persist token usage stats.     |
-| `Path`             | `string`| `"usage"`   | Directory for daily markdown files (relative to app base dir). |
-| `FilenamePattern`  | `string`| `"usage-{date}.md"` | Pattern with `{date}` replaced by `yyyy-MM-dd`. |
-| `IncludeTimings`   | `bool`  | `true`      | Whether to include timing data in reports.            |
+| Property           | Type    | Default           | Description                                           |
+|--------------------|---------|-------------------|-------------------------------------------------------|
+| `Enabled`          | `bool`  | `true`            | Whether to capture and persist token usage stats.     |
+| `Path`             | `string`| `"usage/usage.db"`| Path to the SQLite database file (relative to app base dir). |
+| `IncludeTimings`   | `bool`  | `true`            | Whether to include timing data in records.            |
 
 ## How It Works
 
@@ -34,7 +32,7 @@ Add a `Usage` section to `appsettings.json`:
 llama-server response (JSON)
   → UsageCaptureMiddleware intercepts non-streaming responses
   → Extracts usage + timings from JSON
-  → UsageService writes to daily markdown file
+  → UsageService writes to SQLite database
   → Original response passes through unchanged
 ```
 
@@ -75,20 +73,43 @@ The middleware handles:
 | `/v1/completions`          | ✅       |
 | All other routes           | ❌       |
 
-## Output Format
+## Database Schema
 
-Daily markdown files are created in the configured `Path` directory:
+The SQLite database contains a single table:
 
-```markdown
-# Usage Report — 2026-05-07
-
-| Timestamp | Model | Route | Prompt Tokens | Completion Tokens | Total Tokens | Prompt Ms | Completion Ms | Cache Hits |
-|-----------|-------|-------|---------------|-------------------|--------------|-----------|---------------|------------|
-| 2026-05-07 10:00:00 | llama3.2 | /v1/chat/completions | 10 | 50 | 60 | 120.5 | 450.3 | 15 |
-| 2026-05-07 10:05:00 | mistral | /v1/chat/completions | 20 | 100 | 120 | 200.0 | 800.0 | 8 |
+```sql
+CREATE TABLE usage_records (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp             TEXT    NOT NULL,
+    model                 TEXT    NOT NULL,
+    route                 TEXT    NOT NULL,
+    prompt_tokens         INTEGER NOT NULL,
+    completion_tokens     INTEGER NOT NULL,
+    total_tokens          INTEGER NOT NULL,
+    prompt_ms             REAL,
+    completion_ms         REAL,
+    prompt_per_token_ms   REAL,
+    completion_per_token_ms REAL,
+    cache_hits            INTEGER,
+    INDEX idx_usage_records_timestamp (timestamp)
+);
 ```
 
-When `IncludeTimings` is `false`, the timing columns are omitted entirely from the header and data rows.
+### Querying Usage Data
+
+```bash
+# All records
+sqlite3 usage/usage.db "SELECT * FROM usage_records ORDER BY timestamp DESC;"
+
+# Token totals
+sqlite3 usage/usage.db "SELECT model, SUM(prompt_tokens) as prompt, SUM(completion_tokens) as completion, SUM(total_tokens) as total FROM usage_records GROUP BY model;"
+
+# Daily totals
+sqlite3 usage/usage.db "SELECT DATE(timestamp) as day, COUNT(*) as requests, SUM(total_tokens) as tokens FROM usage_records GROUP BY day ORDER BY day;"
+
+# With timings
+sqlite3 usage/usage.db "SELECT timestamp, model, route, prompt_tokens, completion_tokens, prompt_ms, completion_ms, cache_hits FROM usage_records ORDER BY timestamp DESC;"
+```
 
 ## Data Model
 
@@ -127,7 +148,7 @@ public readonly record struct Timings(
 
 ```csharp
 public record SessionEntry(
-    DateTime Timestamp,
+    DateTimeOffset Timestamp,
     string Model,
     string Route,
     TokenUsage Usage)
@@ -147,7 +168,7 @@ public record SessionEntry(
                                    ▼
                           ┌──────────────────┐
                           │   UsageService    │
-                          │   (markdown file) │
+                          │   (SQLite insert) │
                           └──────────────────┘
 ```
 
@@ -155,11 +176,12 @@ public record SessionEntry(
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
-| `UsageCaptureMiddleware` | `Middleware/UsageCaptureMiddleware.cs` | Intercepts responses, extracts usage + timings |
-| `UsageService` | `Services/UsageService.cs` | Persists to daily markdown files |
+| `ResponseUsageMiddleware` | `Middleware/ResponseUsageMiddleware.cs` | Intercepts responses, extracts usage + timings |
+| `UsageService` | `Services/UsageService.cs` | Persists to SQLite database |
+| `UsageDbContext` | `Services/UsageDbContext.cs` | Raw SQLite connection and schema management |
 | `UsageConfig` | `Config/UsageConfig.cs` | Configuration options |
 | `TokenUsage` | `Models/TokenUsage.cs` | Token count data model |
-| `Timings` | `Models/Timings.cs` | Timing data model |
+| `Timings` | `Models/TokenUsage.cs` | Timing data model |
 | `SessionEntry` | `Models/SessionEntry.cs` | Per-request session entry |
 
 ## Logging
@@ -175,12 +197,12 @@ Timing info is included in logs only when timing data is present.
 ## Testing
 
 Unit tests cover:
-- Standard JSON response extraction
-- NDJSON parsing with timings
-- Missing timings (graceful handling)
-- Partial timings (some fields present, others null)
-- Markdown output with/without timing columns
-- Empty responses and missing usage fields
+- Database creation and record insertion
+- Multiple record append
+- Timestamp storage and retrieval
+- Timing data with and without `IncludeTimings`
+- Null timing handling
+- Auto-creation of database directories
 
 Run tests:
 ```bash

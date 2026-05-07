@@ -45,7 +45,7 @@ All configuration lives in `appsettings.json`:
   },
   "Usage": {
     "Enabled": true,
-    "Path": "usage"
+    "Path": "usage/usage.db"
   },
   "Models": {
     "qwen-smart": {
@@ -87,16 +87,15 @@ LlaModem/
 │   ├── ProxyHeaders.cs         # Standard proxy header constants
 │   └── RouterConfig.cs         # Router settings + timeout thresholds
 ├── Middleware/
-│   ├── BasicAuthExtensions.cs       # Extension for conditional auth middleware
-│   ├── BasicAuthMiddleware.cs       # HTTP Basic Auth implementation
-│   ├── RequestLoggingExtensions.cs  # Logging pipeline registration
-│   ├── RequestLoggingMiddleware.cs  # Request/response logging middleware
-│   ├── UsageCaptureExtensions.cs    # Usage statistics middleware registration
-│   └── UsageCaptureMiddleware.cs    # Token usage extraction from proxy responses
+│   ├── BasicAuthExtensions.cs            # Extension for conditional auth middleware
+│   ├── BasicAuthMiddleware.cs            # HTTP Basic Auth implementation
+│   ├── RequestLoggingExtensions.cs       # Logging pipeline registration
+│   ├── RequestLoggingMiddleware.cs       # Request/response logging middleware
+│   ├── ResponseUsageExtensions.cs        # Usage capture middleware registration
+│   └── ResponseUsageMiddleware.cs        # Token usage extraction from proxy responses
 ├── Models/
 │   ├── SessionEntry.cs       # Per-request usage data record
-│   ├── Timings.cs            # Per-request timing data record struct
-│   └── TokenUsage.cs         # Token count + timing record
+│   └── TokenUsage.cs         # Token count + timing record (includes Timings)
 ├── Services/
 │   ├── DefaultModelLauncher.cs      # PowerShell process launcher for models
 │   ├── ErrorResponseWriter.cs        # JSON error response utility
@@ -112,7 +111,8 @@ LlaModem/
 │   ├── ProcessKiller.cs               # Graceful process tree termination
 │   ├── RequestForwarder.cs            # HTTP proxy to backend servers
 │   ├── SystemIdleTracker.cs          # Tracks last-request timestamp (thread-safe)
-│   └── UsageService.cs                # Persists token usage to daily markdown files
+│   ├── UsageDbContext.cs                # Raw SQLite schema and connection management
+│   ├── UsageService.cs                  # Persists token usage to SQLite database
 ├── Utilities/
 │   └── HttpRequestExtensions.cs  # Shared request body reading helper
 ├── Program.cs                    # Entry point, DI wiring, pipeline setup
@@ -128,15 +128,14 @@ LlaModem/
 
 ## Usage Tracking
 
-LlaModem captures token usage and timing statistics from proxied LLM responses, writing daily markdown reports.
+LlaModem captures token usage and timing statistics from proxied LLM responses, persisting them to a SQLite database.
 
 Configuration (in `appsettings.json`):
 ```json
 {
   "Usage": {
     "Enabled": true,
-    "Path": "usage",
-    "FilenamePattern": "usage-{date}.md",
+    "Path": "usage/usage.db",
     "IncludeTimings": true
   }
 }
