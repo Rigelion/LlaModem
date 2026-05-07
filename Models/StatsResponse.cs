@@ -6,10 +6,10 @@ namespace LlaModem.Models;
 public readonly record struct DailyUsageRow(
     string Date,
     string Model,
-    int Requests,
-    int PromptTokens,
-    int CompletionTokens,
-    int TotalTokens,
+    long Requests,
+    long PromptTokens,
+    long CompletionTokens,
+    long TotalTokens,
     double AvgPromptMs,
     double AvgCompletionMs,
     double CacheHitRate);
@@ -19,7 +19,7 @@ public readonly record struct DailyUsageRow(
 /// </summary>
 public readonly record struct UsageRow(
     long Id,
-    DateTimeOffset Timestamp,
+    string Timestamp,
     string Model,
     string Route,
     int PromptTokens,
@@ -35,10 +35,10 @@ public readonly record struct UsageRow(
 /// Overall summary across all days and models.
 /// </summary>
 public readonly record struct UsageSummaryRow(
-    int TotalRequests,
-    int TotalPromptTokens,
-    int TotalCompletionTokens,
-    int TotalTokens,
+    long TotalRequests,
+    long TotalPromptTokens,
+    long TotalCompletionTokens,
+    long TotalTokens,
     double AvgPromptMs,
     double AvgCompletionMs,
     double CacheHitRate);

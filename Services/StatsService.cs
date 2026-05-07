@@ -6,7 +6,7 @@ namespace LlaModem.Services;
 
 /// <summary>
 /// SQLite-backed implementation for usage statistics queries.
-/// Uses Dapper for auto-mapping and SqlBuilder for dynamic WHERE clauses.
+/// Uses Dapper for auto-mapping with manual WHERE clause building.
 /// </summary>
 public sealed class StatsService : IStatsService
 {
@@ -21,6 +21,7 @@ public sealed class StatsService : IStatsService
 
         await using var conn = new SqliteConnection(_connectionString);
         await conn.OpenAsync();
+        await EnsureTableCreatedAsync(conn);
 
         var daily = await GetDailyRowsAsync(conn, cutoff, model);
         var summary = await GetSummaryAsync(conn, cutoff, model);
@@ -31,65 +32,70 @@ public sealed class StatsService : IStatsService
     private async Task<DailyUsageRow[]> GetDailyRowsAsync(
         SqliteConnection conn, string cutoff, string? model)
     {
-        var builder = new SqlBuilder();
-        var where = builder.AddTemplate("/**where**/");
+        var clauses = new List<string> { "WHERE timestamp >= @cutoff" };
+        object? parameters = new { cutoff };
 
-        builder.Where("timestamp >= @cutoff", new { cutoff });
         if (model is not null)
-            builder.Where("model = @model", new { model });
+        {
+            clauses.Add("AND model = @model");
+            parameters = new { cutoff, model };
+        }
 
         var sql = $"""
-            SELECT date(timestamp) as date,
-                   model,
-                   COUNT(*) as requests,
-                   SUM(prompt_tokens) as prompt_tokens,
-                   SUM(completion_tokens) as completion_tokens,
-                   SUM(total_tokens) as total_tokens,
-                   AVG(prompt_ms) as avg_prompt_ms,
-                   AVG(completion_ms) as avg_completion_ms,
-                   CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) as cache_hit_rate
+            SELECT date(timestamp) as Date,
+                   model as Model,
+                   COUNT(*) as Requests,
+                   SUM(prompt_tokens) as PromptTokens,
+                   SUM(completion_tokens) as CompletionTokens,
+                   SUM(total_tokens) as TotalTokens,
+                   AVG(prompt_ms) as AvgPromptMs,
+                   AVG(completion_ms) as AvgCompletionMs,
+                   CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) as CacheHitRate
             FROM usage_records
-            /**where**/
+            {string.Join(" ", clauses)}
             GROUP BY date, model
             ORDER BY date
             """;
 
-        return (await conn.QueryAsync<DailyUsageRow>(sql, new { cutoff, model })).ToArray();
+        return (await conn.QueryAsync<DailyUsageRow>(sql, parameters)).ToArray();
     }
 
     private async Task<UsageSummaryRow> GetSummaryAsync(
         SqliteConnection conn, string cutoff, string? model)
     {
-        var builder = new SqlBuilder();
-        var where = builder.AddTemplate("/**where**/");
+        var clauses = new List<string> { "WHERE timestamp >= @cutoff" };
+        object? parameters = new { cutoff };
 
-        builder.Where("timestamp >= @cutoff", new { cutoff });
         if (model is not null)
-            builder.Where("model = @model", new { model });
+        {
+            clauses.Add("AND model = @model");
+            parameters = new { cutoff, model };
+        }
 
         var sql = $"""
-            SELECT COUNT(*) as total_requests,
-                   COALESCE(SUM(prompt_tokens), 0) as total_prompt_tokens,
-                   COALESCE(SUM(completion_tokens), 0) as total_completion_tokens,
-                   COALESCE(SUM(total_tokens), 0) as total_tokens,
-                   COALESCE(AVG(prompt_ms), 0) as avg_prompt_ms,
-                   COALESCE(AVG(completion_ms), 0) as avg_completion_ms,
+            SELECT COUNT(*) as TotalRequests,
+                   COALESCE(SUM(prompt_tokens), 0) as TotalPromptTokens,
+                   COALESCE(SUM(completion_tokens), 0) as TotalCompletionTokens,
+                   COALESCE(SUM(total_tokens), 0) as TotalTokens,
+                   COALESCE(AVG(prompt_ms), 0) as AvgPromptMs,
+                   COALESCE(AVG(completion_ms), 0) as AvgCompletionMs,
                    CASE WHEN COUNT(*) > 0
                         THEN CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*)
                         ELSE 0
-                   END as cache_hit_rate
+                   END as CacheHitRate
             FROM usage_records
-            /**where**/
+            {string.Join(" ", clauses)}
             """;
 
-        var row = await conn.QueryFirstOrDefaultAsync<UsageSummaryRow?>(sql, new { cutoff, model });
-        return row ?? new UsageSummaryRow(0, 0, 0, 0, 0, 0, 0);
+        var rows = await conn.QueryAsync<UsageSummaryRow>(sql, parameters);
+        return rows.FirstOrDefault();
     }
 
     public async Task<RecentRequestsResponse> GetRecentRequestsAsync(int limit, int offset, string? model)
     {
         await using var conn = new SqliteConnection(_connectionString);
         await conn.OpenAsync();
+        await EnsureTableCreatedAsync(conn);
 
         var total = await GetTotalCountAsync(conn, model);
         var items = await GetItemsAsync(conn, limit, offset, model);
@@ -99,42 +105,64 @@ public sealed class StatsService : IStatsService
 
     private async Task<long> GetTotalCountAsync(SqliteConnection conn, string? model)
     {
-        var builder = new SqlBuilder();
-        var where = builder.AddTemplate("/**where**/");
+        object? parameters = model is not null ? (object)new { model } : null;
+        var sql = model is not null
+            ? "SELECT COUNT(*) FROM usage_records WHERE model = @model"
+            : "SELECT COUNT(*) FROM usage_records";
 
-        if (model is not null)
-            builder.Where("model = @model", new { model });
-
-        var sql = $"""
-            SELECT COUNT(*) FROM usage_records
-            /**where**/
-            """;
-
-        return await conn.ExecuteScalarAsync<long>(sql, new { model });
+        return await conn.ExecuteScalarAsync<long>(sql!, parameters);
     }
 
     private async Task<UsageRow[]> GetItemsAsync(
         SqliteConnection conn, int limit, int offset, string? model)
     {
-        var builder = new SqlBuilder();
-        var where = builder.AddTemplate("/**where**/");
-        var orderby = builder.AddTemplate("/**orderby**/");
+        var clauses = new List<string>();
+        object parameters = new { model, limit, offset };
 
         if (model is not null)
-            builder.Where("model = @model", new { model });
-        builder.OrderBy("timestamp DESC");
+            clauses.Add("WHERE model = @model");
 
         var sql = $"""
             SELECT id, timestamp, model, route,
-                   prompt_tokens, completion_tokens, total_tokens,
-                   prompt_ms, completion_ms, cache_hits,
-                   status_code, client_ip
+                   prompt_tokens as PromptTokens, completion_tokens as CompletionTokens, total_tokens as TotalTokens,
+                   prompt_ms as PromptMs, completion_ms as CompletionMs, cache_hits as CacheHits,
+                   status_code as StatusCode, client_ip as ClientIp
             FROM usage_records
-            /**where**/
-            /**orderby**/
+            {string.Join(" ", clauses)}
+            ORDER BY timestamp DESC
             LIMIT @limit OFFSET @offset
             """;
 
-        return (await conn.QueryAsync<UsageRow>(sql, new { model, limit, offset })).ToArray();
+        return (await conn.QueryAsync<UsageRow>(sql, parameters)).ToArray();
+    }
+
+    private static async Task EnsureTableCreatedAsync(SqliteConnection conn)
+    {
+        await conn.ExecuteAsync($"""
+            CREATE TABLE IF NOT EXISTS usage_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                request_id TEXT,
+                created TEXT,
+                model TEXT NOT NULL,
+                route TEXT NOT NULL,
+                prompt_tokens INTEGER,
+                completion_tokens INTEGER,
+                total_tokens INTEGER,
+                prompt_ms REAL,
+                completion_ms REAL,
+                prompt_per_token_ms REAL,
+                completion_per_token_ms REAL,
+                cache_hits INTEGER,
+                cached_tokens INTEGER,
+                request_time REAL,
+                response_time REAL,
+                client_ip TEXT,
+                status_code INTEGER,
+                request_headers TEXT
+            )
+            """);
+        await conn.ExecuteAsync("CREATE INDEX IF NOT EXISTS ix_usage_timestamp ON usage_records(timestamp)");
+        await conn.ExecuteAsync("CREATE INDEX IF NOT EXISTS ix_usage_model ON usage_records(model)");
     }
 }
