@@ -62,7 +62,9 @@ public class RequestLoggingMiddleware
             sw.Stop();
 
             var statusCode = context.Response.StatusCode;
-            var responseSize = context.Response.Body.Length;
+            var responseSize = context.Response.Body.CanSeek
+                ? context.Response.Body.Length
+                : -1L;
 
             _logger.LogInformation(
                 "[RESPONSE] {Method} {Path} | Status: {StatusCode} | Duration: {Duration}ms | ResponseSize: {ResponseSize} bytes",

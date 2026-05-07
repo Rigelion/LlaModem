@@ -4,14 +4,17 @@ namespace LlaModem.Models;
 /// Token usage from an OpenAI/Ollama API response.
 /// </summary>
 public record TokenUsage(
-    int PromptTokens,
-    int CompletionTokens,
-    int TotalTokens,
+    int PromptTokens = 0,
+    int CompletionTokens = 0,
+    int TotalTokens = 0,
     double? PromptMs = null,
     double? CompletionMs = null,
     double? PromptPerTokenMs = null,
     double? CompletionPerTokenMs = null,
-    int? CacheHits = null)
+    int? CacheHits = null,
+    string? RequestId = null,
+    DateTimeOffset? Created = null,
+    int? CachedTokens = null)
 {
     public Timings? Timings => (PromptMs.HasValue || CompletionMs.HasValue || PromptPerTokenMs.HasValue || CompletionPerTokenMs.HasValue || CacheHits.HasValue)
         ? new(PromptMs, CompletionMs, PromptPerTokenMs, CompletionPerTokenMs, CacheHits)

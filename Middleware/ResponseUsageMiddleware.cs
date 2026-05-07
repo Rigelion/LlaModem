@@ -212,6 +212,10 @@ public sealed class ResponseUsageMiddleware
         var completionTokens = TryGetInt32(usageElement, "completion_tokens");
         var totalTokens = TryGetInt32(usageElement, "total_tokens");
 
+        var requestId = TryGetString(root, "id");
+        var created = TryExtractCreated(root);
+        var cachedTokens = TryExtractCachedTokens(root);
+
         var timings = TryExtractTimings(root);
 
         return new TokenUsage(
@@ -222,7 +226,10 @@ public sealed class ResponseUsageMiddleware
             timings.CompletionMs,
             timings.PromptPerTokenMs,
             timings.CompletionPerTokenMs,
-            timings.CacheHits);
+            timings.CacheHits,
+            RequestId: requestId,
+            Created: created,
+            CachedTokens: cachedTokens);
     }
 
     private static Timings TryExtractTimings(JsonElement root)
@@ -257,6 +264,32 @@ public sealed class ResponseUsageMiddleware
         if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number)
             return value.GetInt32();
         return null;
+    }
+
+    private static DateTimeOffset? TryExtractCreated(JsonElement root)
+    {
+        if (!root.TryGetProperty("created", out var value) || value.ValueKind != JsonValueKind.Number)
+            return null;
+
+        try
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(value.GetInt64());
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static int? TryExtractCachedTokens(JsonElement root)
+    {
+        if (!root.TryGetProperty("prompt_tokens_details", out var details) || details.ValueKind != JsonValueKind.Object)
+            return null;
+
+        if (!details.TryGetProperty("cached_tokens", out var value) || value.ValueKind != JsonValueKind.Number)
+            return null;
+
+        return value.GetInt32();
     }
 
     private static string? TryGetString(JsonElement element, string propertyName)

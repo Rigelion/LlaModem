@@ -39,6 +39,8 @@ public sealed class UsageService : IUsageService, IDisposable
 
         var timings = _includeTimings ? entry.Timings : null;
 
+        var createdStr = entry.Usage.Created?.ToString("o");
+
         ctx.Insert(
             timestamp: entry.Timestamp.ToString("o"),
             model: entry.Model,
@@ -50,7 +52,10 @@ public sealed class UsageService : IUsageService, IDisposable
             completionMs: timings?.CompletionMs,
             promptPerTokenMs: timings?.PromptPerTokenMs,
             completionPerTokenMs: timings?.CompletionPerTokenMs,
-            cacheHits: timings?.CacheHits);
+            cacheHits: timings?.CacheHits,
+            requestId: entry.Usage.RequestId,
+            created: createdStr,
+            cachedTokens: entry.Usage.CachedTokens);
     }
 
     public void Dispose()
