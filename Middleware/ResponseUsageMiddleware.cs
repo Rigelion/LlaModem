@@ -37,6 +37,7 @@ public sealed class ResponseUsageMiddleware
             return;
         }
 
+        var requestTime = DateTimeOffset.UtcNow;
         var originalBody = context.Response.Body;
         using var buffer = new MemoryStream();
         context.Response.Body = buffer;
@@ -45,6 +46,7 @@ public sealed class ResponseUsageMiddleware
         {
             await _next(context);
 
+            var responseTime = DateTimeOffset.UtcNow;
             buffer.Seek(0, SeekOrigin.Begin);
 
             // Log the full response body
@@ -71,12 +73,26 @@ public sealed class ResponseUsageMiddleware
                     {
                         var model = TryExtractModel(raw) ?? "(unknown)";
                         var route = path;
+                        var clientIp = context.Connection.RemoteIpAddress?.ToString();
+                        var statusCode = context.Response.StatusCode;
+                        var headers = CollectLlamaHeaders(context.Request.Headers);
 
-                        _usageService.Record(new SessionEntry(
-                            DateTimeOffset.UtcNow,
-                            model,
-                            route,
-                            usage));
+                        var entry = new SessionEntry(
+                            Timestamp: DateTimeOffset.UtcNow,
+                            Model: model,
+                            Route: route,
+                            Usage: usage with
+                            {
+                                RequestTime = requestTime,
+                                ResponseTime = responseTime
+                            },
+                            RequestTime: requestTime,
+                            ResponseTime: responseTime,
+                            ClientIp: clientIp,
+                            StatusCode: statusCode,
+                            RequestHeaders: headers);
+
+                        _usageService.Record(entry);
 
                         var timingInfo = usage.Timings is { } t && (t.PromptMs.HasValue || t.CompletionMs.HasValue)
                             ? $", Prompt: {t.PromptMs:F1}ms, Completion: {t.CompletionMs:F1}ms"
@@ -95,9 +111,22 @@ public sealed class ResponseUsageMiddleware
             await buffer.CopyToAsync(originalBody);
             throw;
         }
+        finally
+        {
+            buffer.Seek(0, SeekOrigin.Begin);
+            await buffer.CopyToAsync(originalBody);
+        }
+    }
 
-        buffer.Seek(0, SeekOrigin.Begin);
-        await buffer.CopyToAsync(originalBody);
+    private static string? CollectLlamaHeaders(IHeaderDictionary headers)
+    {
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (key, value) in headers)
+        {
+            if (key.StartsWith("X-Llama", StringComparison.OrdinalIgnoreCase))
+                dict[key] = string.Join("; ", value!);
+        }
+        return dict.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(dict) : null;
     }
 
     private static bool IsStreamingResponse(HttpContext context)

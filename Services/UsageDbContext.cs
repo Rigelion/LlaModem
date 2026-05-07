@@ -32,6 +32,8 @@ public sealed class UsageDbContext : IDisposable
     public void EnsureCreated()
     {
         using var cmd = Connection.CreateCommand();
+
+        // Create table if it doesn't exist
         cmd.CommandText = """
             CREATE TABLE IF NOT EXISTS usage_records (
                 id                      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,11 +50,42 @@ public sealed class UsageDbContext : IDisposable
                 prompt_per_token_ms     REAL,
                 completion_per_token_ms REAL,
                 cache_hits              INTEGER,
-                cached_tokens           INTEGER
+                cached_tokens           INTEGER,
+                request_time            TEXT,
+                response_time           TEXT,
+                client_ip               TEXT,
+                status_code             INTEGER NOT NULL DEFAULT 200,
+                request_headers         TEXT
             );
             CREATE INDEX IF NOT EXISTS idx_usage_records_timestamp ON usage_records(timestamp);
             """;
         cmd.ExecuteNonQuery();
+
+        // Migrate existing databases that lack the new columns
+        cmd.CommandText = "PRAGMA table_info(usage_records)";
+        using var reader = cmd.ExecuteReader();
+        var columns = new HashSet<string>();
+        while (reader.Read())
+            columns.Add(reader.GetString(reader.GetOrdinal("name")));
+
+        var alterParts = new List<string>();
+        if (!columns.Contains("request_time"))
+            alterParts.Add("ADD COLUMN request_time TEXT");
+        if (!columns.Contains("response_time"))
+            alterParts.Add("ADD COLUMN response_time TEXT");
+        if (!columns.Contains("client_ip"))
+            alterParts.Add("ADD COLUMN client_ip TEXT");
+        if (!columns.Contains("status_code"))
+            alterParts.Add("ADD COLUMN status_code INTEGER DEFAULT 200");
+        if (!columns.Contains("request_headers"))
+            alterParts.Add("ADD COLUMN request_headers TEXT");
+
+        if (alterParts.Count > 0)
+        {
+            var alterSql = $"ALTER TABLE usage_records {string.Join(", ", alterParts)}";
+            cmd.CommandText = alterSql;
+            cmd.ExecuteNonQuery();
+        }
     }
 
     public void Insert(
@@ -69,16 +102,23 @@ public sealed class UsageDbContext : IDisposable
         double? promptPerTokenMs,
         double? completionPerTokenMs,
         int? cacheHits,
-        int? cachedTokens)
+        int? cachedTokens,
+        string? requestTime = null,
+        string? responseTime = null,
+        string? clientIp = null,
+        int statusCode = 200,
+        string? requestHeaders = null)
     {
         using var cmd = Connection.CreateCommand();
         cmd.CommandText = """
             INSERT INTO usage_records
                 (timestamp, request_id, created, model, route, prompt_tokens, completion_tokens, total_tokens,
-                 prompt_ms, completion_ms, prompt_per_token_ms, completion_per_token_ms, cache_hits, cached_tokens)
+                 prompt_ms, completion_ms, prompt_per_token_ms, completion_per_token_ms, cache_hits, cached_tokens,
+                 request_time, response_time, client_ip, status_code, request_headers)
             VALUES
                 (@timestamp, @requestId, @created, @model, @route, @promptTokens, @completionTokens, @totalTokens,
-                 @promptMs, @completionMs, @promptPerTokenMs, @completionPerTokenMs, @cacheHits, @cachedTokens);
+                 @promptMs, @completionMs, @promptPerTokenMs, @completionPerTokenMs, @cacheHits, @cachedTokens,
+                 @requestTime, @responseTime, @clientIp, @statusCode, @requestHeaders);
             """;
 
         cmd.Parameters.AddWithValue("@timestamp", timestamp);
@@ -95,6 +135,11 @@ public sealed class UsageDbContext : IDisposable
         cmd.Parameters.AddWithValue("@completionPerTokenMs", (object?)completionPerTokenMs ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@cacheHits", (object?)cacheHits ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@cachedTokens", (object?)cachedTokens ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@requestTime", (object?)requestTime ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@responseTime", (object?)responseTime ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@clientIp", (object?)clientIp ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@statusCode", statusCode);
+        cmd.Parameters.AddWithValue("@requestHeaders", (object?)requestHeaders ?? DBNull.Value);
 
         cmd.ExecuteNonQuery();
     }

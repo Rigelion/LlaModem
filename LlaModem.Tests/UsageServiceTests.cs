@@ -20,20 +20,24 @@ public class UsageServiceTests : IDisposable
         return Options.Create(new UsageConfig { Path = _tempDb, IncludeTimings = includeTimings });
     }
 
-    private List<SqliteDataReader> Query(string sql)
+    private static SessionEntry MakeEntry(
+        DateTimeOffset timestamp,
+        string model,
+        string route,
+        TokenUsage? usage = null,
+        DateTimeOffset? requestTime = null,
+        DateTimeOffset? responseTime = null)
     {
-        using var conn = new SqliteConnection($"Data Source={_tempDb}");
-        conn.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        return new List<SqliteDataReader> { cmd.ExecuteReader() };
-    }
-
-    private static T ReadValue<T>(SqliteDataReader reader, string columnName)
-    {
-        reader.Read();
-        var idx = reader.GetOrdinal(columnName);
-        return reader.IsDBNull(idx) ? default! : reader.GetValue(idx) is T v ? v : throw new InvalidOperationException();
+        var now = requestTime ?? timestamp;
+        var rt = responseTime ?? timestamp;
+        usage ??= new TokenUsage();
+        return new SessionEntry(
+            Timestamp: timestamp,
+            Model: model,
+            Route: route,
+            Usage: usage,
+            RequestTime: now,
+            ResponseTime: rt);
     }
 
     [Fact]
@@ -45,7 +49,7 @@ public class UsageServiceTests : IDisposable
         var date = new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero);
 
         // Act
-        service.Record(new SessionEntry(date, "llama3.2", "/v1/chat/completions",
+        service.Record(MakeEntry(date, "llama3.2", "/v1/chat/completions",
             new TokenUsage(10, 50, 60)));
 
         // Assert
@@ -70,12 +74,19 @@ public class UsageServiceTests : IDisposable
         // Arrange
         var config = CreateOptions();
         var service = new UsageService(config);
+        var now = DateTimeOffset.UtcNow;
 
         // Act
-        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero), "llama3.2", "/v1/chat/completions",
-            new TokenUsage(10, 50, 60)));
-        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 5, 0, TimeSpan.Zero), "mistral", "/v1/chat/completions",
-            new TokenUsage(20, 100, 120)));
+        service.Record(MakeEntry(
+            new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero),
+            "llama3.2", "/v1/chat/completions",
+            new TokenUsage(10, 50, 60),
+            now, now));
+        service.Record(MakeEntry(
+            new DateTimeOffset(2026, 5, 1, 10, 5, 0, TimeSpan.Zero),
+            "mistral", "/v1/chat/completions",
+            new TokenUsage(20, 100, 120),
+            now, now));
 
         // Assert
         using var conn = new SqliteConnection($"Data Source={_tempDb}");
@@ -101,7 +112,7 @@ public class UsageServiceTests : IDisposable
         var expected = new DateTimeOffset(2026, 5, 1, 14, 30, 0, TimeSpan.Zero);
 
         // Act
-        service.Record(new SessionEntry(expected, "test", "/v1/completions",
+        service.Record(MakeEntry(expected, "test", "/v1/completions",
             new TokenUsage(5, 25, 30)));
 
         // Assert
@@ -121,18 +132,20 @@ public class UsageServiceTests : IDisposable
         // Arrange
         var config = CreateOptions(includeTimings: true);
         var service = new UsageService(config);
+        var now = DateTimeOffset.UtcNow;
 
         // Act
-        service.Record(new SessionEntry(
+        service.Record(MakeEntry(
             new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero),
             "llama3.2", "/v1/chat/completions",
-            new TokenUsage(10, 50, 60, 120.5, 450.3, null, null, 15)));
+            new TokenUsage(10, 50, 60, 120.5, 450.3, null, null, 15),
+            now, now));
 
         // Assert
         using var conn = new SqliteConnection($"Data Source={_tempDb}");
         conn.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT prompt_ms, completion_ms, cache_hits FROM usage_records LIMIT 1";
+        cmd.CommandText = "SELECT prompt_ms, completion_ms, cache_hits, request_time, response_time, client_ip, status_code, request_headers FROM usage_records LIMIT 1";
         using var reader = cmd.ExecuteReader();
         reader.Read();
         Assert.Equal(120.5, reader.GetDouble(reader.GetOrdinal("prompt_ms")));
@@ -146,12 +159,14 @@ public class UsageServiceTests : IDisposable
         // Arrange
         var config = CreateOptions(includeTimings: false);
         var service = new UsageService(config);
+        var now = DateTimeOffset.UtcNow;
 
         // Act
-        service.Record(new SessionEntry(
+        service.Record(MakeEntry(
             new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero),
             "llama3.2", "/v1/chat/completions",
-            new TokenUsage(10, 50, 60, 120.5, 450.3, null, null, 15)));
+            new TokenUsage(10, 50, 60, 120.5, 450.3, null, null, 15),
+            now, now));
 
         // Assert
         using var conn = new SqliteConnection($"Data Source={_tempDb}");
@@ -171,12 +186,14 @@ public class UsageServiceTests : IDisposable
         // Arrange
         var config = CreateOptions(includeTimings: true);
         var service = new UsageService(config);
+        var now = DateTimeOffset.UtcNow;
 
         // Act
-        service.Record(new SessionEntry(
+        service.Record(MakeEntry(
             new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero),
             "llama3.2", "/v1/chat/completions",
-            new TokenUsage(10, 50, 60)));
+            new TokenUsage(10, 50, 60),
+            now, now));
 
         // Assert
         using var conn = new SqliteConnection($"Data Source={_tempDb}");
@@ -199,11 +216,76 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(DateTimeOffset.UtcNow, "test", "/v1/completions",
+        service.Record(MakeEntry(DateTimeOffset.UtcNow, "test", "/v1/completions",
             new TokenUsage(1, 2, 3)));
 
         // Assert
         Assert.True(File.Exists(dbInNewDir));
+    }
+
+    [Fact]
+    public void Record_StoresNewFields()
+    {
+        // Arrange
+        var config = CreateOptions();
+        var service = new UsageService(config);
+        var requestTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+        var responseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 1, TimeSpan.Zero);
+        var headers = "{\"X-Llama-Model\":\"llama3.2\",\"X-Llama-Temperature\":\"0.7\"}";
+
+        // Act
+        service.Record(new SessionEntry(
+            Timestamp: requestTime,
+            Model: "llama3.2",
+            Route: "/v1/chat/completions",
+            Usage: new TokenUsage(10, 50, 60),
+            RequestTime: requestTime,
+            ResponseTime: responseTime,
+            ClientIp: "192.168.1.100",
+            StatusCode: 200,
+            RequestHeaders: headers));
+
+        // Assert
+        using var conn = new SqliteConnection($"Data Source={_tempDb}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT request_time, response_time, client_ip, status_code, request_headers FROM usage_records LIMIT 1";
+        using var reader = cmd.ExecuteReader();
+        reader.Read();
+
+        Assert.Equal(requestTime.ToString("o"), reader.GetString(reader.GetOrdinal("request_time")));
+        Assert.Equal(responseTime.ToString("o"), reader.GetString(reader.GetOrdinal("response_time")));
+        Assert.Equal("192.168.1.100", reader.GetString(reader.GetOrdinal("client_ip")));
+        Assert.Equal(200, reader.GetInt32(reader.GetOrdinal("status_code")));
+        Assert.Equal(headers, reader.GetString(reader.GetOrdinal("request_headers")));
+    }
+
+    [Fact]
+    public void Record_StoresStatusCode()
+    {
+        // Arrange
+        var config = CreateOptions();
+        var service = new UsageService(config);
+        var now = DateTimeOffset.UtcNow;
+
+        // Act
+        service.Record(new SessionEntry(
+            Timestamp: now,
+            Model: "llama3.2",
+            Route: "/v1/chat/completions",
+            Usage: new TokenUsage(10, 50, 60),
+            RequestTime: now,
+            ResponseTime: now,
+            StatusCode: 500));
+
+        // Assert
+        using var conn = new SqliteConnection($"Data Source={_tempDb}");
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT status_code FROM usage_records LIMIT 1";
+        using var reader = cmd.ExecuteReader();
+        reader.Read();
+        Assert.Equal(500, reader.GetInt32(reader.GetOrdinal("status_code")));
     }
 
     public void Dispose()

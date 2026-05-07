@@ -55,7 +55,12 @@ public sealed class UsageService : IUsageService, IDisposable
             cacheHits: timings?.CacheHits,
             requestId: entry.Usage.RequestId,
             created: createdStr,
-            cachedTokens: entry.Usage.CachedTokens);
+            cachedTokens: entry.Usage.CachedTokens,
+            requestTime: entry.RequestTime.ToString("o"),
+            responseTime: entry.ResponseTime.ToString("o"),
+            clientIp: entry.ClientIp,
+            statusCode: entry.StatusCode,
+            requestHeaders: entry.RequestHeaders);
     }
 
     public void Dispose()

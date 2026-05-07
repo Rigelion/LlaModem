@@ -7,7 +7,12 @@ public record SessionEntry(
     DateTimeOffset Timestamp,
     string Model,
     string Route,
-    TokenUsage Usage)
+    TokenUsage Usage,
+    DateTimeOffset RequestTime,
+    DateTimeOffset ResponseTime,
+    string? ClientIp = null,
+    int StatusCode = 200,
+    string? RequestHeaders = null)
 {
     public Timings? Timings => Usage.Timings;
 }

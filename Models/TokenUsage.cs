@@ -14,7 +14,9 @@ public record TokenUsage(
     int? CacheHits = null,
     string? RequestId = null,
     DateTimeOffset? Created = null,
-    int? CachedTokens = null)
+    int? CachedTokens = null,
+    DateTimeOffset? RequestTime = null,
+    DateTimeOffset? ResponseTime = null)
 {
     public Timings? Timings => (PromptMs.HasValue || CompletionMs.HasValue || PromptPerTokenMs.HasValue || CompletionPerTokenMs.HasValue || CacheHits.HasValue)
         ? new(PromptMs, CompletionMs, PromptPerTokenMs, CompletionPerTokenMs, CacheHits)
