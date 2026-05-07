@@ -1,5 +1,7 @@
+using Dapper;
 using LlaModem.Config;
 using LlaModem.Models;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
@@ -23,48 +25,57 @@ public sealed class UsageService : IUsageService, IDisposable
         _connectionString = $"Data Source={_basePath}";
     }
 
-    private UsageDbContext CreateContext()
+    public void Record(SessionEntry entry)
     {
+        var timings = _includeTimings ? entry.Timings : null;
+        var createdStr = entry.Usage.Created?.ToString("o");
+
+        // Ensure the directory exists before opening the connection.
         var dir = Path.GetDirectoryName(_basePath);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
 
-        return new UsageDbContext(_connectionString);
-    }
+        using var conn = new SqliteConnection(_connectionString);
+        conn.Open();
 
-    public void Record(SessionEntry entry)
-    {
-        using var ctx = CreateContext();
-        ctx.EnsureCreated();
+        // Ensure schema exists (idempotent, handles migration).
+        DbSchema.EnsureAsync(conn).GetAwaiter().GetResult();
 
-        var timings = _includeTimings ? entry.Timings : null;
-
-        var createdStr = entry.Usage.Created?.ToString("o");
-
-        ctx.Insert(
-            timestamp: entry.Timestamp.ToString("o"),
-            model: entry.Model,
-            route: entry.Route,
-            promptTokens: entry.Usage.PromptTokens,
-            completionTokens: entry.Usage.CompletionTokens,
-            totalTokens: entry.Usage.TotalTokens,
-            promptMs: timings?.PromptMs,
-            completionMs: timings?.CompletionMs,
-            promptPerTokenMs: timings?.PromptPerTokenMs,
-            completionPerTokenMs: timings?.CompletionPerTokenMs,
-            cacheHits: timings?.CacheHits,
-            requestId: entry.Usage.RequestId,
-            created: createdStr,
-            cachedTokens: entry.Usage.CachedTokens,
-            requestTime: entry.RequestTime.ToString("o"),
-            responseTime: entry.ResponseTime.ToString("o"),
-            clientIp: entry.ClientIp,
-            statusCode: entry.StatusCode,
-            requestHeaders: entry.RequestHeaders);
+        conn.Execute("""
+            INSERT INTO usage_records
+                (timestamp, request_id, created, model, route, prompt_tokens, completion_tokens, total_tokens,
+                 prompt_ms, completion_ms, prompt_per_token_ms, completion_per_token_ms, cache_hits, cached_tokens,
+                 request_time, response_time, client_ip, status_code, request_headers)
+            VALUES
+                (@timestamp, @requestId, @created, @model, @route, @promptTokens, @completionTokens, @totalTokens,
+                 @promptMs, @completionMs, @promptPerTokenMs, @completionPerTokenMs, @cacheHits, @cachedTokens,
+                 @requestTime, @responseTime, @clientIp, @statusCode, @requestHeaders)
+            """, new
+            {
+                timestamp = entry.Timestamp.ToString("o"),
+                requestId = entry.Usage.RequestId,
+                created = createdStr,
+                model = entry.Model,
+                route = entry.Route,
+                promptTokens = entry.Usage.PromptTokens,
+                completionTokens = entry.Usage.CompletionTokens,
+                totalTokens = entry.Usage.TotalTokens,
+                promptMs = timings?.PromptMs,
+                completionMs = timings?.CompletionMs,
+                promptPerTokenMs = timings?.PromptPerTokenMs,
+                completionPerTokenMs = timings?.CompletionPerTokenMs,
+                cacheHits = timings?.CacheHits,
+                cachedTokens = entry.Usage.CachedTokens,
+                requestTime = entry.RequestTime.ToString("o"),
+                responseTime = entry.ResponseTime.ToString("o"),
+                clientIp = entry.ClientIp,
+                statusCode = entry.StatusCode,
+                requestHeaders = entry.RequestHeaders
+            });
     }
 
     public void Dispose()
     {
-        // Contexts are disposed per-call; nothing to clean up.
+        // No state to clean up — connections are per-call.
     }
 }

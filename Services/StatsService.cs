@@ -6,7 +6,7 @@ namespace LlaModem.Services;
 
 /// <summary>
 /// SQLite-backed implementation for usage statistics queries.
-/// Uses Dapper for auto-mapping with manual WHERE clause building.
+/// Uses Dapper for auto-mapping with composable WHERE clauses.
 /// </summary>
 public sealed class StatsService : IStatsService
 {
@@ -32,63 +32,47 @@ public sealed class StatsService : IStatsService
     private async Task<DailyUsageRow[]> GetDailyRowsAsync(
         SqliteConnection conn, string cutoff, string? model)
     {
-        var clauses = new List<string> { "WHERE timestamp >= @cutoff" };
-        object? parameters = new { cutoff };
-
-        if (model is not null)
-        {
-            clauses.Add("AND model = @model");
-            parameters = new { cutoff, model };
-        }
-
+        var where = WhereClause(cutoff, model);
         var sql = $"""
-            SELECT date(timestamp) as Date,
-                   model as Model,
-                   COUNT(*) as Requests,
-                   SUM(prompt_tokens) as PromptTokens,
-                   SUM(completion_tokens) as CompletionTokens,
-                   SUM(total_tokens) as TotalTokens,
-                   AVG(prompt_ms) as AvgPromptMs,
-                   AVG(completion_ms) as AvgCompletionMs,
-                   CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) as CacheHitRate
+            SELECT date(timestamp) AS Date,
+                   model AS Model,
+                   COUNT(*) AS Requests,
+                   SUM(prompt_tokens) AS PromptTokens,
+                   SUM(completion_tokens) AS CompletionTokens,
+                   SUM(total_tokens) AS TotalTokens,
+                   AVG(prompt_ms) AS AvgPromptMs,
+                   AVG(completion_ms) AS AvgCompletionMs,
+                   CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*) AS CacheHitRate
             FROM usage_records
-            {string.Join(" ", clauses)}
+            {where.Clause}
             GROUP BY date, model
             ORDER BY date
             """;
 
-        return (await conn.QueryAsync<DailyUsageRow>(sql, parameters)).ToArray();
+        return (await conn.QueryAsync<DailyUsageRow>(sql, where.Parameters!)).ToArray();
     }
 
     private async Task<UsageSummaryRow> GetSummaryAsync(
         SqliteConnection conn, string cutoff, string? model)
     {
-        var clauses = new List<string> { "WHERE timestamp >= @cutoff" };
-        object? parameters = new { cutoff };
-
-        if (model is not null)
-        {
-            clauses.Add("AND model = @model");
-            parameters = new { cutoff, model };
-        }
-
+        var where = WhereClause(cutoff, model);
         var sql = $"""
-            SELECT COUNT(*) as TotalRequests,
-                   COALESCE(SUM(prompt_tokens), 0) as TotalPromptTokens,
-                   COALESCE(SUM(completion_tokens), 0) as TotalCompletionTokens,
-                   COALESCE(SUM(total_tokens), 0) as TotalTokens,
-                   COALESCE(AVG(prompt_ms), 0) as AvgPromptMs,
-                   COALESCE(AVG(completion_ms), 0) as AvgCompletionMs,
+            SELECT COUNT(*) AS TotalRequests,
+                   COALESCE(SUM(prompt_tokens), 0) AS TotalPromptTokens,
+                   COALESCE(SUM(completion_tokens), 0) AS TotalCompletionTokens,
+                   COALESCE(SUM(total_tokens), 0) AS TotalTokens,
+                   COALESCE(AVG(prompt_ms), 0) AS AvgPromptMs,
+                   COALESCE(AVG(completion_ms), 0) AS AvgCompletionMs,
                    CASE WHEN COUNT(*) > 0
                         THEN CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(*)
                         ELSE 0
-                   END as CacheHitRate
+                   END AS CacheHitRate
             FROM usage_records
-            {string.Join(" ", clauses)}
+            {where.Clause}
             """;
 
-        var rows = await conn.QueryAsync<UsageSummaryRow>(sql, parameters);
-        return rows.FirstOrDefault();
+        var rows = await conn.QueryAsync<UsageSummaryRow>(sql, where.Parameters!);
+        return rows.FirstOrDefault()!;
     }
 
     public async Task<RecentRequestsResponse> GetRecentRequestsAsync(int limit, int offset, string? model)
@@ -105,64 +89,67 @@ public sealed class StatsService : IStatsService
 
     private async Task<long> GetTotalCountAsync(SqliteConnection conn, string? model)
     {
-        object? parameters = model is not null ? (object)new { model } : null;
-        var sql = model is not null
-            ? "SELECT COUNT(*) FROM usage_records WHERE model = @model"
-            : "SELECT COUNT(*) FROM usage_records";
-
-        return await conn.ExecuteScalarAsync<long>(sql!, parameters);
+        var (clause, parameters) = ModelWhereClause(model);
+        var sql = $"SELECT COUNT(*) FROM usage_records{clause}";
+        return await conn.ExecuteScalarAsync<long>(sql, parameters);
     }
 
     private async Task<UsageRow[]> GetItemsAsync(
         SqliteConnection conn, int limit, int offset, string? model)
     {
-        var clauses = new List<string>();
-        object parameters = new { model, limit, offset };
+        var sql = model is null
+            ? """
+                SELECT id, timestamp, model, route,
+                       prompt_tokens AS PromptTokens, completion_tokens AS CompletionTokens, total_tokens AS TotalTokens,
+                       prompt_ms AS PromptMs, completion_ms AS CompletionMs, cache_hits AS CacheHits,
+                       status_code AS StatusCode, client_ip AS ClientIp
+                FROM usage_records
+                ORDER BY timestamp DESC
+                LIMIT @limit OFFSET @offset
+                """
+            : """
+                SELECT id, timestamp, model, route,
+                       prompt_tokens AS PromptTokens, completion_tokens AS CompletionTokens, total_tokens AS TotalTokens,
+                       prompt_ms AS PromptMs, completion_ms AS CompletionMs, cache_hits AS CacheHits,
+                       status_code AS StatusCode, client_ip AS ClientIp
+                FROM usage_records
+                WHERE model = @model
+                ORDER BY timestamp DESC
+                LIMIT @limit OFFSET @offset
+                """;
 
-        if (model is not null)
-            clauses.Add("WHERE model = @model");
-
-        var sql = $"""
-            SELECT id, timestamp, model, route,
-                   prompt_tokens as PromptTokens, completion_tokens as CompletionTokens, total_tokens as TotalTokens,
-                   prompt_ms as PromptMs, completion_ms as CompletionMs, cache_hits as CacheHits,
-                   status_code as StatusCode, client_ip as ClientIp
-            FROM usage_records
-            {string.Join(" ", clauses)}
-            ORDER BY timestamp DESC
-            LIMIT @limit OFFSET @offset
-            """;
+        var parameters = model is null
+            ? (object)new { limit, offset }
+            : new { model, limit, offset };
 
         return (await conn.QueryAsync<UsageRow>(sql, parameters)).ToArray();
     }
 
     private static async Task EnsureTableCreatedAsync(SqliteConnection conn)
     {
-        await conn.ExecuteAsync($"""
-            CREATE TABLE IF NOT EXISTS usage_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT NOT NULL,
-                request_id TEXT,
-                created TEXT,
-                model TEXT NOT NULL,
-                route TEXT NOT NULL,
-                prompt_tokens INTEGER,
-                completion_tokens INTEGER,
-                total_tokens INTEGER,
-                prompt_ms REAL,
-                completion_ms REAL,
-                prompt_per_token_ms REAL,
-                completion_per_token_ms REAL,
-                cache_hits INTEGER,
-                cached_tokens INTEGER,
-                request_time REAL,
-                response_time REAL,
-                client_ip TEXT,
-                status_code INTEGER,
-                request_headers TEXT
-            )
-            """);
-        await conn.ExecuteAsync("CREATE INDEX IF NOT EXISTS ix_usage_timestamp ON usage_records(timestamp)");
-        await conn.ExecuteAsync("CREATE INDEX IF NOT EXISTS ix_usage_model ON usage_records(model)");
+        await DbSchema.EnsureAsync(conn);
+    }
+
+    /// <summary>
+    /// Builds a parameterized WHERE clause for queries filtered by timestamp and/or model.
+    /// </summary>
+    private static (string Clause, object? Parameters) WhereClause(string cutoff, string? model)
+    {
+        if (model is null)
+            return ("WHERE timestamp >= @cutoff", new { cutoff });
+
+        return ("WHERE timestamp >= @cutoff AND model = @model", new { cutoff, model });
+    }
+
+    /// <summary>
+    /// Builds a parameterized WHERE clause for model-only filtering (no timestamp cutoff).
+    /// Returns an empty clause when model is null.
+    /// </summary>
+    private static (string Clause, object? Parameters) ModelWhereClause(string? model)
+    {
+        if (model is null)
+            return ("", null);
+
+        return (" WHERE model = @model", new { model });
     }
 }
