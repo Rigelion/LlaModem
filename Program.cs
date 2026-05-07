@@ -21,14 +21,9 @@ public class Program
             .CreateLogger();
         builder.Host.UseSerilog(logger);
 
-        // Bind configuration
-        builder.Services.Configure<AppConfig>(builder.Configuration);
+        // Bind configuration (AddOptions + Bind replaces Configure — no duplication)
         builder.Services.AddOptions<AppConfig>().Bind(builder.Configuration).ValidateOnStart();
-
-        builder.Services.Configure<RouterConfig>(builder.Configuration.GetSection("Router"));
         builder.Services.AddOptions<RouterConfig>().Bind(builder.Configuration.GetSection("Router")).ValidateOnStart();
-
-        builder.Services.Configure<UsageConfig>(builder.Configuration.GetSection(UsageConfig.SectionName));
         builder.Services.AddOptions<UsageConfig>().Bind(builder.Configuration.GetSection(UsageConfig.SectionName)).ValidateOnStart();
         builder.Services.AddSingleton<IUsageService, UsageService>();
 
@@ -77,16 +72,13 @@ public class Program
             await launcher.ShutdownAllAsync(appLogger);
         });
 
-        // Usage capture middleware (before request logging, to see full responses)
+        // Response logging + usage capture middleware (combined — single buffer pass)
         var usageConfig = app.Configuration.GetSection(UsageConfig.SectionName).Get<UsageConfig>();
         if (usageConfig?.Enabled == true)
-            app.UseUsageCapture();
+            app.UseResponseUsageCapture();
 
-        // Request logging middleware (first, before auth)
+        // Request logging middleware (after response capture, so response size is available)
         app.UseRequestLogging();
-
-        // Response logging middleware (after request, before auth)
-        app.UseResponseLogging();
 
         // Apply Basic Auth to /v1/* routes
         app.UseBasicAuthWhen("/v1");

@@ -4,7 +4,7 @@ namespace LlaModem.Models;
 /// A single usage entry for one request within a session (day).
 /// </summary>
 public record SessionEntry(
-    DateTime Timestamp,
+    DateTimeOffset Timestamp,
     string Model,
     string Route,
     TokenUsage Usage)

@@ -5,19 +5,21 @@ using System.Text.Json;
 namespace LlaModem.Middleware;
 
 /// <summary>
-/// Intercepts non-streaming responses to extract token usage stats
-/// and persist them via IUsageService. The original response passes through unchanged.
+/// Combines response body logging and token usage capture into a single middleware.
+/// Buffers the response body once, then logs the full body and extracts usage data
+/// (tokens, timings) from llama-server JSON responses. The original response passes
+/// through unchanged. Only processes non-streaming responses on proxy routes.
 /// </summary>
-public sealed class UsageCaptureMiddleware
+public sealed class ResponseUsageMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly IUsageService _usageService;
-    private readonly ILogger<UsageCaptureMiddleware> _logger;
+    private readonly IUsageService? _usageService;
+    private readonly ILogger<ResponseUsageMiddleware> _logger;
 
-    public UsageCaptureMiddleware(
+    public ResponseUsageMiddleware(
         RequestDelegate next,
-        IUsageService usageService,
-        ILogger<UsageCaptureMiddleware> logger)
+        IUsageService? usageService,
+        ILogger<ResponseUsageMiddleware> logger)
     {
         _next = next;
         _usageService = usageService;
@@ -26,133 +28,83 @@ public sealed class UsageCaptureMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Only capture usage from proxy routes that return token stats
-        var path = context.Request.Path.Value ?? string.Empty;
-        var isProxyRoute = path.StartsWith("/v1/chat/completions", StringComparison.OrdinalIgnoreCase)
-                        || path.StartsWith("/v1/completions", StringComparison.OrdinalIgnoreCase);
+        var isStreaming = IsStreamingResponse(context);
 
-        if (!isProxyRoute)
+        // Only capture non-streaming responses
+        if (isStreaming)
         {
             await _next(context);
             return;
         }
 
-        // Detect streaming from the request body (stream: true) — response headers aren't set yet at this point
-        var isStreaming = await IsStreamingRequestAsync(context.Request);
+        var originalBody = context.Response.Body;
+        using var buffer = new MemoryStream();
+        context.Response.Body = buffer;
 
-        if (!isStreaming)
-        {
-            var originalBody = context.Response.Body;
-            using var buffer = new MemoryStream();
-            context.Response.Body = buffer;
-
-            try
-            {
-                await _next(context);
-
-                buffer.Seek(0, SeekOrigin.Begin);
-                await ExtractAndRecordUsage(context, buffer, originalBody);
-            }
-            catch
-            {
-                await WriteBufferedBody(buffer, originalBody);
-                throw;
-            }
-        }
-        else
+        try
         {
             await _next(context);
+
+            buffer.Seek(0, SeekOrigin.Begin);
+
+            // Log the full response body
+            var bytes = buffer.ToArray();
+            if (bytes.Length > 0)
+            {
+                var bodyString = System.Text.Encoding.UTF8.GetString(bytes);
+                _logger.LogInformation("[RESPONSE BODY] {Method} {Path}\n{Body}", context.Request.Method, context.Request.Path, bodyString);
+            }
+
+            // Extract and record usage if this is a proxy route and usage service is available
+            if (_usageService is not null)
+            {
+                var path = context.Request.Path.Value ?? string.Empty;
+                var isProxyRoute = path.StartsWith("/v1/chat/completions", StringComparison.OrdinalIgnoreCase)
+                                || path.StartsWith("/v1/completions", StringComparison.OrdinalIgnoreCase);
+
+                if (isProxyRoute && !string.IsNullOrWhiteSpace(System.Text.Encoding.UTF8.GetString(bytes)))
+                {
+                    var raw = System.Text.Encoding.UTF8.GetString(bytes);
+                    var usage = TryExtractUsageFromRaw(raw);
+
+                    if (usage is not null)
+                    {
+                        var model = TryExtractModel(raw) ?? "(unknown)";
+                        var route = path;
+
+                        _usageService.Record(new SessionEntry(
+                            DateTimeOffset.UtcNow,
+                            model,
+                            route,
+                            usage));
+
+                        var timingInfo = usage.Timings is { } t && (t.PromptMs.HasValue || t.CompletionMs.HasValue)
+                            ? $", Prompt: {t.PromptMs:F1}ms, Completion: {t.CompletionMs:F1}ms"
+                            : string.Empty;
+
+                        _logger.LogInformation(
+                            "[USAGE] {Model} {Route} — Prompt: {PromptTokens}, Completion: {CompletionTokens}, Total: {TotalTokens}{Timing}",
+                            model, route, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens, timingInfo);
+                    }
+                }
+            }
         }
+        catch
+        {
+            buffer.Seek(0, SeekOrigin.Begin);
+            await buffer.CopyToAsync(originalBody);
+            throw;
+        }
+
+        buffer.Seek(0, SeekOrigin.Begin);
+        await buffer.CopyToAsync(originalBody);
     }
 
-    private static async Task<bool> IsStreamingRequestAsync(HttpRequest request)
+    private static bool IsStreamingResponse(HttpContext context)
     {
-        if (request.Body is null || !request.Body.CanRead)
-            return false;
-
-        if (request.Body.CanSeek)
-        {
-            if (request.Body.Length == 0)
-                return false;
-        }
-        else
-        {
-            // PipeStream (default ASP.NET Core body) doesn't support Length.
-            // Read all content, then replace Body with a seekable MemoryStream.
-            var content = await ReadAllBytesAsync(request.Body);
-            if (content.Length == 0)
-                return false;
-
-            request.Body = new MemoryStream(content);
-        }
-
-        var originalPosition = request.Body.Position;
-        try
-        {
-            using var reader = new StreamReader(request.Body, System.Text.Encoding.UTF8, leaveOpen: true);
-            var body = await reader.ReadToEndAsync();
-
-            // Check for "stream": true in the JSON body
-            if (body.Contains("\"stream\"", StringComparison.OrdinalIgnoreCase)
-                && body.Contains("true", StringComparison.OrdinalIgnoreCase))
-            {
-                // Verify it's actually stream:true, not some other field named stream
-                var doc = JsonDocument.Parse(body);
-                if (doc.RootElement.TryGetProperty("stream", out var streamProp) && streamProp.GetBoolean())
-                    return true;
-            }
-
-            return false;
-        }
-        finally
-        {
-            request.Body.Position = originalPosition;
-        }
-    }
-
-    private async Task ExtractAndRecordUsage(HttpContext context, MemoryStream bodyStream, Stream originalBody)
-    {
-        try
-        {
-            var raw = System.Text.Encoding.UTF8.GetString(bodyStream.ToArray());
-
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                await WriteBufferedBody(bodyStream, originalBody);
-                return;
-            }
-
-            // Try to find usage — handle standard JSON, SSE (data: prefix), and NDJSON
-            var usage = TryExtractUsageFromRaw(raw);
-
-            if (usage is not null)
-            {
-                var model = TryExtractModel(raw) ?? "(unknown)";
-                var route = context.Request.Path.Value ?? context.Request.Path.ToString();
-
-                _usageService.Record(new SessionEntry(
-                    DateTime.Now,
-                    model,
-                    route,
-                    usage));
-
-                var timingInfo = usage.Timings is { } t && (t.PromptMs.HasValue || t.CompletionMs.HasValue)
-                    ? $", Prompt: {t.PromptMs:F1}ms, Completion: {t.CompletionMs:F1}ms"
-                    : string.Empty;
-
-                _logger.LogInformation(
-                    "[USAGE] {Model} {Route} — Prompt: {PromptTokens}, Completion: {CompletionTokens}, Total: {TotalTokens}{Timing}",
-                    model, route, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens, timingInfo);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "[USAGE] Failed to extract token usage from response");
-        }
-        finally
-        {
-            await WriteBufferedBody(bodyStream, originalBody);
-        }
+        var contentType = context.Response.Headers.ContentType.ToString();
+        return contentType.Contains("stream", StringComparison.OrdinalIgnoreCase)
+            || context.Response.Headers.TransferEncoding.Any();
     }
 
     private static TokenUsage? TryExtractUsageFromRaw(string raw)
@@ -236,7 +188,6 @@ public sealed class UsageCaptureMiddleware
 
     private static string StripSseFormat(string raw)
     {
-        // Handle SSE format: "data: {...}\n\ndata: {...}\n\ndata: [DONE]"
         var sb = new System.Text.StringBuilder(raw.Length);
         var lines = raw.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
 
@@ -287,19 +238,6 @@ public sealed class UsageCaptureMiddleware
             TryGetInt32Nullable(timingsElement, "cache_n"));
     }
 
-    private static async Task<byte[]> ReadAllBytesAsync(Stream stream)
-    {
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        return ms.ToArray();
-    }
-
-    private static async Task WriteBufferedBody(MemoryStream bodyStream, Stream originalBody)
-    {
-        bodyStream.Seek(0, SeekOrigin.Begin);
-        await bodyStream.CopyToAsync(originalBody);
-    }
-
     private static int TryGetInt32(JsonElement element, string propertyName)
     {
         if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number)
@@ -328,5 +266,3 @@ public sealed class UsageCaptureMiddleware
         return null;
     }
 }
-
-

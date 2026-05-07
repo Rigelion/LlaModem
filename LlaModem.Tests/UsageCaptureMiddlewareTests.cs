@@ -7,17 +7,17 @@ using Moq;
 
 namespace LlaModem.Tests;
 
-public class UsageCaptureMiddlewareTests
+public class ResponseUsageMiddlewareTests
 {
     [Fact]
     public async Task Invoke_CapturesUsageFromChatCompletions()
     {
         // Arrange
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler("{\"model\":\"llama3.2\",\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":50,\"total_tokens\":60}}"),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -40,10 +40,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler("{\"model\":\"mistral\",\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":20,\"total_tokens\":25}}"),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/completions";
@@ -63,10 +63,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange — next handler just passes through without touching usage
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             next: _ => Task.CompletedTask,
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/health";
@@ -84,10 +84,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             next: _ => Task.CompletedTask,
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/admin/status";
@@ -105,10 +105,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler("{\"model\":\"test\",\"choices\":[{\"text\":\"hello\"}]}"),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -127,10 +127,10 @@ public class UsageCaptureMiddlewareTests
         // Arrange — use a non-disposing wrapper so ASP.NET Core doesn't kill the stream
         var expectedBody = "{\"model\":\"llama3.2\",\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":50,\"total_tokens\":60}}";
         var originalStream = new NonDisposingMemoryStream();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler(expectedBody),
             Mock.Of<IUsageService>(),
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -150,10 +150,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange — response has usage object but with zero/missing fields
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler("{\"model\":\"test\",\"usage\":{}}"),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -174,10 +174,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler(""),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -196,10 +196,10 @@ public class UsageCaptureMiddlewareTests
         // Arrange — llama-server response with timings
         var mockService = new Mock<IUsageService>();
         var response = "{\"model\":\"llama3.2\",\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":50,\"total_tokens\":60},\"timings\":{\"prompt_ms\":120.5,\"predicted_ms\":450.3,\"prompt_per_token_ms\":12.05,\"predicted_per_token_ms\":9.006,\"cache_n\":15}}";
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler(response),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -224,10 +224,10 @@ public class UsageCaptureMiddlewareTests
     {
         // Arrange — response without timings field
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler("{\"model\":\"test\",\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":50,\"total_tokens\":60}}"),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -248,10 +248,10 @@ public class UsageCaptureMiddlewareTests
         // Arrange — timings with only some fields present
         var mockService = new Mock<IUsageService>();
         var response = "{\"model\":\"test\",\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":20,\"total_tokens\":25},\"timings\":{\"prompt_ms\":100}}";
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler(response),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -273,10 +273,10 @@ public class UsageCaptureMiddlewareTests
         // Arrange — NDJSON with timings in last line
         var ndjson = "{\"model\":\"test\",\"choices\":[{\"delta\":{\"content\":\"h\"}}]}\n{\"model\":\"test\",\"choices\":[{\"delta\":{\"content\":\"i\"}}],\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":10,\"total_tokens\":13},\"timings\":{\"prompt_ms\":50.0,\"predicted_ms\":200.0,\"cache_n\":5}}";
         var mockService = new Mock<IUsageService>();
-        var middleware = new UsageCaptureMiddleware(
+        var middleware = new ResponseUsageMiddleware(
             CreateNextHandler(ndjson),
             mockService.Object,
-            Mock.Of<ILogger<UsageCaptureMiddleware>>());
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
 
         var context = new DefaultHttpContext();
         context.Request.Path = "/v1/chat/completions";
@@ -291,6 +291,27 @@ public class UsageCaptureMiddlewareTests
             e.Usage.CompletionTokens == 10 &&
             e.Usage.Timings.HasValue &&
             e.Usage.Timings.Value.CacheHits == 5)), Times.Once);
+    }
+
+    [Fact]
+    public async Task Invoke_WhenNoUsageService_DoesNotThrow()
+    {
+        // Arrange — usage service is null
+        var middleware = new ResponseUsageMiddleware(
+            CreateNextHandler("{\"model\":\"test\",\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":2,\"total_tokens\":3}}"),
+            null,
+            Mock.Of<ILogger<ResponseUsageMiddleware>>());
+
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/v1/chat/completions";
+        context.Response.Body = new MemoryStream();
+
+        // Act — should not throw when usage service is not configured
+        // If it throws, the test fails
+        await middleware.InvokeAsync(context);
+
+        // Assert — if we get here, no exception was thrown
+        Assert.True(true);
     }
 
     /// <summary>

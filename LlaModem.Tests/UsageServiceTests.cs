@@ -20,7 +20,7 @@ public class UsageServiceTests : IDisposable
         // Arrange
         var config = Options.Create(new UsageConfig { Path = _tempDir, FilenamePattern = "usage-{date}.md" });
         var service = new UsageService(config);
-        var date = new DateTime(2026, 5, 1);
+        var date = new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero);
 
         // Act
         service.Record(new SessionEntry(date, "llama3.2", "/v1/chat/completions",
@@ -46,9 +46,9 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero), "llama3.2", "/v1/chat/completions",
             new TokenUsage(10, 50, 60)));
-        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 5, 0), "mistral", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 5, 0, TimeSpan.Zero), "mistral", "/v1/chat/completions",
             new TokenUsage(20, 100, 120)));
 
         // Assert
@@ -66,9 +66,9 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(new DateTime(2026, 5, 1), "llama3.2", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero), "llama3.2", "/v1/chat/completions",
             new TokenUsage(10, 50, 60)));
-        service.Record(new SessionEntry(new DateTime(2026, 5, 2), "mistral", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 2, 0, 0, 0, TimeSpan.Zero), "mistral", "/v1/chat/completions",
             new TokenUsage(20, 100, 120)));
 
         // Assert
@@ -84,7 +84,7 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(DateTime.UtcNow, "test", "/v1/chat/completions",
+        service.Record(new SessionEntry(DateTimeOffset.UtcNow, "test", "/v1/chat/completions",
             new TokenUsage(1, 2, 3)));
 
         // Assert
@@ -100,7 +100,7 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(DateTime.UtcNow, "test", "/v1/chat/completions",
+        service.Record(new SessionEntry(DateTimeOffset.UtcNow, "test", "/v1/chat/completions",
             new TokenUsage(1, 2, 3)));
 
         // Assert
@@ -115,11 +115,11 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(DateTime.UtcNow, "test-model", "/v1/completions",
+        service.Record(new SessionEntry(DateTimeOffset.UtcNow, "test-model", "/v1/completions",
             new TokenUsage(5, 25, 30)));
 
         // Assert
-        var content = File.ReadAllText(Path.Combine(_tempDir, $"usage-{DateTime.UtcNow:yyyy-MM-dd}.md"));
+        var content = File.ReadAllText(Path.Combine(_tempDir, $"usage-{DateTimeOffset.UtcNow:yyyy-MM-dd}.md"));
         Assert.Contains("/v1/completions", content);
     }
 
@@ -131,7 +131,7 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero), "llama3.2", "/v1/chat/completions",
             new TokenUsage(10, 50, 60, 120.5, 450.3, null, null, 15)));
 
         // Assert
@@ -153,7 +153,7 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero), "llama3.2", "/v1/chat/completions",
             new TokenUsage(10, 50, 60)));
 
         // Assert
@@ -172,7 +172,7 @@ public class UsageServiceTests : IDisposable
         var service = new UsageService(config);
 
         // Act
-        service.Record(new SessionEntry(new DateTime(2026, 5, 1, 10, 0, 0), "llama3.2", "/v1/chat/completions",
+        service.Record(new SessionEntry(new DateTimeOffset(2026, 5, 1, 10, 0, 0, TimeSpan.Zero), "llama3.2", "/v1/chat/completions",
             new TokenUsage(10, 50, 60)));
 
         // Assert

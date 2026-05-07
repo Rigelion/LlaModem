@@ -7,14 +7,17 @@ namespace LlaModem.Services;
 
 /// <summary>
 /// Checks available VRAM via nvidia-smi.
+/// Returns null (insufficient) if nvidia-smi is unavailable — VRAM check is best-effort.
 /// </summary>
 public class GpuMemoryChecker : IGpuMemoryChecker
 {
     private readonly RouterConfig.TimeoutConfig _timeouts;
+    private readonly ILogger<GpuMemoryChecker> _logger;
 
-    public GpuMemoryChecker(IOptions<RouterConfig> config)
+    public GpuMemoryChecker(IOptions<RouterConfig> config, ILogger<GpuMemoryChecker> logger)
     {
         _timeouts = config.Value.Timeouts;
+        _logger = logger;
     }
 
     public (bool isSufficient, string? errorMessage) CheckAvailableResources()
@@ -33,7 +36,7 @@ public class GpuMemoryChecker : IGpuMemoryChecker
 
     /// <summary>
     /// Gets free VRAM in bytes by parsing nvidia-smi output.
-    /// Returns null if nvidia-smi is not available.
+    /// Returns null if nvidia-smi is not available or fails.
     /// </summary>
     private long? GetFreeVramBytes()
     {
@@ -50,21 +53,29 @@ public class GpuMemoryChecker : IGpuMemoryChecker
             };
 
             using var process = Process.Start(psi);
-            if (process is null) return null;
+            if (process is null)
+            {
+                _logger.LogWarning("nvidia-smi process failed to start — VRAM check skipped");
+                return null;
+            }
 
             process.WaitForExit(_timeouts.NvidiaSmiTimeoutSeconds * 1000);
             var output = process.StandardOutput.ReadToEnd().Trim();
 
-            if (string.IsNullOrWhiteSpace(output)) return null;
+            if (string.IsNullOrWhiteSpace(output))
+            {
+                _logger.LogDebug("nvidia-smi returned empty output — VRAM check skipped");
+                return null;
+            }
 
             // Parse the first line (GPU 0)
             var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             var freeMib = long.Parse(lines[0].Trim(), CultureInfo.InvariantCulture);
             return freeMib * 1024 * 1024; // Convert MiB to bytes
         }
-        catch
+        catch (Exception ex)
         {
-            // nvidia-smi not found, permission denied, etc.
+            _logger.LogDebug(ex, "nvidia-smi check failed — VRAM check skipped: {Message}", ex.Message);
             return null;
         }
     }
