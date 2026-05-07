@@ -76,6 +76,12 @@ Usage statistics are persisted to a SQLite database at `usage/usage.db`. Each re
 
 Query the database with `sqlite3 usage/usage.db` for ad-hoc analysis.
 
+| Path | Auth | Description |
+|------|------|-------------|
+| `GET /admin/stats/usage` | — | Daily aggregated usage (`?days=30&model=qwen-smart`) |
+| `GET /admin/stats/requests` | — | Paginated recent requests (`?limit=50&offset=0&model=qwen-smart`) |
+| `GET /admin/stats/cost-comparison` | — | Cloud model cost comparison (`?days=30&model=qwen-smart`) — estimates what the same token usage would cost on Claude Opus 4.6, Claude Sonnet 4.5, GPT-5.1 Codex Max, Gemini 3 Pro, Gemini 3 Flash, and Qwen 3 Max |
+
 ## Configuration
 
 Edit `appsettings.json`:

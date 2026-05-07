@@ -1,4 +1,5 @@
 using LlaModem.Config;
+using LlaModem.Models;
 using LlaModem.Middleware;
 using LlaModem.Services;
 using Microsoft.Extensions.Options;
@@ -32,6 +33,30 @@ public static class EndpointSetup
             var response = await stats.GetRecentRequestsAsync(limit, offset, model);
             return Results.Json(response);
         }).WithName("GetRecentRequests");
+
+        statsGroup.MapGet("/cost-comparison", async (IStatsService stats, int days = 30, string? model = null) =>
+        {
+            days = Math.Clamp(days, 1, 365);
+            var usage = await stats.GetDailyUsageAsync(days, model);
+            var costs = ModelPricing.All
+                .Select(p => new ModelCost(
+                    p.Name,
+                    ModelPricing.CalculateCost(p, usage.Summary.TotalPromptTokens, 0),
+                    ModelPricing.CalculateCost(p, 0, usage.Summary.TotalCompletionTokens),
+                    ModelPricing.CalculateCost(p, usage.Summary.TotalPromptTokens, usage.Summary.TotalCompletionTokens)))
+                .OrderBy(c => c.TotalCost)
+                .ToArray();
+
+            var cheapest = costs.First();
+            var mostExpensive = costs.Last();
+
+            return Results.Json(new CostComparisonResponse(
+                usage.Period,
+                model,
+                costs,
+                cheapest,
+                mostExpensive));
+        }).WithName("GetCostComparison");
     }
 
     private static void MapHealthEndpoint(this IEndpointRouteBuilder endpoints)
