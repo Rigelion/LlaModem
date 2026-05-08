@@ -131,14 +131,8 @@ public class ModelManager
 
     private async Task StartModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null)
     {
-        // VRAM check — only reached when no model is running (all detection checks failed above)
-        var (isSufficient, errorMessage) = _gpuChecker.CheckAvailableResources();
-        if (!isSufficient)
-        {
-            _logger.LogError("Cannot start model '{Model}': {Error}", modelName, errorMessage);
-            throw new InvalidOperationException(
-                $"Insufficient resources to start '{modelName}': {errorMessage}");
-        }
+        // VRAM check — disabled, see below
+        // CheckVramAvailability(modelName);
 
         _logger.LogInformation(
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
@@ -195,6 +189,20 @@ public class ModelManager
         if (!success)
             _logger.LogWarning("Health check failed for {Url}: {Reason}", url, reason);
         return success;
+    }
+
+    /// <summary>
+    /// Checks available VRAM via nvidia-smi. Disabled — kept as a reference.
+    /// </summary>
+    private void CheckVramAvailability(string modelName)
+    {
+        var (isSufficient, errorMessage) = _gpuChecker.CheckAvailableResources();
+        if (!isSufficient)
+        {
+            _logger.LogError("Cannot start model '{Model}': {Error}", modelName, errorMessage);
+            throw new InvalidOperationException(
+                $"Insufficient resources to start '{modelName}': {errorMessage}");
+        }
     }
 
     // No explicit disposal needed. The DI container handles the lifecycle,
