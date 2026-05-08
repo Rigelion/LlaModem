@@ -20,6 +20,8 @@ public class DefaultModelLauncher : IModelLauncher
     /// </summary>
     private readonly object _lock = new();
 
+    private static string? _activeModelName;
+
     public DefaultModelLauncher(
         IHttpClientFactory httpClientFactory,
         IHealthChecker healthChecker,
@@ -45,6 +47,7 @@ public class DefaultModelLauncher : IModelLauncher
         if (launchParams?.MinP.HasValue == true) paramParts.Add($"-MinP {launchParams.MinP}");
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
         if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
+        if (launchParams?.ContextLength.HasValue == true) paramParts.Add($"-ContextLength {launchParams.ContextLength}");
         var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
 
         var arguments =
@@ -67,16 +70,17 @@ public class DefaultModelLauncher : IModelLauncher
             {
                 _trackedProcesses.Add(process);
             }
+
+            // Persist the active model name so we can verify it later
+            _activeModelName = modelName;
         }
 
         return process;
     }
 
-    public bool IsModelRunning(string _ = "")
+    public bool IsModelRunning(string modelName)
     {
-        // Only check powershell.exe processes (never pwsh)
-        var psProcesses = Process.GetProcessesByName("powershell");
-        return psProcesses.Any(p => p.MainWindowTitle.Contains(PowerShellTitle, StringComparison.OrdinalIgnoreCase));
+        return string.Equals(_activeModelName, modelName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static Process? FindProcessByTitle(string _ = "")
@@ -102,6 +106,9 @@ public class DefaultModelLauncher : IModelLauncher
         }
 
         await _processKiller.StopAsync(process, modelName, logger);
+
+        // Clear the active model reference
+        _activeModelName = null;
     }
 
     public async Task ShutdownAllAsync(ILogger logger)
@@ -114,6 +121,7 @@ public class DefaultModelLauncher : IModelLauncher
             _trackedProcesses.Clear();
         }
 
+        _activeModelName = null;
         await _processKiller.ShutdownAllAsync(processesToKill, logger);
     }
 
@@ -132,5 +140,6 @@ public class DefaultModelLauncher : IModelLauncher
             modelName, target.Id);
 
         await _processKiller.StopAsync(target, modelName, logger);
+        _activeModelName = null;
     }
 }

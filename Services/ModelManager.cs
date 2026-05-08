@@ -55,31 +55,23 @@ public class ModelManager
                 $"Model '{modelName}' not found. Available models: {available}");
         }
 
-        // Check 1: Is a PowerShell window with this model title already open?
+        // Check 1: Is this model active AND is the backend healthy?
         if (_launcher.IsModelRunning(modelName))
         {
-            _logger.LogDebug("PowerShell window for model '{Model}' is already running", modelName);
-            lock (_lock)
+            var backendHealthy = await _launcher.IsModelRunningV2(_config.BackendUrl);
+            if (backendHealthy)
             {
-                _activeModelName = modelName;
+                _logger.LogDebug("Model '{Model}' is already running and healthy", modelName);
+                lock (_lock)
+                {
+                    _activeModelName = modelName;
+                }
+                return;
             }
-            return;
+            // Backend not responding — model likely died, fall through to restart
         }
 
-        // Check 2: Is the backend URL responding? (llama-server may be running but title check missed it)
-        var backendHealthy = await _launcher.IsModelRunningV2(_config.BackendUrl);
-        if (backendHealthy)
-        {
-            _logger.LogDebug("Backend is healthy for model '{Model}'", modelName);
-            lock (_lock)
-            {
-                _activeProcess = null; // Will be refreshed on next request
-                _activeModelName = modelName;
-            }
-            return;
-        }
-
-        // Check 3: Internal state — process still tracked and alive?
+        // Check 2: Internal state — process still tracked and alive?
         lock (_lock)
         {
             if (_activeModelName == modelName && _activeProcess is not null && !_activeProcess.HasExited)
