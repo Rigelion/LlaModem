@@ -47,7 +47,6 @@ public class DefaultModelLauncher : IModelLauncher
         if (launchParams?.MinP.HasValue == true) paramParts.Add($"-MinP {launchParams.MinP}");
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
         if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
-        if (launchParams?.ContextLength.HasValue == true) paramParts.Add($"-ContextLength {launchParams.ContextLength}");
         var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
 
         var arguments =
