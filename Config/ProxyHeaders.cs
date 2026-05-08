@@ -12,4 +12,5 @@ public static class ProxyHeaders
     public const string MinP = "X-Llama-MinP";
     public const string PresencePenalty = "X-Llama-PresencePenalty";
     public const string RepetitionPenalty = "X-Llama-RepetitionPenalty";
+    public const string ContextLength = "X-Llama-ContextLength";
 }
