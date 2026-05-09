@@ -1,7 +1,9 @@
 using LlaModem.Config;
 using LlaModem.Middleware;
 using LlaModem.Services;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
 
@@ -60,6 +62,11 @@ public class Program
         {
             client.Timeout = TimeSpan.FromMinutes(5);
         });
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer<AdminRouteFilter>();
+        });
         builder.Services.AddSingleton<HealthChecker>();
         builder.Services.AddSingleton<ProcessKiller>();
         builder.Services.AddSingleton<IModelRepository, InMemoryModelRepository>();
@@ -106,6 +113,8 @@ public class Program
         // Apply Basic Auth to /v1/* routes
         app.UseBasicAuthWhen("/v1");
 
+        app.MapOpenApi();
+        app.MapScalarApiReference();
         app.ConfigureEndpoints();
         app.MapStatsEndpoints();
 
