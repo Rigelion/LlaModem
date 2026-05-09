@@ -79,7 +79,7 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
         var summary = await GetSummaryAsync(conn, days, model, ct) ?? new UsageSummaryRow(0, 0, 0, 0, 0, 0, 0);
         var daily = await GetDailyRowsAsync(conn, days, model, ct);
 
-        return new DailyUsageResponse((cutoff.ToString("yyyy-MM-dd"), now.ToString("yyyy-MM-dd")), summary, daily);
+        return new DailyUsageResponse(new DateRange { From = cutoff.ToString("yyyy-MM-dd"), To = now.ToString("yyyy-MM-dd") }, summary, daily);
     }
 
     private async Task<UsageSummaryRow?> GetSummaryAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)

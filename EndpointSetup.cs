@@ -77,7 +77,7 @@ public static class EndpointSetup
         });
     }
 
-    private static void MapAdminEndpoints(this IEndpointRouteBuilder endpoints)
+     public static void MapAdminEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var adminGroup = endpoints.MapGroup("/admin");
 

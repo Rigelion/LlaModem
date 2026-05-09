@@ -1,7 +1,6 @@
 using LlaModem.Config;
 using LlaModem.Middleware;
 using LlaModem.Services;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 using Serilog;
@@ -117,9 +116,6 @@ public class Program
         app.MapOpenApi();
         app.MapScalarApiReference();
         app.ConfigureEndpoints();
-        app.MapStatsEndpoints();
-        app.MapAdminEndpoints();
-        app.MapDashboardEndpoints();
 
         app.Run();
     }

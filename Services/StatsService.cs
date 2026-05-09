@@ -26,7 +26,7 @@ public sealed class StatsService : IStatsService
         var daily = await GetDailyRowsAsync(conn, cutoff, model);
         var summary = await GetSummaryAsync(conn, cutoff, model);
 
-        return new DailyUsageResponse((cutoff, now), summary, daily);
+        return new DailyUsageResponse(new DateRange { From = cutoff, To = now }, summary, daily);
     }
 
     private async Task<DailyUsageRow[]> GetDailyRowsAsync(

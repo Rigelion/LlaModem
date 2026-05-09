@@ -1,6 +1,11 @@
 namespace LlaModem.Models;
 
 /// <summary>
+/// Date range for period tracking.
+/// </summary>
+public readonly record struct DateRange(string From, string To);
+
+/// <summary>
 /// Aggregated usage for a single day (one model).
 /// </summary>
 public readonly record struct DailyUsageRow(
@@ -47,7 +52,7 @@ public readonly record struct UsageSummaryRow(
 /// Response envelope for daily usage aggregation.
 /// </summary>
 public sealed record DailyUsageResponse(
-    (string From, string To) Period,
+    DateRange Period,
     UsageSummaryRow Summary,
     DailyUsageRow[] Daily);
 

@@ -13,7 +13,7 @@ public readonly record struct ModelCost(
 /// Response envelope for cost comparison across cloud models.
 /// </summary>
 public sealed record CostComparisonResponse(
-    (string From, string To) Period,
+    DateRange Period,
     string? ModelFilter,
     ModelCost[] Costs,
     ModelCost Cheapest,
