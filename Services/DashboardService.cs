@@ -224,13 +224,13 @@ public sealed class DashboardService
     }
 
     /// <summary>
-    /// Loads parameters from dashboard_params.json or returns null.
+    /// Loads parameters from dashboard_params.json or returns defaults.
     /// </summary>
     private ModelLaunchParams LoadParams(string modelName)
     {
         if (!File.Exists(_paramsFilePath))
         {
-            return new ModelLaunchParams(null, null, null, null, null, null);
+            return ModelLaunchParams.Defaults;
         }
 
         try
@@ -241,7 +241,7 @@ public sealed class DashboardService
 
             if (!root.TryGetProperty(modelName, out var modelElement))
             {
-                return new ModelLaunchParams(null, null, null, null, null, null);
+                return ModelLaunchParams.Defaults;
             }
 
             var temp = TryGetDouble(modelElement, "Temperature");
@@ -353,7 +353,7 @@ public sealed record StartModelResult(
             Status: "running_active",
             CurrentTokensPerSecond: 0,
             AverageTokensPerSession: null,
-            Parameters: new ModelLaunchParams(null, null, null, null, null, null),
+            Parameters: ModelLaunchParams.Defaults,
             ScriptPath: config.StartScript,
             ProcessId: ProcessId,
             StartedAt: StartedAt,
