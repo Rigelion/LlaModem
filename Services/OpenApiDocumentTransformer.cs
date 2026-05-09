@@ -1,4 +1,5 @@
 using LlaModem.Models;
+using LlaModem.Services.OpenApiExtensions;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
@@ -88,7 +89,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "DailyUsageResponse" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/DailyUsageResponse") } }
                     }
                 }
             };
@@ -127,7 +128,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "RecentRequestsResponse" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/RecentRequestsResponse") } }
                     }
                 }
             };
@@ -160,7 +161,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "CostComparisonResponse" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/CostComparisonResponse") } }
                     }
                 }
             };
@@ -183,7 +184,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                         Schema = new OpenApiSchema
                         {
                             Type = JsonSchemaType.Array,
-                            Items = new OpenApiSchema { Id = "ModelDashboardItem" }
+                            Items = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/ModelDashboardItem") } }
                         }
                     }
                 }
@@ -213,7 +214,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "ModelDashboardItem" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/ModelDashboardItem") } }
                     }
                 }
             };
@@ -241,7 +242,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "StartModelRequest" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/StartModelRequest") } }
                     }
                 }
             };
@@ -290,7 +291,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "UpdateModelParamsRequest" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/UpdateModelParamsRequest") } }
                     }
                 }
             };
@@ -302,7 +303,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "ParameterUpdateResponse" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/ParameterUpdateResponse") } }
                     }
                 }
             };
@@ -331,7 +332,7 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
                 {
                     ["application/json"] = new OpenApiMediaType
                     {
-                        Schema = new OpenApiSchema { Id = "HealthCheckResponse" }
+                        Schema = new OpenApiSchema { Extensions = new Dictionary<string, IOpenApiExtension> { ["$ref"] = new SchemaReferenceExtension("#/components/schemas/HealthCheckResponse") } }
                     }
                 }
             };
