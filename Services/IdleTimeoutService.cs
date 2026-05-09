@@ -57,7 +57,7 @@ public class IdleTimeoutService : BackgroundService
                         "Idle timeout reached ({Elapsed}s). Stopping active model...",
                         elapsed.TotalSeconds);
 
-                    await _modelManager.StopActiveModelAsync();
+                    await _modelManager.StopActiveModelAsync(stoppingToken);
                 }
             }
         }

@@ -11,21 +11,22 @@ public class DefaultModelLauncher
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HealthChecker _healthChecker;
     private readonly ProcessKiller _processKiller;
+    private readonly IModelRepository _repository;
 
-    private string? _activeModelName;
     /// <summary>
-    /// Thread-safe process tracking using ConcurrentHashSet pattern.
+    /// Thread-safe process tracking via IModelRepository abstraction.
     /// </summary>
-    private readonly ConcurrentDictionary<int, Process> _trackedProcesses = new();
 
     public DefaultModelLauncher(
         IHttpClientFactory httpClientFactory,
         HealthChecker healthChecker,
-        ProcessKiller processKiller)
+        ProcessKiller processKiller,
+        IModelRepository repository)
     {
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
         _processKiller = processKiller;
+        _repository = repository;
     }
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
@@ -61,23 +62,22 @@ public class DefaultModelLauncher
         // Track the process for shutdown cleanup
         if (process is not null)
         {
-            _trackedProcesses[process.Id] = process;
-            _activeModelName = modelName;
+            var state = new ModelProcessState(modelName, process.Id, DateTimeOffset.UtcNow);
+            await _repository.SetStateAsync(state);
         }
 
         return process;
     }
 
-    public bool IsModelRunning(string modelName)
+    public async Task<bool> IsModelRunningAsync(string modelName, CancellationToken ct = default)
     {
-        return string.Equals(_activeModelName, modelName, StringComparison.OrdinalIgnoreCase);
+        var state = await _repository.GetStateAsync(modelName, ct);
+        return state is not null && state.ModelName.Equals(modelName, StringComparison.OrdinalIgnoreCase);
     }
 
-    private Process? FindProcessByTitle(string _ = "")
+    private async Task<ModelProcessState?> GetCurrentStateAsync(string modelName, CancellationToken ct = default)
     {
-        var psProcesses = Process.GetProcessesByName("powershell");
-        return Array.Find(psProcesses, p =>
-            p.MainWindowTitle.Contains(PowerShellTitle, StringComparison.OrdinalIgnoreCase));
+        return await _repository.GetStateAsync(modelName, ct);
     }
 
     public async Task<bool> IsModelRunningV2(string backendUrl, CancellationToken cancellationToken = default)
@@ -87,35 +87,63 @@ public class DefaultModelLauncher
         return success;
     }
 
-    public async Task StopAsync(Process process, string modelName, ILogger logger)
+    public async Task StopAsync(Process process, string modelName, ILogger logger, CancellationToken ct = default)
     {
-        // Remove from tracked processes before stopping
-        _trackedProcesses.TryRemove(process.Id, out _);
+        // Clear repository state before stopping
+        await _repository.ClearStateAsync(ct);
 
         await _processKiller.StopAsync(process, modelName, logger);
-
-        // Clear the active model reference
-        _activeModelName = null;
     }
 
-    public async Task ShutdownAllAsync(ILogger logger)
+    public async Task ShutdownAllAsync(ILogger logger, CancellationToken ct = default)
     {
-        // Atomically snapshot and clear tracked processes
-        var processesToKill = _trackedProcesses.Values.ToArray();
-        _trackedProcesses.Clear();
+        // Atomically snapshot all tracked processes
+        var allStates = await _repository.GetAllStatesAsync(ct);
+        var processesToKill = new List<Process>();
 
-        // Clear the active model reference
-        _activeModelName = null;
+        foreach (var state in allStates)
+        {
+            try
+            {
+                var process = Process.GetProcessById(state.ProcessId);
+                if (!process.HasExited)
+                    processesToKill.Add(process);
+            }
+            catch (ArgumentException)
+            {
+                // Process already exited
+            }
+        }
+
+        await _repository.ClearStateAsync(ct);
         await _processKiller.ShutdownAllAsync(processesToKill, logger);
     }
 
-    public async Task StopModelByNameAsync(string modelName, ILogger logger)
+    public async Task StopModelByNameAsync(string modelName, ILogger logger, CancellationToken ct = default)
     {
-        var target = FindProcessByTitle(modelName);
+        var state = await GetCurrentStateAsync(modelName, ct);
 
-        if (target is null || target.HasExited)
+        if (state is null)
         {
             logger.LogDebug("No running process found for model '{Model}'", modelName);
+            return;
+        }
+
+        Process? target;
+        try
+        {
+            target = Process.GetProcessById(state.ProcessId);
+            if (target.HasExited)
+            {
+                logger.LogDebug("Process for model '{Model}' (PID: {Pid}) has exited", modelName, state.ProcessId);
+                await _repository.ClearStateAsync(ct);
+                return;
+            }
+        }
+        catch (ArgumentException)
+        {
+            logger.LogDebug("Process for model '{Model}' (PID: {Pid}) not found", modelName, state.ProcessId);
+            await _repository.ClearStateAsync(ct);
             return;
         }
 
@@ -124,7 +152,6 @@ public class DefaultModelLauncher
             modelName, target.Id);
 
         await _processKiller.StopAsync(target, modelName, logger);
-        // Clear the active model reference
-        _activeModelName = null;
+        await _repository.ClearStateAsync(ct);
     }
 }

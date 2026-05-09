@@ -62,9 +62,13 @@ public class Program
         });
         builder.Services.AddSingleton<HealthChecker>();
         builder.Services.AddSingleton<ProcessKiller>();
+        builder.Services.AddSingleton<IModelRepository, InMemoryModelRepository>();
         builder.Services.AddSingleton<DefaultModelLauncher>();
         builder.Services.AddSingleton<GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
+        builder.Services.AddSingleton<IUsagePersistence, SqliteUsagePersistence>();
+        builder.Services.AddSingleton<IStatsService, StatsService>();
+        builder.Services.AddSingleton<UsageService>();
         builder.Services.AddSingleton<SystemIdleTracker>();
         builder.Services.AddSingleton<LaunchParamParser>();
         builder.Services.AddSingleton<RequestForwarder>();
@@ -81,13 +85,13 @@ public class Program
         var app = builder.Build();
 
         // Register shutdown handler to kill all tracked PowerShell windows
-        var launcher = app.Services.GetRequiredService<DefaultModelLauncher>();
+        var modelManager = app.Services.GetRequiredService<ModelManager>();
         var appLogger = app.Services.GetRequiredService<ILogger<Program>>();
         var appLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         appLifetime.ApplicationStopping.Register(async () =>
         {
-            appLogger.LogInformation("Application shutdown initiated — shutting down all tracked PowerShell windows");
-            await launcher.ShutdownAllAsync(appLogger);
+            appLogger.LogInformation("Application shutdown initiated — shutting down all tracked processes");
+            await modelManager.ShutdownAsync(appLifetime.ApplicationStopping);
         });
 
         // Response logging + usage capture middleware (combined — single buffer pass)

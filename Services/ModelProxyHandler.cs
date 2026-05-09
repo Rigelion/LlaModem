@@ -36,34 +36,32 @@ public class ModelProxyHandler
         var modelName = request.Headers[ProxyHeaders.Model].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(modelName))
         {
-            await ErrorResponseWriter.WriteErrorAsync(context, 400, "Missing header",
-                $"The 'X-Llama-Model' header is required. Available models: {string.Join(", ", _config.Value.Models.Keys)}",
-                _logger);
+            await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.BadRequest("MissingHeader",
+                $"The 'X-Llama-Model' header is required. Available models: {string.Join(", ", _config.Value.Models.Keys)}"));
             return;
         }
 
         var modelConfig = _config.Value.Models.GetValueOrDefault(modelName);
         if (modelConfig is null)
         {
-            await ErrorResponseWriter.WriteErrorAsync(context, 400, "Unknown model",
-                $"Model '{modelName}' not found. Available models: {string.Join(", ", _config.Value.Models.Keys)}",
-                _logger);
+            await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.BadRequest("UnknownModel",
+                $"Model '{modelName}' not found. Available models: {string.Join(", ", _config.Value.Models.Keys)}"));
             return;
         }
 
         var launchParams = await _paramParser.ParseAsync(context, request);
         if (launchParams is null && context.Response.HasStarted) return; // error was written
 
-        WarnIfModelAlreadyRunning(launchParams, modelName);
+        await WarnIfModelAlreadyRunningAsync(launchParams, modelName, context.RequestAborted);
         if (context.Response.HasStarted) return;
 
         try
         {
-            await _modelManager.EnsureModelAsync(modelName, launchParams);
+            await _modelManager.EnsureModelAsync(modelName, launchParams, context.RequestAborted);
         }
         catch (Exception ex)
         {
-            await ErrorResponseWriter.WriteAsync(context, 503, "Model unavailable", ex.Message);
+            await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.ServiceUnavailable(ex.Message));
             return;
         }
 
@@ -76,13 +74,17 @@ public class ModelProxyHandler
         await _forwarder.ForwardAsync(context, request, httpClient, targetUrl);
     }
 
-    private void WarnIfModelAlreadyRunning(ModelLaunchParams? launchParams, string modelName)
+    private async Task WarnIfModelAlreadyRunningAsync(ModelLaunchParams? launchParams, string modelName, CancellationToken ct = default)
     {
-        if (launchParams is not null && _modelManager.ActiveModelName == modelName)
+        if (launchParams is not null)
         {
-            _logger.LogWarning(
-                "Model '{Model}' is already running — header launch params will be ignored (only the first start uses them)",
-                modelName);
+            var activeModel = await _modelManager.GetActiveModelNameAsync(ct);
+            if (activeModel == modelName)
+            {
+                _logger.LogWarning(
+                    "Model '{Model}' is already running — header launch params will be ignored (only the first start uses them)",
+                    modelName);
+            }
         }
     }
 

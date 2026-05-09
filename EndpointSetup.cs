@@ -61,9 +61,9 @@ public static class EndpointSetup
 
     private static void MapHealthEndpoint(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/health", (ModelManager modelManager) =>
+        endpoints.MapGet("/health", async (ModelManager modelManager, CancellationToken ct) =>
         {
-            var activeModel = modelManager.ActiveModelName;
+            var activeModel = await modelManager.GetActiveModelNameAsync(ct);
             return Results.Json(new { status = "ok", activeModel });
         });
     }
@@ -80,9 +80,9 @@ public static class EndpointSetup
     {
         var adminGroup = endpoints.MapGroup("/admin");
 
-        adminGroup.MapGet("/status", (ModelManager modelManager, IOptions<AppConfig> config) =>
+        adminGroup.MapGet("/status", async (ModelManager modelManager, IOptions<AppConfig> config, CancellationToken ct) =>
         {
-            var activeModel = modelManager.ActiveModelName;
+            var activeModel = await modelManager.GetActiveModelNameAsync(ct);
             return Results.Json(new { activeModel, backendUrl = config.Value.BackendUrl });
         });
 
@@ -90,26 +90,31 @@ public static class EndpointSetup
         {
             var body = await System.Text.Json.JsonSerializer.DeserializeAsync<SwitchModelRequest>(context.Request.Body);
             if (body?.Model == null)
-                return Results.Json(new { error = "Bad request", message = "Provide a 'model' field in the request body." }, statusCode: 400);
+            {
+                await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.BadRequest("BadRequest",
+                    "Provide a 'model' field in the request body."));
+                return;
+            }
 
             try
             {
-                await modelManager.EnsureModelAsync(body.Model);
-                return Results.Json(new { activeModel = modelManager.ActiveModelName });
+                await modelManager.EnsureModelAsync(body.Model, null, context.RequestAborted);
+                var activeModel = await modelManager.GetActiveModelNameAsync(context.RequestAborted);
+                await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.Ok(new { activeModel }));
             }
             catch (Exception ex)
             {
-                return Results.Json(new { error = "Model unavailable", message = ex.Message }, statusCode: 503);
+                await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.ServiceUnavailable(ex.Message));
             }
         });
 
         adminGroup.MapPost("/stop", async (HttpContext context, ModelManager modelManager) =>
         {
-            var stopped = modelManager.ActiveModelName;
-            if (modelManager.ActiveModelName == null)
+            var stopped = await modelManager.GetActiveModelNameAsync(context.RequestAborted);
+            if (stopped is null)
                 return Results.Json(new { message = "No active model to stop." }, statusCode: 400);
 
-            await modelManager.StopActiveModelAsync();
+            await modelManager.StopActiveModelAsync(context.RequestAborted);
             return Results.Json(new { message = $"Model '{stopped}' stopped." });
         });
     }

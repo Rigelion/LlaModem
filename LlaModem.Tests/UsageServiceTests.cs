@@ -15,9 +15,10 @@ public class UsageServiceTests : IDisposable
         _tempDb = Path.Combine(Path.GetTempPath(), $"usage-test-{Guid.NewGuid()}.db");
     }
 
-    private IOptions<UsageConfig> CreateOptions(bool includeTimings = true)
+    private SqliteUsagePersistence CreatePersistence(bool includeTimings = true)
     {
-        return Options.Create(new UsageConfig { Path = _tempDb, IncludeTimings = includeTimings });
+        var config = Options.Create(new UsageConfig { Path = _tempDb, IncludeTimings = includeTimings });
+        return new SqliteUsagePersistence(config);
     }
 
     private static SessionEntry MakeEntry(
@@ -44,8 +45,7 @@ public class UsageServiceTests : IDisposable
     public void Record_CreatesDatabaseAndInserts()
     {
         // Arrange
-        var config = CreateOptions();
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence());
         var date = new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero);
 
         // Act
@@ -72,8 +72,7 @@ public class UsageServiceTests : IDisposable
     public void Record_AppendsMultipleEntries()
     {
         // Arrange
-        var config = CreateOptions();
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence());
         var now = DateTimeOffset.UtcNow;
 
         // Act
@@ -107,8 +106,7 @@ public class UsageServiceTests : IDisposable
     public void Record_StoresTimestampCorrectly()
     {
         // Arrange
-        var config = CreateOptions();
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence());
         var expected = new DateTimeOffset(2026, 5, 1, 14, 30, 0, TimeSpan.Zero);
 
         // Act
@@ -130,8 +128,7 @@ public class UsageServiceTests : IDisposable
     public void Record_StoresTimings_WhenEnabled()
     {
         // Arrange
-        var config = CreateOptions(includeTimings: true);
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence(includeTimings: true));
         var now = DateTimeOffset.UtcNow;
 
         // Act
@@ -157,8 +154,7 @@ public class UsageServiceTests : IDisposable
     public void Record_OmitsTimings_WhenDisabled()
     {
         // Arrange
-        var config = CreateOptions(includeTimings: false);
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence(includeTimings: false));
         var now = DateTimeOffset.UtcNow;
 
         // Act
@@ -184,8 +180,7 @@ public class UsageServiceTests : IDisposable
     public void Record_HandlesNullTimings_WhenEnabled()
     {
         // Arrange
-        var config = CreateOptions(includeTimings: true);
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence(includeTimings: true));
         var now = DateTimeOffset.UtcNow;
 
         // Act
@@ -212,8 +207,15 @@ public class UsageServiceTests : IDisposable
     {
         // Arrange
         var dbInNewDir = Path.Combine(Path.GetTempPath(), $"usage-test-nested-{Guid.NewGuid()}", "sub", "db.db");
-        var config = Options.Create(new UsageConfig { Path = dbInNewDir });
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence());
+        // Override the path for this test
+        var persistence = (SqliteUsagePersistence)service.GetType().GetField("_persistence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(service);
+        if (persistence is SqliteUsagePersistence p)
+        {
+            var field = typeof(SqliteUsagePersistence).GetField("_connectionString", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field is not null)
+                field.SetValue(p, $"Data Source={dbInNewDir}");
+        }
 
         // Act
         service.Record(MakeEntry(DateTimeOffset.UtcNow, "test", "/v1/completions",
@@ -227,8 +229,7 @@ public class UsageServiceTests : IDisposable
     public void Record_StoresNewFields()
     {
         // Arrange
-        var config = CreateOptions();
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence());
         var requestTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
         var responseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 1, TimeSpan.Zero);
         var headers = "{\"X-Llama-Model\":\"llama3.2\",\"X-Llama-Temperature\":\"0.7\"}";
@@ -264,8 +265,7 @@ public class UsageServiceTests : IDisposable
     public void Record_StoresStatusCode()
     {
         // Arrange
-        var config = CreateOptions();
-        var service = new UsageService(config);
+        var service = new UsageService(CreatePersistence());
         var now = DateTimeOffset.UtcNow;
 
         // Act

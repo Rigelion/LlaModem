@@ -1,4 +1,5 @@
 using LlaModem.Models;
+using LlaModem.Utilities;
 using System.Text;
 using System.Text.Json;
 
@@ -17,10 +18,13 @@ public static class UsageExtractor
     public static TokenUsage? Extract(string raw)
     {
         var cleaned = StripSseFormat(raw);
-
         if (string.IsNullOrWhiteSpace(cleaned))
             return null;
+        return ParseSingleOrNdjson(cleaned);
+    }
 
+    private static TokenUsage? ParseSingleOrNdjson(string cleaned)
+    {
         // Try parsing as single JSON object first (standard OpenAI response)
         try
         {
@@ -34,28 +38,31 @@ public static class UsageExtractor
 
         // Parse as NDJSON — one JSON object per line
         var lines = cleaned.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        TokenUsage? lastUsage = null;
-
-        foreach (var line in lines)
+        var usages = new List<TokenUsage>();
+        foreach (var usage in lines.Select(ParseLine))
         {
-            var trimmed = line.Trim();
-            if (trimmed == "[DONE]" || trimmed.Length == 0)
-                continue;
-
-            try
-            {
-                using var doc = JsonDocument.Parse(trimmed);
-                var usage = TryExtractUsage(doc.RootElement);
-                if (usage is not null)
-                    lastUsage = usage;
-            }
-            catch
-            {
-                // Skip unparseable lines
-            }
+            if (usage is not null)
+                usages.Add(usage);
         }
+        return usages.Count > 0 ? usages[^1] : null;
+    }
 
-        return lastUsage;
+    private static TokenUsage? ParseLine(string line)
+    {
+        var trimmed = line.Trim();
+        if (trimmed == "[DONE]" || trimmed.Length == 0)
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(trimmed);
+            return TryExtractUsage(doc.RootElement);
+        }
+        catch
+        {
+            // Skip unparseable lines
+            return null;
+        }
     }
 
     /// <summary>
@@ -66,7 +73,12 @@ public static class UsageExtractor
         var cleaned = StripSseFormat(raw);
         if (string.IsNullOrWhiteSpace(cleaned))
             return null;
+        return ExtractModelFromJson(cleaned);
+    }
 
+    private static string? ExtractModelFromJson(string cleaned)
+    {
+        // Try parsing as single JSON object first
         try
         {
             using var doc = JsonDocument.Parse(cleaned);
@@ -74,25 +86,34 @@ public static class UsageExtractor
         }
         catch
         {
-            // NDJSON fallback — check each line
+            // NDJSON fallback — check each line in reverse order (last wins)
             var lines = cleaned.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in lines.Reverse())
+            var models = new List<string>();
+            foreach (var model in lines.Reverse().Select(ExtractModelFromLine))
             {
-                var trimmed = line.Trim();
-                if (trimmed == "[DONE]" || trimmed.Length == 0)
-                    continue;
-                try
-                {
-                    using var doc = JsonDocument.Parse(trimmed);
-                    var model = GetString(doc.RootElement, "model");
-                    if (!string.IsNullOrEmpty(model))
-                        return model;
-                }
-                catch { /* skip */ }
+                if (model is not null)
+                    models.Add(model);
             }
+            return models.Count > 0 ? models[^1] : null;
         }
+    }
 
-        return null;
+    private static string? ExtractModelFromLine(string line)
+    {
+        var trimmed = line.Trim();
+        if (trimmed == "[DONE]" || trimmed.Length == 0)
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(trimmed);
+            var model = GetString(doc.RootElement, "model");
+            return string.IsNullOrEmpty(model) ? null : model;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -119,21 +140,19 @@ public static class UsageExtractor
             || context.Response.Headers.TransferEncoding.Any();
     }
 
+    /// <summary>
+    /// Strips Server-Sent Events (SSE) format from raw JSON.
+    /// Removes "data: " prefixes and filters empty lines.
+    /// </summary>
     private static string StripSseFormat(string raw)
     {
-        var sb = new StringBuilder(raw.Length);
-        var lines = raw.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
-
-        foreach (var line in lines)
-        {
-            var trimmed = line.Trim();
-            if (trimmed.StartsWith("data: ", StringComparison.Ordinal))
-                sb.AppendLine(trimmed[6..]);
-            else if (trimmed.Length > 0)
-                sb.AppendLine(trimmed);
-        }
-
-        return sb.ToString().Trim();
+        return string.Join("\n", raw.Split(new[] { '\r', '\n' }, StringSplitOptions.None)
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0 && !line.StartsWith("data: ", StringComparison.Ordinal))
+            .Concat(raw.Split(new[] { '\r', '\n' }, StringSplitOptions.None)
+                .Where(line => line.Trim().StartsWith("data: ", StringComparison.Ordinal))
+                .Select(line => line.Trim()[6..]))
+            .Where(line => line.Length > 0));
     }
 
     private static TokenUsage? TryExtractUsage(JsonElement root)

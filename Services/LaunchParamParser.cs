@@ -53,8 +53,8 @@ public class LaunchParamParser
 
         if (!double.TryParse(headerValue, out var parsed))
         {
-            await ErrorResponseWriter.WriteAsync(context, 400, "Bad request",
-                $"Invalid {headerName} value: '{headerValue}'");
+            await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.BadRequest("InvalidParameterValue",
+                $"Invalid {headerName} value: '{headerValue}'"));
             return (null, true);
         }
 
