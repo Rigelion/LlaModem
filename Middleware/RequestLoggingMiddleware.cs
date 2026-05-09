@@ -1,19 +1,29 @@
 using LlaModem.Config;
 using LlaModem.Utilities;
+using Microsoft.Extensions.Options;
 
 namespace LlaModem.Middleware;
 
+/// <summary>
+/// Logs request and response details with configurable body logging.
+/// </summary>
 public class RequestLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestLoggingMiddleware> _logger;
+    private readonly bool _logRequestBody;
+    private readonly bool _logResponseBody;
 
     public RequestLoggingMiddleware(
         RequestDelegate next,
-        ILogger<RequestLoggingMiddleware> logger)
+        ILogger<RequestLoggingMiddleware> logger,
+        IOptions<RouterConfig> routerConfig)
     {
         _next = next;
         _logger = logger;
+        var logging = routerConfig.Value?.Logging ?? new RouterConfig.LoggingConfig();
+        _logRequestBody = logging.LogRequestBody;
+        _logResponseBody = logging.LogResponseBody;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -37,8 +47,8 @@ public class RequestLoggingMiddleware
             method, scheme, context.Request.Host, path, queryString, clientIp, modelName,
             temperature ?? "(default)", topP ?? "(default)", presencePenalty ?? "(default)", hasAuth);
 
-        // Log full request body at Debug level
-        if (context.Request.Body.CanRead)
+        // Log full request body at Debug level (configurable)
+        if (_logRequestBody && context.Request.Body.CanRead)
         {
             var buffer = await HttpRequestExtensions.ReadBodyAsync(context.Request);
             if (buffer.Length > 0)
@@ -69,6 +79,19 @@ public class RequestLoggingMiddleware
             _logger.LogInformation(
                 "[RESPONSE] {Method} {Path} | Status: {StatusCode} | Duration: {Duration}ms | ResponseSize: {ResponseSize} bytes",
                 method, path, statusCode, sw.ElapsedMilliseconds, responseSize);
+
+            // Log response body at Debug level (configurable)
+            if (_logResponseBody && context.Response.Body.CanSeek && context.Response.Body.Length > 0)
+            {
+                context.Response.Body.Position = 0;
+                var buffer = new byte[context.Response.Body.Length];
+                var bytesRead = context.Response.Body.Read(buffer, 0, buffer.Length);
+                if (bytesRead > 0)
+                {
+                    var bodyString = System.Text.Encoding.UTF8.GetString(buffer);
+                    _logger.LogDebug("[RESPONSE BODY] {Body}", bodyString);
+                }
+            }
         }
     }
 }

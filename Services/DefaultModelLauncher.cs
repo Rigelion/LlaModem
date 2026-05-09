@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace LlaModem.Services;
@@ -7,16 +8,15 @@ public class DefaultModelLauncher
     private const string PowerShellExe = "powershell";
     private const string PowerShellTitle = "LlaModem";
 
-    /// <summary>
-    /// Thread-safe collection of all PowerShell processes tracked by LlaModem.
-    /// </summary>
-    private readonly HashSet<Process> _trackedProcesses = new();
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HealthChecker _healthChecker;
     private readonly ProcessKiller _processKiller;
 
     private string? _activeModelName;
-    private readonly object _lock = new();
+    /// <summary>
+    /// Thread-safe process tracking using ConcurrentHashSet pattern.
+    /// </summary>
+    private readonly ConcurrentDictionary<int, Process> _trackedProcesses = new();
 
     public DefaultModelLauncher(
         IHttpClientFactory httpClientFactory,
@@ -61,12 +61,7 @@ public class DefaultModelLauncher
         // Track the process for shutdown cleanup
         if (process is not null)
         {
-            lock (_lock)
-            {
-                _trackedProcesses.Add(process);
-            }
-
-            // Persist the active model name so we can verify it later
+            _trackedProcesses[process.Id] = process;
             _activeModelName = modelName;
         }
 
@@ -95,10 +90,7 @@ public class DefaultModelLauncher
     public async Task StopAsync(Process process, string modelName, ILogger logger)
     {
         // Remove from tracked processes before stopping
-        lock (_lock)
-        {
-            _trackedProcesses.Remove(process);
-        }
+        _trackedProcesses.TryRemove(process.Id, out _);
 
         await _processKiller.StopAsync(process, modelName, logger);
 
@@ -108,13 +100,9 @@ public class DefaultModelLauncher
 
     public async Task ShutdownAllAsync(ILogger logger)
     {
-        Process[] processesToKill;
-
-        lock (_lock)
-        {
-            processesToKill = _trackedProcesses.ToArray();
-            _trackedProcesses.Clear();
-        }
+        // Atomically snapshot and clear tracked processes
+        var processesToKill = _trackedProcesses.Values.ToArray();
+        _trackedProcesses.Clear();
 
         // Clear the active model reference
         _activeModelName = null;

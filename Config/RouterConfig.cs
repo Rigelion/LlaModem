@@ -13,6 +13,20 @@ public record RouterConfig
     /// </summary>
     public TimeoutConfig Timeouts { get; init; } = new();
 
+    /// <summary>
+    /// Logging configuration for request/response body logging.
+    /// </summary>
+    public LoggingConfig Logging { get; init; } = new();
+
+    public record LoggingConfig
+    {
+        /// <summary>Enable logging of request bodies at Debug level (default: false).</summary>
+        public bool LogRequestBody { get; init; } = false;
+
+        /// <summary>Enable logging of response bodies at Debug level (default: false).</summary>
+        public bool LogResponseBody { get; init; } = false;
+    }
+
     public record TimeoutConfig
     {
         /// <summary>Minimum GPU VRAM in GB required to start a model (default: 12).</summary>

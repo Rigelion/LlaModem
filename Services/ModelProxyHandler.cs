@@ -36,16 +36,18 @@ public class ModelProxyHandler
         var modelName = request.Headers[ProxyHeaders.Model].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(modelName))
         {
-            await ErrorResponseWriter.WriteAsync(context, 400, "Missing header",
-                $"The 'X-Llama-Model' header is required. Available models: {string.Join(", ", _config.Value.Models.Keys)}");
+            await ErrorResponseWriter.WriteErrorAsync(context, 400, "Missing header",
+                $"The 'X-Llama-Model' header is required. Available models: {string.Join(", ", _config.Value.Models.Keys)}",
+                _logger);
             return;
         }
 
         var modelConfig = _config.Value.Models.GetValueOrDefault(modelName);
         if (modelConfig is null)
         {
-            await ErrorResponseWriter.WriteAsync(context, 400, "Unknown model",
-                $"Model '{modelName}' not found. Available models: {string.Join(", ", _config.Value.Models.Keys)}");
+            await ErrorResponseWriter.WriteErrorAsync(context, 400, "Unknown model",
+                $"Model '{modelName}' not found. Available models: {string.Join(", ", _config.Value.Models.Keys)}",
+                _logger);
             return;
         }
 
