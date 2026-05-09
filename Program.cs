@@ -35,7 +35,7 @@ public class Program
             }
         });
         builder.Services.AddSingleton<IUsageService, UsageService>();
-        builder.Services.AddSingleton<IStatsService, StatsService>(sp =>
+        builder.Services.AddSingleton<IStatsService>(sp =>
         {
             var config = sp.GetRequiredService<IOptions<UsageConfig>>().Value;
             var basePath = config.Path;
@@ -69,7 +69,6 @@ public class Program
         builder.Services.AddSingleton<ModelMetricsService>();
         builder.Services.AddSingleton<DashboardService>();
         builder.Services.AddSingleton<IUsagePersistence, SqliteUsagePersistence>();
-        builder.Services.AddSingleton<IStatsService, StatsService>();
         builder.Services.AddSingleton<UsageService>();
         builder.Services.AddSingleton<SystemIdleTracker>();
         builder.Services.AddSingleton<LaunchParamParser>();
