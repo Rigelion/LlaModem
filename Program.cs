@@ -66,6 +66,7 @@ public class Program
         builder.Services.AddOpenApi(options =>
         {
             options.AddDocumentTransformer<AdminRouteFilter>();
+            options.AddDocumentTransformer<OpenApiDocumentTransformer>();
         });
         builder.Services.AddSingleton<HealthChecker>();
         builder.Services.AddSingleton<ProcessKiller>();
@@ -117,6 +118,8 @@ public class Program
         app.MapScalarApiReference();
         app.ConfigureEndpoints();
         app.MapStatsEndpoints();
+        app.MapAdminEndpoints();
+        app.MapDashboardEndpoints();
 
         app.Run();
     }

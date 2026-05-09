@@ -129,14 +129,12 @@ public static class DashboardEndpointExtensions
     {
         var dashboardGroup = endpoints.MapGroup("/admin/dashboard");
 
-        // GET /admin/dashboard/models
         dashboardGroup.MapGet("/models", async (DashboardService dashboard, CancellationToken ct) =>
         {
             var models = await dashboard.GetAllModelsAsync(ct);
             return Results.Json(models);
         }).WithName("GetAllModels");
 
-        // GET /admin/dashboard/models/{name}
         dashboardGroup.MapGet("/models/{name}", async (
             DashboardService dashboard,
             string name,
@@ -150,7 +148,6 @@ public static class DashboardEndpointExtensions
             return Results.Json(model);
         }).WithName("GetModel");
 
-        // POST /admin/dashboard/models/{name}/start
         dashboardGroup.MapPost("/models/{name}/start", async (
             DashboardService dashboard,
             HttpContext context,
@@ -187,7 +184,6 @@ public static class DashboardEndpointExtensions
             });
         }).WithName("StartModel");
 
-        // POST /admin/dashboard/models/{name}/stop
         dashboardGroup.MapPost("/models/{name}/stop", async (
             DashboardService dashboard,
             HttpContext context,
@@ -214,7 +210,6 @@ public static class DashboardEndpointExtensions
             return Results.Ok(new { message = result.Message });
         }).WithName("StopModel");
 
-        // PUT /admin/dashboard/models/{name}/params
         dashboardGroup.MapPut("/models/{name}/params", async (
             DashboardService dashboard,
             HttpContext context,
@@ -238,7 +233,6 @@ public static class DashboardEndpointExtensions
             }
         }).WithName("UpdateModelParams");
 
-        // GET /admin/dashboard/models/{name}/health
         dashboardGroup.MapGet("/models/{name}/health", async (
             DashboardService dashboard,
             string name,
