@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace LlaModem.Services;
 
-public class DefaultModelLauncher : IModelLauncher
+public class DefaultModelLauncher
 {
     private const string PowerShellExe = "powershell";
     private const string PowerShellTitle = "LlaModem";
@@ -12,20 +12,16 @@ public class DefaultModelLauncher : IModelLauncher
     /// </summary>
     private readonly HashSet<Process> _trackedProcesses = new();
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IHealthChecker _healthChecker;
-    private readonly IProcessKiller _processKiller;
+    private readonly HealthChecker _healthChecker;
+    private readonly ProcessKiller _processKiller;
 
-    /// <summary>
-    /// Lock for protecting the tracked processes collection.
-    /// </summary>
+    private string? _activeModelName;
     private readonly object _lock = new();
-
-    private static string? _activeModelName;
 
     public DefaultModelLauncher(
         IHttpClientFactory httpClientFactory,
-        IHealthChecker healthChecker,
-        IProcessKiller processKiller)
+        HealthChecker healthChecker,
+        ProcessKiller processKiller)
     {
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
@@ -82,7 +78,7 @@ public class DefaultModelLauncher : IModelLauncher
         return string.Equals(_activeModelName, modelName, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static Process? FindProcessByTitle(string _ = "")
+    private Process? FindProcessByTitle(string _ = "")
     {
         var psProcesses = Process.GetProcessesByName("powershell");
         return Array.Find(psProcesses, p =>
@@ -120,6 +116,7 @@ public class DefaultModelLauncher : IModelLauncher
             _trackedProcesses.Clear();
         }
 
+        // Clear the active model reference
         _activeModelName = null;
         await _processKiller.ShutdownAllAsync(processesToKill, logger);
     }
@@ -139,6 +136,7 @@ public class DefaultModelLauncher : IModelLauncher
             modelName, target.Id);
 
         await _processKiller.StopAsync(target, modelName, logger);
+        // Clear the active model reference
         _activeModelName = null;
     }
 }

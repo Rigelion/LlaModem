@@ -9,7 +9,7 @@ namespace LlaModem.Services;
 /// Checks available VRAM via nvidia-smi.
 /// Returns null (insufficient) if nvidia-smi is unavailable — VRAM check is best-effort.
 /// </summary>
-public class GpuMemoryChecker : IGpuMemoryChecker
+public class GpuMemoryChecker
 {
     private readonly RouterConfig.TimeoutConfig _timeouts;
     private readonly ILogger<GpuMemoryChecker> _logger;

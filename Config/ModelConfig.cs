@@ -2,15 +2,9 @@ namespace LlaModem.Config;
 
 /// <summary>
 /// Configuration for a single model.
-/// Environment variables in StartScript are expanded at assignment time.
+/// Environment variables in StartScript are expanded at binding time in Program.cs.
 /// </summary>
 public record ModelConfig
 {
-    private readonly string? _expandedScript;
-
-    public string StartScript
-    {
-        get => _expandedScript ?? string.Empty;
-        init => _expandedScript = Environment.ExpandEnvironmentVariables(value ?? string.Empty);
-    }
+    public string StartScript { get; set; } = string.Empty;
 }

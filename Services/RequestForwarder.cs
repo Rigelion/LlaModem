@@ -3,13 +3,13 @@ using LlaModem.Utilities;
 
 namespace LlaModem.Services;
 
-public class RequestForwarder : IRequestForwarder
+public class RequestForwarder
 {
-    private readonly IHeaderValueInjector _headerValueInjector;
+    private readonly HeaderValueInjector _headerValueInjector;
     private readonly ILogger<RequestForwarder> _logger;
 
     public RequestForwarder(
-        IHeaderValueInjector headerValueInjector,
+        HeaderValueInjector headerValueInjector,
         ILogger<RequestForwarder> logger)
     {
         _headerValueInjector = headerValueInjector;

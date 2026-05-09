@@ -25,6 +25,15 @@ public class Program
         builder.Services.AddOptions<AppConfig>().Bind(builder.Configuration).ValidateOnStart();
         builder.Services.AddOptions<RouterConfig>().Bind(builder.Configuration.GetSection("Router")).ValidateOnStart();
         builder.Services.AddOptions<UsageConfig>().Bind(builder.Configuration.GetSection(UsageConfig.SectionName)).ValidateOnStart();
+
+        // Expand environment variables in ModelConfig.StartScript at binding time (pure function)
+        builder.Services.Configure<AppConfig>(config =>
+        {
+            foreach (var model in config.Models.Values)
+            {
+                model.StartScript = Environment.ExpandEnvironmentVariables(model.StartScript);
+            }
+        });
         builder.Services.AddSingleton<IUsageService, UsageService>();
         builder.Services.AddSingleton<IStatsService, StatsService>(sp =>
         {
@@ -45,25 +54,25 @@ public class Program
             server.ListenAnyIP(uri.Port);
         });
 
-        // Register services
+        // Register services (concrete types only — no unnecessary interfaces)
         builder.Services.AddHttpClient();
         builder.Services.AddHttpClient("ModelManager", client =>
         {
             client.Timeout = TimeSpan.FromMinutes(5);
         });
-        builder.Services.AddSingleton<IHealthChecker, HealthChecker>();
-        builder.Services.AddSingleton<IProcessKiller, ProcessKiller>();
-        builder.Services.AddSingleton<IModelLauncher, DefaultModelLauncher>();
-        builder.Services.AddSingleton<IGpuMemoryChecker, GpuMemoryChecker>();
+        builder.Services.AddSingleton<HealthChecker>();
+        builder.Services.AddSingleton<ProcessKiller>();
+        builder.Services.AddSingleton<DefaultModelLauncher>();
+        builder.Services.AddSingleton<GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
-        builder.Services.AddSingleton<ISystemIdleTracker, SystemIdleTracker>();
-        builder.Services.AddSingleton<ILaunchParamParser, LaunchParamParser>();
-        builder.Services.AddSingleton<IRequestForwarder, RequestForwarder>();
+        builder.Services.AddSingleton<SystemIdleTracker>();
+        builder.Services.AddSingleton<LaunchParamParser>();
+        builder.Services.AddSingleton<RequestForwarder>();
         builder.Services.AddSingleton<ModelProxyHandler>();
         builder.Services.AddHostedService<IdleTimeoutService>();
 
         // Register header value injector with configured mappings
-        builder.Services.AddSingleton<IHeaderValueInjector>(sp =>
+        builder.Services.AddSingleton<HeaderValueInjector>(sp =>
         {
             var routerConfig = sp.GetRequiredService<IOptions<RouterConfig>>().Value;
             return new HeaderValueInjector(routerConfig.EnableBodyHeaderInjection, routerConfig.BodyHeaderMappings);
@@ -72,7 +81,7 @@ public class Program
         var app = builder.Build();
 
         // Register shutdown handler to kill all tracked PowerShell windows
-        var launcher = app.Services.GetRequiredService<IModelLauncher>();
+        var launcher = app.Services.GetRequiredService<DefaultModelLauncher>();
         var appLogger = app.Services.GetRequiredService<ILogger<Program>>();
         var appLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         appLifetime.ApplicationStopping.Register(async () =>

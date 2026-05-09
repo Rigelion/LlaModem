@@ -10,10 +10,10 @@ public class ModelManager
     private readonly RouterConfig.TimeoutConfig _timeouts;
     private readonly ILogger<ModelManager> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IHealthChecker _healthChecker;
-    private readonly IProcessKiller _processKiller;
-    private readonly IModelLauncher _launcher;
-    private readonly IGpuMemoryChecker _gpuChecker;
+    private readonly HealthChecker _healthChecker;
+    private readonly ProcessKiller _processKiller;
+    private readonly DefaultModelLauncher _launcher;
+    private readonly GpuMemoryChecker _gpuChecker;
     private readonly object _lock = new();
 
     private string? _activeModelName;
@@ -27,10 +27,10 @@ public class ModelManager
         IOptions<RouterConfig> routerConfig,
         ILogger<ModelManager> logger,
         IHttpClientFactory httpClientFactory,
-        IHealthChecker healthChecker,
-        IProcessKiller processKiller,
-        IModelLauncher launcher,
-        IGpuMemoryChecker gpuChecker)
+        HealthChecker healthChecker,
+        ProcessKiller processKiller,
+        DefaultModelLauncher launcher,
+        GpuMemoryChecker gpuChecker)
     {
         _config = config.Value;
         _timeouts = routerConfig.Value.Timeouts;

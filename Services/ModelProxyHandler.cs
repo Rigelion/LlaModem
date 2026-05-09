@@ -7,18 +7,18 @@ public class ModelProxyHandler
 {
     private readonly IOptions<AppConfig> _config;
     private readonly ModelManager _modelManager;
-    private readonly ISystemIdleTracker _systemIdleTracker;
-    private readonly ILaunchParamParser _paramParser;
-    private readonly IRequestForwarder _forwarder;
+    private readonly SystemIdleTracker _systemIdleTracker;
+    private readonly LaunchParamParser _paramParser;
+    private readonly RequestForwarder _forwarder;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ModelProxyHandler> _logger;
 
     public ModelProxyHandler(
         IOptions<AppConfig> config,
         ModelManager modelManager,
-        ISystemIdleTracker systemIdleTracker,
-        ILaunchParamParser paramParser,
-        IRequestForwarder forwarder,
+        SystemIdleTracker systemIdleTracker,
+        LaunchParamParser paramParser,
+        RequestForwarder forwarder,
         IHttpClientFactory httpClientFactory,
         ILogger<ModelProxyHandler> logger)
     {

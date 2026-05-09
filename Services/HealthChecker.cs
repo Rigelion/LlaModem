@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
 
-public class HealthChecker : IHealthChecker
+public class HealthChecker
 {
     private readonly RouterConfig.TimeoutConfig _timeouts;
     private readonly IHttpClientFactory _httpClientFactory;

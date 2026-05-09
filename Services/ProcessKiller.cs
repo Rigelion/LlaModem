@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
 
-public class ProcessKiller : IProcessKiller
+public class ProcessKiller
 {
     private readonly int _gracefulShutdownTimeoutMs;
 

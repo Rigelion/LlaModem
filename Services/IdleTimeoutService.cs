@@ -11,7 +11,7 @@ public class IdleTimeoutService : BackgroundService
     private const int CheckIntervalDivisor = 20;
 
     private readonly ModelManager _modelManager;
-    private readonly ISystemIdleTracker _systemIdleTracker;
+    private readonly SystemIdleTracker _systemIdleTracker;
     private readonly RouterConfig _config;
     private readonly ILogger<IdleTimeoutService> _logger;
     private readonly PeriodicTimer _timer;
@@ -26,7 +26,7 @@ public class IdleTimeoutService : BackgroundService
 
     public IdleTimeoutService(
         ModelManager modelManager,
-        ISystemIdleTracker systemIdleTracker,
+        SystemIdleTracker systemIdleTracker,
         IOptions<RouterConfig> config,
         ILogger<IdleTimeoutService> logger)
     {

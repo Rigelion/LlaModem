@@ -2,7 +2,7 @@ using LlaModem.Config;
 
 namespace LlaModem.Services;
 
-public class LaunchParamParser : ILaunchParamParser
+public class LaunchParamParser
 {
 
     public async Task<ModelLaunchParams?> ParseAsync(HttpContext context, HttpRequest request)
