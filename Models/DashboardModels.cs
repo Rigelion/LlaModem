@@ -30,7 +30,12 @@ public sealed record StartModelRequest(
     double? RepetitionPenalty = null)
 {
     public ModelLaunchParams ToLaunchParams() => new(
-        Temperature, TopP, TopK, MinP, PresencePenalty, RepetitionPenalty);
+        Temperature ?? Services.ModelLaunchParams.Defaults.Temperature,
+        TopP ?? Services.ModelLaunchParams.Defaults.TopP,
+        TopK ?? Services.ModelLaunchParams.Defaults.TopK,
+        MinP ?? Services.ModelLaunchParams.Defaults.MinP,
+        PresencePenalty ?? Services.ModelLaunchParams.Defaults.PresencePenalty,
+        RepetitionPenalty ?? Services.ModelLaunchParams.Defaults.RepetitionPenalty);
 }
 
 /// <summary>
@@ -42,7 +47,16 @@ public sealed record UpdateModelParamsRequest(
     double? TopK = null,
     double? MinP = null,
     double? PresencePenalty = null,
-    double? RepetitionPenalty = null);
+    double? RepetitionPenalty = null)
+{
+    public ModelLaunchParams ToLaunchParams() => new(
+        Temperature ?? ModelLaunchParams.Defaults.Temperature,
+        TopP ?? ModelLaunchParams.Defaults.TopP,
+        TopK ?? ModelLaunchParams.Defaults.TopK,
+        MinP ?? ModelLaunchParams.Defaults.MinP,
+        PresencePenalty ?? ModelLaunchParams.Defaults.PresencePenalty,
+        RepetitionPenalty ?? ModelLaunchParams.Defaults.RepetitionPenalty);
+}
 
 /// <summary>
 /// Response from health check endpoint.

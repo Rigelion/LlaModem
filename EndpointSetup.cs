@@ -157,7 +157,21 @@ public static class DashboardEndpointExtensions
             string name,
             CancellationToken ct) =>
         {
-            var body = await System.Text.Json.JsonSerializer.DeserializeAsync<StartModelRequest>(context.Request.Body);
+            StartModelRequest? body;
+            try
+            {
+                body = await System.Text.Json.JsonSerializer.DeserializeAsync<StartModelRequest>(context.Request.Body);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return Results.BadRequest(new { error = "InvalidRequest", message = "Request body must be valid JSON" });
+            }
+
+            if (body is null)
+            {
+                return Results.BadRequest(new { error = "InvalidRequest", message = "Request body is required" });
+            }
+
             var result = await dashboard.StartModelAsync(name, body, ct);
 
             if (!result.Success)
