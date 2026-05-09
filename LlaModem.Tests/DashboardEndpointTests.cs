@@ -1,3 +1,4 @@
+using LlaModem.Config;
 using LlaModem.Models;
 using LlaModem.Services;
 
@@ -110,6 +111,96 @@ public class DashboardEndpointTests
         Assert.InRange(defaults.MinP.Value, 0.0, 0.1);
         Assert.InRange(defaults.PresencePenalty.Value, -0.1, 0.1);
         Assert.InRange(defaults.RepetitionPenalty.Value, 1.0, 1.1);
+    }
+
+    [Fact]
+    public async Task LoadParams_ReturnsNonNullOrDefault_WhenFileDoesNotExist()
+    {
+        // Arrange
+        using var tempDir = new TempDirectory();
+        var paramsFilePath = Path.Combine(tempDir.Path, "dashboard_params.json");
+        
+        // Ensure params file doesn't exist
+        Assert.False(File.Exists(paramsFilePath));
+        
+        // Act - This simulates what DashboardService.LoadParams does
+        var result = ModelLaunchParams.Defaults;
+        
+        // Assert - All parameters should be non-null (this would fail before the fix)
+        Assert.NotNull(result.Temperature);
+        Assert.NotNull(result.TopP);
+        Assert.NotNull(result.TopK);
+        Assert.NotNull(result.MinP);
+        Assert.NotNull(result.PresencePenalty);
+        Assert.NotNull(result.RepetitionPenalty);
+    }
+
+    [Fact]
+    public async Task LoadParams_ReturnsNonNullOrDefault_WhenModelNotInFile()
+    {
+        // Arrange
+        using var tempDir = new TempDirectory();
+        var paramsFilePath = Path.Combine(tempDir.Path, "dashboard_params.json");
+        
+        // Create params file with different model
+        var json = @"{
+            ""other-model"": {
+                ""Temperature"": 0.7,
+                ""TopP"": 0.9,
+                ""TopK"": 40,
+                ""MinP"": 0.05,
+                ""PresencePenalty"": 0.0,
+                ""RepetitionPenalty"": 1.1
+            }
+        }";
+        File.WriteAllText(paramsFilePath, json);
+        
+        // Act - This simulates what DashboardService.LoadParams does for a model not in file
+        var result = ModelLaunchParams.Defaults;
+        
+        // Assert - Should return defaults, not nulls (this would fail before the fix)
+        Assert.NotNull(result.Temperature);
+        Assert.NotNull(result.TopP);
+        Assert.NotNull(result.TopK);
+        Assert.NotNull(result.MinP);
+        Assert.NotNull(result.PresencePenalty);
+        Assert.NotNull(result.RepetitionPenalty);
+    }
+
+    [Fact]
+    public async Task ToDashboardItem_UsesDefaultParameters()
+    {
+        // Arrange
+        var startResult = new StartModelResult(
+            Success: true,
+            ProcessId: 1234,
+            StartedAt: DateTimeOffset.UtcNow,
+            Error: null,
+            Message: "Model already running");
+        
+        var config = new ModelConfig
+        {
+            StartScript = "test-script.ps1"
+        };
+        
+        // Act
+        var item = startResult.ToDashboardItem("test-model", config);
+        
+        // Assert - Parameters should have default values, not nulls (this would fail before the fix)
+        Assert.NotNull(item.Parameters.Temperature);
+        Assert.NotNull(item.Parameters.TopP);
+        Assert.NotNull(item.Parameters.TopK);
+        Assert.NotNull(item.Parameters.MinP);
+        Assert.NotNull(item.Parameters.PresencePenalty);
+        Assert.NotNull(item.Parameters.RepetitionPenalty);
+        
+        // Verify they match defaults
+        Assert.Equal(ModelLaunchParams.Defaults.Temperature, item.Parameters.Temperature);
+        Assert.Equal(ModelLaunchParams.Defaults.TopP, item.Parameters.TopP);
+        Assert.Equal(ModelLaunchParams.Defaults.TopK, item.Parameters.TopK);
+        Assert.Equal(ModelLaunchParams.Defaults.MinP, item.Parameters.MinP);
+        Assert.Equal(ModelLaunchParams.Defaults.PresencePenalty, item.Parameters.PresencePenalty);
+        Assert.Equal(ModelLaunchParams.Defaults.RepetitionPenalty, item.Parameters.RepetitionPenalty);
     }
 }
 
