@@ -66,6 +66,8 @@ public class Program
         builder.Services.AddSingleton<DefaultModelLauncher>();
         builder.Services.AddSingleton<GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
+        builder.Services.AddSingleton<ModelMetricsService>();
+        builder.Services.AddSingleton<DashboardService>();
         builder.Services.AddSingleton<IUsagePersistence, SqliteUsagePersistence>();
         builder.Services.AddSingleton<IStatsService, StatsService>();
         builder.Services.AddSingleton<UsageService>();

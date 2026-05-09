@@ -13,15 +13,18 @@ public sealed class ResponseUsageMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly IUsageService? _usageService;
+    private readonly ModelMetricsService? _metricsService;
     private readonly ILogger<ResponseUsageMiddleware> _logger;
 
     public ResponseUsageMiddleware(
         RequestDelegate next,
         IUsageService? usageService,
+        ModelMetricsService? metricsService,
         ILogger<ResponseUsageMiddleware> logger)
     {
         _next = next;
         _usageService = usageService;
+        _metricsService = metricsService;
         _logger = logger;
     }
 
@@ -98,6 +101,12 @@ public sealed class ResponseUsageMiddleware
                         _logger.LogInformation(
                             "[USAGE] {Model} {Route} — Prompt: {PromptTokens}, Completion: {CompletionTokens}, Total: {TotalTokens}{Timing}",
                             model, route, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens, timingInfo);
+
+                        // Update metrics service
+                        if (_metricsService is not null)
+                        {
+                            _metricsService.RecordUsage(model, usage.TotalTokens, entry.RequestTime);
+                        }
                     }
                 }
             }

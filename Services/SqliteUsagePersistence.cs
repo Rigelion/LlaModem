@@ -76,13 +76,13 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
         var now = DateTimeOffset.UtcNow;
 
-        var summary = await GetSummaryAsync(conn, days, model, ct);
+        var summary = await GetSummaryAsync(conn, days, model, ct) ?? new UsageSummaryRow(0, 0, 0, 0, 0, 0, 0);
         var daily = await GetDailyRowsAsync(conn, days, model, ct);
 
         return new DailyUsageResponse((cutoff.ToString("yyyy-MM-dd"), now.ToString("yyyy-MM-dd")), summary, daily);
     }
 
-    private async Task<UsageSummaryRow> GetSummaryAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)
+    private async Task<UsageSummaryRow?> GetSummaryAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)
     {
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
 
@@ -102,7 +102,7 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
             """ + (model is not null ? " AND model = @model" : "");
 
         var param = new { days, model };
-        return await conn.QueryFirstOrDefaultAsync<UsageSummaryRow>(sql, param);
+        return await conn.QueryFirstOrDefaultAsync<UsageSummaryRow?>(sql, param);
     }
 
     private async Task<DailyUsageRow[]> GetDailyRowsAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)

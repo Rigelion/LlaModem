@@ -13,6 +13,7 @@ public static class EndpointSetup
         endpoints.MapHealthEndpoint();
         endpoints.MapV1ProxyEndpoint();
         endpoints.MapAdminEndpoints();
+        endpoints.MapDashboardEndpoints();
     }
 
     public static void MapStatsEndpoints(this IEndpointRouteBuilder endpoints)
@@ -121,3 +122,123 @@ public static class EndpointSetup
 }
 
 public record SwitchModelRequest(string? Model);
+
+public static class DashboardEndpointExtensions
+{
+    public static void MapDashboardEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        var dashboardGroup = endpoints.MapGroup("/admin/dashboard");
+
+        // GET /admin/dashboard/models
+        dashboardGroup.MapGet("/models", async (DashboardService dashboard, CancellationToken ct) =>
+        {
+            var models = await dashboard.GetAllModelsAsync(ct);
+            return Results.Json(models);
+        }).WithName("GetAllModels");
+
+        // GET /admin/dashboard/models/{name}
+        dashboardGroup.MapGet("/models/{name}", async (
+            DashboardService dashboard,
+            string name,
+            CancellationToken ct) =>
+        {
+            var model = await dashboard.GetModelAsync(name, ct);
+            if (model is null)
+            {
+                return Results.NotFound(new { error = "ModelNotFound", message = $"Model '{name}' not found" });
+            }
+            return Results.Json(model);
+        }).WithName("GetModel");
+
+        // POST /admin/dashboard/models/{name}/start
+        dashboardGroup.MapPost("/models/{name}/start", async (
+            DashboardService dashboard,
+            HttpContext context,
+            string name,
+            CancellationToken ct) =>
+        {
+            var body = await System.Text.Json.JsonSerializer.DeserializeAsync<StartModelRequest>(context.Request.Body);
+            var result = await dashboard.StartModelAsync(name, body, ct);
+
+            if (!result.Success)
+            {
+                return Results.Json(new { error = "StartFailed", message = result.Message }, statusCode: 503);
+            }
+
+            return Results.Ok(new
+            {
+                message = result.Message,
+                processId = result.ProcessId,
+                startedAt = result.StartedAt?.ToString("o")
+            });
+        }).WithName("StartModel");
+
+        // POST /admin/dashboard/models/{name}/stop
+        dashboardGroup.MapPost("/models/{name}/stop", async (
+            DashboardService dashboard,
+            HttpContext context,
+            string name,
+            CancellationToken ct) =>
+        {
+            var result = await dashboard.StopModelAsync(name, ct);
+
+            if (!result.Success)
+            {
+                if (result.Message.Contains("not found"))
+                {
+                    return Results.NotFound(new { error = "ModelNotFound", message = result.Message });
+                }
+
+                if (result.Message.Contains("not active"))
+                {
+                    return Results.BadRequest(new { error = "ModelNotActive", message = result.Message });
+                }
+
+                return Results.Json(new { error = "StopFailed", message = result.Message }, statusCode: 503);
+            }
+
+            return Results.Ok(new { message = result.Message });
+        }).WithName("StopModel");
+
+        // PUT /admin/dashboard/models/{name}/params
+        dashboardGroup.MapPut("/models/{name}/params", async (
+            DashboardService dashboard,
+            HttpContext context,
+            string name,
+            CancellationToken ct) =>
+        {
+            var body = await System.Text.Json.JsonSerializer.DeserializeAsync<UpdateModelParamsRequest>(context.Request.Body);
+            if (body is null)
+            {
+                return Results.BadRequest(new { error = "InvalidRequest", message = "Request body is required" });
+            }
+
+            try
+            {
+                var result = dashboard.UpdateParamsAsync(name, body);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.NotFound(new { error = "ModelNotFound", message = ex.Message });
+            }
+        }).WithName("UpdateModelParams");
+
+        // GET /admin/dashboard/models/{name}/health
+        dashboardGroup.MapGet("/models/{name}/health", async (
+            DashboardService dashboard,
+            string name,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await dashboard.GetHealthAsync(name, ct);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = "ModelNotRunning", message = ex.Message });
+            }
+        }).WithName("GetModelHealth");
+    }
+}

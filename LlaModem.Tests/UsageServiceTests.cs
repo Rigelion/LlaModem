@@ -209,7 +209,7 @@ public class UsageServiceTests : IDisposable
         var dbInNewDir = Path.Combine(Path.GetTempPath(), $"usage-test-nested-{Guid.NewGuid()}", "sub", "db.db");
         var service = new UsageService(CreatePersistence());
         // Override the path for this test
-        var persistence = (SqliteUsagePersistence)service.GetType().GetField("_persistence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(service);
+        var persistence = (SqliteUsagePersistence?)service.GetType().GetField("_persistence", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(service);
         if (persistence is SqliteUsagePersistence p)
         {
             var field = typeof(SqliteUsagePersistence).GetField("_connectionString", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
