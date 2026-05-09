@@ -116,6 +116,7 @@ public class Program
         app.MapOpenApi();
         app.MapScalarApiReference();
         app.ConfigureEndpoints();
+        app.MapStatsEndpoints();
 
         app.Run();
     }
