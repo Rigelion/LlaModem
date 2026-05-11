@@ -18,18 +18,6 @@ param(
 # Load paths - bracket notation works for standalone expressions
 $paths = $script:CachePaths
 
-# Debug: Check what we have
-Write-Host "=== DEBUG ===" -ForegroundColor Yellow
-Write-Host "CachePaths type: $($script:CachePaths.GetType().FullName)"
-Write-Host "CachePaths value: '$script:CachePaths'"
-Write-Host "CachePaths['Models'] (standalone): '$($script:CachePaths['Models'])'"
-Write-Host "CachePaths['Models'] type: $($script:CachePaths['Models'].GetType().FullName)"
-Write-Host "Paths type: $($paths.GetType().FullName)"
-Write-Host "Paths value: '$paths'"
-Write-Host "Paths['Models'] (standalone): '$($paths['Models'])'"
-Write-Host "Paths['Models'] type: $($paths['Models'].GetType().FullName)"
-Write-Host "=== END DEBUG ===" -ForegroundColor Yellow
-
 # CRITICAL: Assign to temp variables BEFORE using in string contexts
 # This avoids PowerShell's string interpolation quirk where $paths['Models']
 # inside quotes becomes "@{...}['Models']" instead of the actual value
