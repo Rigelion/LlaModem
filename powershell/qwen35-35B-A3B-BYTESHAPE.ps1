@@ -42,6 +42,9 @@ if ($Verbose) {
 
 # Run llama-server
 try {
+        # Build slot path
+    $slotPath = Join-Path $paths['Models'] "llamacache"
+
     llama-server `
         --model $ModelPath `
         --port $Port `
