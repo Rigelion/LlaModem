@@ -15,21 +15,28 @@ param(
 . .\common.ps1
 . .\config.ps1
 
-$paths = $script:CachePaths
+# Debug output BEFORE assignment
+Write-Host "=== BEFORE ASSIGNMENT ===" -ForegroundColor Yellow
+Write-Host "CachePaths before: '$CachePaths'"
+Write-Host "Script CachePaths before: '${script:CachePaths}'"
+Write-Host "Type: $($CachePaths.GetType().FullName)"
+Write-Host "==================" -ForegroundColor Yellow
 
-# Debug output
-Write-Host "=== PATHS DEBUG ===" -ForegroundColor Yellow
-Write-Host "Temp:           '$paths['Temp']'"
-Write-Host "LlamaCache:     '$paths['LlamaCache']'"
-Write-Host "HfCache:        '$paths['HfCache']'"
-Write-Host "NvidiaCache:    '$paths['NvidiaCache']'"
-Write-Host "Models:         '$paths['Models']'"
-Write-Host "Slot Path:      '$paths['Models']/llamacache'"
+$paths = ${script:CachePaths}
+
+# Debug output AFTER assignment
+Write-Host "=== AFTER ASSIGNMENT ===" -ForegroundColor Yellow
+Write-Host "CachePaths after: '$CachePaths'"
+Write-Host "Script CachePaths after: '${script:CachePaths}'"
+Write-Host "Type: $($CachePaths.GetType().FullName)"
+Write-Host "paths after: '$paths'"
+Write-Host "Type: $($paths.GetType().FullName)"
+Write-Host "paths['Models']: '$paths['Models']'"
 Write-Host "==================" -ForegroundColor Yellow
 
 New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
-Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
-    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
+Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
+    -HfCache $paths['HfCache'] -NvidiaCache $paths['NvidiaCache']
 
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 
