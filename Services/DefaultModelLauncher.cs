@@ -53,7 +53,9 @@ public class DefaultModelLauncher
             FileName = PowerShellExe,
             Arguments = arguments,
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
-            UseShellExecute = true,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
             CreateNoWindow = true
         };
 
