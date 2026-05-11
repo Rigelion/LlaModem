@@ -40,6 +40,9 @@ public class DefaultModelLauncher
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
         if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
 
+        // Working directory is where the model script lives
+        var workingDir = Path.GetDirectoryName(scriptPath);
+
         // Get wrapper script path relative to assembly location (where .exe runs from)
         var wrapperScript = Path.Combine("Scripts", "start-model.ps1");
         var wrapperDir = Path.GetDirectoryName(typeof(DefaultModelLauncher).Assembly.Location);

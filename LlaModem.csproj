@@ -39,4 +39,11 @@
     <_ContentIncludedByDefault Remove="LlaModem.Tests\obj\project.assets.json" />
   </ItemGroup>
 
+  <!-- Copy wrapper script to output -->
+  <ItemGroup>
+    <None Update="Scripts\start-model.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
