@@ -17,12 +17,12 @@ param(
 
 $paths = $script:CachePaths
 
-# Test hashtable access
+# Test hashtable access - use explicit casting
 Write-Host "=== HASHTABLE TEST ===" -ForegroundColor Yellow
 Write-Host "Type: $($paths.GetType().FullName)"
 Write-Host "Models (dot): '$paths.Models'"
 Write-Host "Models (bracket): '$paths['Models']'"
-Write-Host "Models (PSBase): '$paths.PSBase['Models']'"
+Write-Host "Models (explicit): '$([System.Collections.Hashtable]$paths)['Models']'"
 Write-Host "==================" -ForegroundColor Yellow
 
 New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
