@@ -18,19 +18,19 @@ The server listens on `http://localhost:9000` (configured in `appsettings.json`)
 
 ```bash
 curl -u admin:your-password \
-  -H "X-Llama-Model: qwen-smart" \
+  -H "X-Llama-Model: qwen36-smart" \
   -H "Content-Type: application/json" \
-  -d '{"model":"qwen-smart","messages":[{"role":"user","content":"Hello"}]}' \
+  -d '{"model":"qwen36-smart","messages":[{"role":"user","content":"Hello"}]}' \
   http://localhost:9000/v1/chat/completions
 ```
 
 ### Model Parameters via Headers
 
-Pass generation parameters as HTTP headers — LlaModem injects them into the request body:
+Pass generation parameters as HTTP headers - LlaModem injects them into the request body:
 
 ```bash
 curl -u admin:your-password \
-  -H "X-Llama-Model: qwen-smart" \
+  -H "X-Llama-Model: qwen36-smart" \
   -H "X-Llama-Temperature: 0.7" \
   -H "X-Llama-TopP: 0.9" \
   -H "X-Llama-MinP: 0.05" \
@@ -65,10 +65,10 @@ Supported headers:
 
 | Path | Auth | Description |
 |------|------|-------------|
-| `GET /health` | — | Router health + active model name |
-| `GET /admin/status` | — | Current active model and backend URL |
-| `POST /admin/model` | — | Switch to specified model: `{ "model": "qwen-smart" }` |
-| `POST /admin/stop` | — | Stop the currently running model |
+| `GET /health` | - | Router health + active model name |
+| `GET /admin/status` | - | Current active model and backend URL |
+| `POST /admin/model` | - | Switch to specified model: `{ "model": "qwen36-smart" }` |
+| `POST /admin/stop` | - | Stop the currently running model |
 
 ### Usage Statistics (unauthenticated)
 
@@ -78,9 +78,9 @@ Query the database with `sqlite3 usage/usage.db` for ad-hoc analysis.
 
 | Path | Auth | Description |
 |------|------|-------------|
-| `GET /admin/stats/usage` | — | Daily aggregated usage (`?days=30&model=qwen-smart`) |
-| `GET /admin/stats/requests` | — | Paginated recent requests (`?limit=50&offset=0&model=qwen-smart`) |
-| `GET /admin/stats/cost-comparison` | — | Cloud model cost comparison (`?days=30&model=qwen-smart`) — estimates what the same token usage would cost on Claude Opus 4.6, Claude Sonnet 4.5, GPT-5.1 Codex Max, Gemini 3 Pro, Gemini 3 Flash, and Qwen 3 Max |
+| `GET /admin/stats/usage` | - | Daily aggregated usage (`?days=30&model=qwen36-smart`) |
+| `GET /admin/stats/requests` | - | Paginated recent requests (`?limit=50&offset=0&model=qwen36-smart`) |
+| `GET /admin/stats/cost-comparison` | - | Cloud model cost comparison (`?days=30&model=qwen36-smart`) - estimates what the same token usage would cost on Claude Opus 4.6, Claude Sonnet 4.5, GPT-5.1 Codex Max, Gemini 3 Pro, Gemini 3 Flash, and Qwen 3 Max |
 
 ## Configuration
 
@@ -112,8 +112,11 @@ Edit `appsettings.json`:
     "Path": "usage/usage.db"
   },
   "Models": {
-    "qwen-smart": { "StartScript": "%QWEN_SMART_START_SCRIPT%", "BackendUrl": "http://localhost:8001" },
-    "qwen-fast": { "StartScript": "%QWEN_FAST_START_SCRIPT%", "BackendUrl": "http://localhost:8002" }
+    "qwen36-smart": { "StartScript": "%QWEN36_SMART_START_SCRIPT%" },
+    "qwen36-optimized": { "StartScript": "%QWEN36_OPTIMIZED_START_SCRIPT%" },
+    "qwen35-35b": { "StartScript": "%QWEN35_35B_START_SCRIPT%" },
+    "qwen35-9b": { "StartScript": "%QWEN35_9B_START_SCRIPT%" },
+    "qwen3-coder": { "StartScript": "%QWEN3_CODER_START_SCRIPT%" }
   }
 }
 ```
@@ -124,11 +127,31 @@ Edit `appsettings.json`:
 - **Header injection**: When enabled, LlaModem reads configured HTTP headers and injects their values into the JSON request body at the root level. Values are auto-typed (boolean, integer, double, or string).
 - **Idle timeout**: The active model shuts down automatically after `Timeouts.IdleTimeoutSeconds` of no requests.
 - **Usage statistics**: When enabled in the `Usage` section, token consumption is recorded per-request to a SQLite database at `usage/usage.db`. Supports all OpenAI-compatible completion and chat-completion endpoints.
-- **Timeouts**: All thresholds are configurable — VRAM requirements (`VramThresholdGb`), nvidia-smi query timeout, graceful shutdown duration, health check timing (poll interval + delay), and idle threshold.
+- **Timeouts**: All thresholds are configurable - VRAM requirements (`VramThresholdGb`), nvidia-smi query timeout, graceful shutdown duration, health check timing (poll interval + delay), and idle threshold.
 
 ## PowerShell Start Scripts
 
 Each model in `appsettings.json` references a `.ps1` script via `StartScript`. LlaModem launches this script with optional launch parameters (temperature, top_p, presence_penalty) passed as command-line arguments.
+
+### Optimized Scripts (powershell/ directory)
+
+All scripts now share a common module (`common.ps1`) with:
+- Auto CPU thread detection (`-Threads 0` = auto)
+- Port validation before startup
+- Error handling with exit codes
+- Optional verbose mode (`-Verbose` flag)
+
+### Available Models
+
+All scripts use port **8001** (only one model runs at a time):
+
+| Model | Alias | Script | Context | Threads |
+|-------|-------|--------|---------|---------|  
+| Qwen3.6 35B-A3B | qwen36-smart | llama-qwen36-SMART.ps1 | 80K | Auto |
+| Qwen3.6 35B-A3B | qwen36-optimized | llama-qwen36-OPTIMIZED.ps1 | 65K | Auto |
+| Qwen3.5 35B-A3B | qwen35-35b | qwen35-35B-A3B-BYTESHAPE.ps1 | 100K | Auto |
+| Qwen3.5 9B | qwen35-9b | qwen35-9B-Byteshape.ps1 | 65K | Auto |
+| Qwen3-Coder 30B | qwen3-coder | qwen3-CODER-30B-A3B-BYTESHAPE.ps1 | 202K | Auto |
 
 ### Script Template
 
@@ -159,20 +182,23 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 llama-server `
     --model "<path to model.gguf>" `
     --port 8001 `
+    --alias "qwen36-smart" `
     -c 131072 `
     -n 4096 `
-    --threads 6 `
+    --threads 0 `
     --temp $Temperature `
     --top-p $TopP `
     --presence-penalty $PresencePenalty
 ```
 
+**Note:** All scripts use port 8001 since only one model runs at a time.
+
 ### Key Points
 
-- **Parameters**: LlaModem passes launch parameters as PowerShell arguments (`-Temperature`, `-TopP`, `-PresencePenalty`). These are only used on the first start — subsequent requests to the same running model ignore them.
+- **Parameters**: LlaModem passes launch parameters as PowerShell arguments (`-Temperature`, `-TopP`, `-PresencePenalty`). These are only used on the first start - subsequent requests to the same running model ignore them.
 - **Environment variables**: Set paths, cache locations, and other config via `$env:` variables inside the script. LlaModem expands `%VAR%` references in `StartScript` paths at startup.
 - **Port assignment**: Each model needs its own port. LlaModem routes based on the `BackendUrl` configured for each model.
-- **Health endpoint**: llama-server exposes `/health` by default — LlaModem polls this to confirm the model is ready.
+- **Health endpoint**: llama-server exposes `/health` by default - LlaModem polls this to confirm the model is ready.
 
 ## Architecture
 
@@ -182,18 +208,18 @@ Client → LlaModem (:9000) → llama-server backend (:8001 / :8002)
 
 ### Request Flow
 
-1. **Usage Capture** — intercepts non-streaming responses, extracts token usage stats (if enabled)
-2. **Request Logging** — logs method, path, headers, and body (debug level)
-3. **Basic Auth** — validates credentials on `/v1/*` routes only
-4. **Header Injection** — maps HTTP headers to JSON body fields (configurable)
-5. **Model Routing** — selects the target backend via `X-Llama-Model` header
-6. **Lazy Start** — model auto-starts on first request if not running
-7. **Forwarding** — proxies request to the selected `llama-server` backend
+1. **Usage Capture** - intercepts non-streaming responses, extracts token usage stats (if enabled)
+2. **Request Logging** - logs method, path, headers, and body (debug level)
+3. **Basic Auth** - validates credentials on `/v1/*` routes only
+4. **Header Injection** - maps HTTP headers to JSON body fields (configurable)
+5. **Model Routing** - selects the target backend via `X-Llama-Model` header
+6. **Lazy Start** - model auto-starts on first request if not running
+7. **Forwarding** - proxies request to the selected `llama-server` backend
 
 ### Model Lifecycle
 
 - **Lazy start**: Models only launch when first requested
-- **Hot switching**: Request a different model — the current one stops, the new one starts
+- **Hot switching**: Request a different model - the current one stops, the new one starts
 - **Idle shutdown**: Stops the active model after `IdleTimeoutSeconds` of inactivity
 - **VRAM check**: Validates available GPU memory before launching (requires `nvidia-smi`)
 - **Graceful shutdown**: 5-second graceful stop → force kill fallback on exit
