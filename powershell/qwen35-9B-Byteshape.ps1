@@ -17,16 +17,8 @@ param(
 
 $paths = $script:CachePaths
 
-# Debug: Check what we are getting
-Write-Host "=== DEBUG ===" -ForegroundColor Yellow
-Write-Host "CachePaths type: $($script:CachePaths.GetType().FullName)"
-Write-Host "CachePaths value: $($script:CachePaths)"
-Write-Host "CachePaths keys: $($script:CachePaths.Keys)"
-Write-Host "CachePaths['Models']: $($script:CachePaths['Models'])"
-Write-Host "paths type: $($paths.GetType().FullName)"
-Write-Host "paths value: $paths"
-Write-Host "paths['Models']: $paths['Models']"
-Write-Host "=== END DEBUG ===" -ForegroundColor Yellow
+# Build slot path before llama-server
+$slotPath = Join-Path $paths['Models'] "llamacache"
 
 New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
 Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
@@ -46,9 +38,6 @@ if ($Verbose) {
 }
 
 try {
-    # Build slot path
-    $slotPath = Join-Path $paths['Models'] "llamacache"
-    
     llama-server `
         --model $ModelPath `
         --slot-save-path $slotPath `
