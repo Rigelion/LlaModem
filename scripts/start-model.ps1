@@ -10,7 +10,11 @@ $Host.UI.RawUI.WindowTitle = "LlaModem"
 $scriptDir = Split-Path -Parent $ModelScript
 
 # Launch the model script with all parameters
-& $ModelScript @ModelParams
+if ($ModelParams -and $ModelParams.Count -gt 0) {
+    & $ModelScript @ModelParams
+} else {
+    & $ModelScript
+}
 
 # Exit with the model script's exit code
 exit $LASTEXITCODE

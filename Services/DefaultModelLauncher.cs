@@ -59,7 +59,7 @@ public class DefaultModelLauncher
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,
-            Arguments = $"-ExecutionPolicy Bypass -File {fullWrapperPath} -ModelScript {scriptPath} {string.Join(" ", paramParts)}",
+            Arguments = $"-ExecutionPolicy Bypass -File {fullWrapperPath} -ModelScript {scriptPath} -ModelParams {string.Join(" ", paramParts)}",
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
             RedirectStandardOutput = true,
