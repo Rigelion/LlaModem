@@ -1,7 +1,7 @@
 # Centralized configuration for llama-server scripts
 # Modify paths here to change all scripts at once
 
-$script:CachePaths = @{
+$script:CachePaths = [PSCustomObject]@{
     Temp = "F:\Temp"
     LlamaCache = "F:\llama-cache"
     HfCache = "F:\hf-cache"
