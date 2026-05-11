@@ -22,4 +22,6 @@ $script:DefaultParams = @{
 
 # Load config into all scripts
 . $PSScriptRoot\common.ps1
-. $PSScriptRoot\config.ps1
+
+# Initialize paths from config
+$paths = $script:CachePaths
