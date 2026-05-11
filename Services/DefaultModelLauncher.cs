@@ -35,14 +35,14 @@ public class DefaultModelLauncher
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
     {
-        // Build launch params as PowerShell array (no dashes, script handles them)
+        // Build launch params as PowerShell array (with dashes)
         var paramParts = new List<string>();
-        if (launchParams?.Temperature.HasValue == true) paramParts.Add($"Temperature {launchParams.Temperature}");
-        if (launchParams?.TopP.HasValue == true) paramParts.Add($"TopP {launchParams.TopP}");
-        if (launchParams?.TopK.HasValue == true) paramParts.Add($"TopK {launchParams.TopK}");
-        if (launchParams?.MinP.HasValue == true) paramParts.Add($"MinP {launchParams.MinP}");
-        if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"PresencePenalty {launchParams.PresencePenalty}");
-        if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"RepetitionPenalty {launchParams.RepetitionPenalty}");
+        if (launchParams?.Temperature.HasValue == true) paramParts.Add($"-Temperature {launchParams.Temperature}");
+        if (launchParams?.TopP.HasValue == true) paramParts.Add($"-TopP {launchParams.TopP}");
+        if (launchParams?.TopK.HasValue == true) paramParts.Add($"-TopK {launchParams.TopK}");
+        if (launchParams?.MinP.HasValue == true) paramParts.Add($"-MinP {launchParams.MinP}");
+        if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
+        if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
 
         // Working directory is where the model script lives, but only if it exists
         var workingDir = Path.GetDirectoryName(scriptPath);
