@@ -56,10 +56,11 @@ public class DefaultModelLauncher
         var wrapperDir = Path.GetDirectoryName(typeof(DefaultModelLauncher).Assembly.Location);
         var fullWrapperPath = wrapperDir is not null ? Path.Combine(wrapperDir, wrapperScript) : Path.Combine(Environment.CurrentDirectory, wrapperScript);
 
+        var paramString = string.Join(" ", paramParts);
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,
-            Arguments = $"-ExecutionPolicy Bypass -File {fullWrapperPath} -ModelScript {scriptPath} -ModelParams {string.Join(" ", paramParts)}",
+            Arguments = $"-ExecutionPolicy Bypass -File {fullWrapperPath} -ModelScript {scriptPath} -ModelParams \"{paramString}\"",
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
             RedirectStandardOutput = true,

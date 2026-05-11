@@ -1,7 +1,10 @@
 param(
     [Parameter(Mandatory = $true)][string]$ModelScript,
-    [Parameter(Mandatory = $false)][string[]]$ModelParams
+    [Parameter(Mandatory = $false)][string]$ModelParams
 )
+
+# Parse ModelParams string into array
+$paramArray = if ($ModelParams -and $ModelParams.Trim() -ne "") { $ModelParams.Trim().Split(' ', [StringSplitOptions]::RemoveEmptyEntries) } else { @() }
 
 # Set window title for process identification
 $Host.UI.RawUI.WindowTitle = "LlaModem"
@@ -9,9 +12,21 @@ $Host.UI.RawUI.WindowTitle = "LlaModem"
 # Get directory of the model script
 $scriptDir = Split-Path -Parent $ModelScript
 
+Write-Host "[Wrapper] Starting model from: $ModelScript" -ForegroundColor Green
+Write-Host "[Wrapper] Script directory: $scriptDir" -ForegroundColor Green
+if ($paramArray -and $paramArray.Count -gt 0) {
+    Write-Host "[Wrapper] Params: $($paramArray -join ' ')" -ForegroundColor Green
+}
+
+# Check if script exists
+if (-not (Test-Path $ModelScript)) {
+    Write-Host "[Wrapper] ERROR: Script not found: $ModelScript" -ForegroundColor Red
+    exit 1
+}
+
 # Launch the model script with all parameters
-if ($ModelParams -and $ModelParams.Count -gt 0) {
-    & $ModelScript @ModelParams
+if ($paramArray -and $paramArray.Count -gt 0) {
+    & $ModelScript @paramArray
 } else {
     & $ModelScript
 }
