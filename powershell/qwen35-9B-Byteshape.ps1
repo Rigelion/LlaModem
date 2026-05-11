@@ -25,7 +25,7 @@ Write-Host "CachePaths keys: $($script:CachePaths.Keys)"
 Write-Host "CachePaths['Models']: $($script:CachePaths['Models'])"
 Write-Host "paths type: $($paths.GetType().FullName)"
 Write-Host "paths value: $paths"
-Write-Host "paths['Models']: $paths['Models']"
+Write-Host "paths['Models']: {0}" -f $paths['Models']
 Write-Host "=== END DEBUG ===" -ForegroundColor Yellow
 
 New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
@@ -61,7 +61,7 @@ try {
         --min-p $MinP `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "$paths['Models']/llamacache" `
+        --slot-save-path "{0}/llamacache" -f $paths['Models'] `
         --reasoning on `
         -fa on `
         -lv 2

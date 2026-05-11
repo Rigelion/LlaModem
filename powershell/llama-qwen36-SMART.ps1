@@ -53,7 +53,7 @@ try {
         --min-p $MinP `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "$paths['Models']/llamacache" `
+        --slot-save-path "{0}/llamacache" -f $paths['Models'] `
         --reasoning on `
         -fa on `
         --cache-type-k q8_0 `

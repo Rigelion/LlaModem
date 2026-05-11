@@ -52,7 +52,7 @@ try {
         --cache-type-v turbo4 `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "$paths['Models']/llamacache" `
+        --slot-save-path "{0}/llamacache" -f $paths['Models'] `
         --reasoning on `
         -fa on `
         -lv 2

@@ -56,7 +56,7 @@ try {
         --min-p $MinP `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "$paths['Models']/llamacache" `
+        --slot-save-path "{0}/llamacache" -f $paths['Models'] `
         -fa on `
         --cache-type-k q8_0 `
         --cache-type-v turbo4 `
