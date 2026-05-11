@@ -20,13 +20,13 @@ $paths = $script:CachePaths
 # Test property access with PSCustomObject
 Write-Host "=== PROPERTY TEST ===" -ForegroundColor Yellow
 Write-Host "Type: $($paths.GetType().FullName)"
-Write-Host "Models: '$paths.Models'"
-Write-Host "Slot Path: '$paths.Models/llamacache'"
+Write-Host "Models: '$paths['Models']'"
+Write-Host "Slot Path: '$paths['Models']/llamacache'"
 Write-Host "==================" -ForegroundColor Yellow
 
-New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
-Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
-    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
+New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
+Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
+    -HfCache $paths['HfCache'] -NvidiaCache $paths['NvidiaCache']
 
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 
@@ -57,7 +57,7 @@ try {
         --min-p $MinP `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "$paths.Models/llamacache" `
+        --slot-save-path "$paths['Models']/llamacache" `
         --reasoning on `
         -fa on `
         -lv 2

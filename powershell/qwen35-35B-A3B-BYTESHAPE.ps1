@@ -19,10 +19,10 @@ param(
 # Setup paths
 $paths = $script:CachePaths
 New-CacheDirectories -Directories @(
-    $paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache
+    $paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache']
 )
-Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
-    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
+Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
+    -HfCache $paths['HfCache'] -NvidiaCache $paths['NvidiaCache']
 
 # Auto-detect threads
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
@@ -62,7 +62,7 @@ try {
         --min-p $MinP `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "$paths.Models/llamacache" `
+        --slot-save-path "$paths['Models']/llamacache" `
         --reasoning on `
         -fa on `
         --cache-ram 8192 `
