@@ -15,23 +15,14 @@ param(
 . .\common.ps1
 . .\config.ps1
 
-# Debug output BEFORE assignment
-Write-Host "=== BEFORE ASSIGNMENT ===" -ForegroundColor Yellow
-Write-Host "CachePaths before: '$CachePaths'"
-Write-Host "Script CachePaths before: '${script:CachePaths}'"
-Write-Host "Type: $($CachePaths.GetType().FullName)"
-Write-Host "==================" -ForegroundColor Yellow
-
 $paths = $script:CachePaths
 
-# Debug output AFTER assignment
-Write-Host "=== AFTER ASSIGNMENT ===" -ForegroundColor Yellow
-Write-Host "CachePaths after: '$CachePaths'"
-Write-Host "Script CachePaths after: '${script:CachePaths}'"
-Write-Host "Type: $($CachePaths.GetType().FullName)"
-Write-Host "paths after: '$paths'"
+# Test hashtable access
+Write-Host "=== HASHTABLE TEST ===" -ForegroundColor Yellow
 Write-Host "Type: $($paths.GetType().FullName)"
-Write-Host "paths['Models']: '$paths['Models']'"
+Write-Host "Models (dot): '$paths.Models'"
+Write-Host "Models (bracket): '$paths['Models']'"
+Write-Host "Models (PSBase): '$paths.PSBase['Models']'"
 Write-Host "==================" -ForegroundColor Yellow
 
 New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
