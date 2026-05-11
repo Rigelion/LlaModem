@@ -1,4 +1,4 @@
-# Qwen3.5 9B Byteshape - Optimized (Updated)
+# Qwen3.5 9B Byteshape - Optimized (Updated with Class Config)
 param(
     [double]$Temperature = 0.6,
     [double]$TopP = 0.95,
@@ -15,30 +15,15 @@ param(
 . .\common.ps1
 . .\config.ps1
 
-# Load paths - PSCustomObject uses dot notation
+# Load paths - use dot notation for class properties
 $paths = $script:CachePaths
 
-# Debug: Check PSCustomObject properties
-Write-Host "=== PSCUSTOMOBJECT DEBUG ===" -ForegroundColor Yellow
-Write-Host "Paths type: $($paths.GetType().FullName)"
-Write-Host "Paths.Models: $($paths.Models)"
-Write-Host "Paths.Temp: $($paths.Temp)"
-Write-Host "=== END DEBUG ===" -ForegroundColor Yellow
+# Build slot path using dot notation ($paths.Models, not $paths['Models'])
+$slotPath = Join-Path $paths.Models "llamacache"
 
-# CRITICAL: Assign to temp variables using dot notation for PSCustomObject
-$modelsPath = $paths.Models
-$tempPath = $paths.Temp
-$llamaCachePath = $paths.LlamaCache
-$hfCachePath = $paths.HfCache
-$nvidiaCachePath = $paths.NvidiaCache
-
-# Build slot path using Join-Path with the temp variable
-$slotPath = Join-Path $modelsPath "llamacache"
-
-# Create directories using temp variables
-New-CacheDirectories -Directories @($tempPath, $llamaCachePath, $hfCachePath, $nvidiaCachePath)
-Setup-Environment -Temp $tempPath -LlamaCache $llamaCachePath `
-    -HfCache $hfCachePath -NvidiaCache $nvidiaCachePath
+New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
+Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
+    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
 
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 
