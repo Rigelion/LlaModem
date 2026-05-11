@@ -17,17 +17,16 @@ param(
 
 $paths = $script:CachePaths
 
-# Test hashtable access - use explicit casting
-Write-Host "=== HASHTABLE TEST ===" -ForegroundColor Yellow
+# Test property access with PSCustomObject
+Write-Host "=== PROPERTY TEST ===" -ForegroundColor Yellow
 Write-Host "Type: $($paths.GetType().FullName)"
-Write-Host "Models (dot): '$paths.Models'"
-Write-Host "Models (bracket): '$paths['Models']'"
-Write-Host "Models (explicit): '$([System.Collections.Hashtable]$paths)['Models']'"
+Write-Host "Models: '$paths.Models'"
+Write-Host "Slot Path: '$paths.Models/llamacache'"
 Write-Host "==================" -ForegroundColor Yellow
 
-New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
-Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
-    -HfCache $paths['HfCache'] -NvidiaCache $paths['NvidiaCache']
+New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
+Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
+    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
 
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 
