@@ -15,9 +15,20 @@ param(
 . .\common.ps1
 . .\config.ps1
 
+# Verify cache paths are loaded correctly
+Write-Host "CachePaths Type: $($script:CachePaths.GetType().FullName)"
+Write-Host "CachePaths value: '$script:CachePaths'"
+Write-Host "CachePaths['Models']: '$script:CachePaths['Models]'"
+
+# Load paths correctly
 $paths = $script:CachePaths
 
-# Build slot path before llama-server
+# Verify paths loaded
+Write-Host "Paths Type: $($paths.GetType().FullName)"
+Write-Host "Paths value: '$paths'"
+Write-Host "Paths['Models']: '$paths['Models]'"
+
+# Build slot path
 $slotPath = Join-Path $paths['Models'] "llamacache"
 
 New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
