@@ -13,8 +13,9 @@ param(
 )
 
 . .\common.ps1
+. .\config.ps1
 
-$paths = Get-DefaultPaths
+$paths = $script:CachePaths
 New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
 Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
     -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache

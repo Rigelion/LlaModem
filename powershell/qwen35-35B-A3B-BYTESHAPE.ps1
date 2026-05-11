@@ -14,9 +14,10 @@ param(
 
 # Import common functions
 . .\common.ps1
+. .\config.ps1
 
 # Setup paths
-$paths = Get-DefaultPaths
+$paths = $script:CachePaths
 New-CacheDirectories -Directories @(
     $paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache
 )
