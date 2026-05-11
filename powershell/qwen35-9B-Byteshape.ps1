@@ -22,7 +22,7 @@ Write-Host "Script CachePaths before: '${script:CachePaths}'"
 Write-Host "Type: $($CachePaths.GetType().FullName)"
 Write-Host "==================" -ForegroundColor Yellow
 
-$paths = ${script:CachePaths}
+$paths = $script:CachePaths
 
 # Debug output AFTER assignment
 Write-Host "=== AFTER ASSIGNMENT ===" -ForegroundColor Yellow
