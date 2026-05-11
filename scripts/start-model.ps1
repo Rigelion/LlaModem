@@ -26,7 +26,9 @@ if (-not (Test-Path $ModelScript)) {
 
 # Launch the model script with all parameters
 if ($paramArray -and $paramArray.Count -gt 0) {
-    & $ModelScript @paramArray
+    # Build command string and invoke it
+    $cmd = "$ModelScript $($paramArray -join ' ')"
+    Invoke-Expression $cmd
 } else {
     & $ModelScript
 }
