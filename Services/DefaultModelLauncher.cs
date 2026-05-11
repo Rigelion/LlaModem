@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 
 namespace LlaModem.Services;
 
@@ -12,6 +13,7 @@ public class DefaultModelLauncher
     private readonly HealthChecker _healthChecker;
     private readonly ProcessKiller _processKiller;
     private readonly IModelRepository _repository;
+    private readonly ILogger<DefaultModelLauncher> _logger;
 
     /// <summary>
     /// Thread-safe process tracking via IModelRepository abstraction.
@@ -21,12 +23,14 @@ public class DefaultModelLauncher
         IHttpClientFactory httpClientFactory,
         HealthChecker healthChecker,
         ProcessKiller processKiller,
-        IModelRepository repository)
+        IModelRepository repository,
+        ILogger<DefaultModelLauncher> logger)
     {
         _httpClientFactory = httpClientFactory;
         _healthChecker = healthChecker;
         _processKiller = processKiller;
         _repository = repository;
+        _logger = logger;
     }
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
@@ -40,8 +44,12 @@ public class DefaultModelLauncher
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
         if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
 
-        // Working directory is where the model script lives
+        // Working directory is where the model script lives, but only if it exists
         var workingDir = Path.GetDirectoryName(scriptPath);
+        if (!string.IsNullOrEmpty(workingDir) && !Directory.Exists(workingDir))
+        {
+            workingDir = null;
+        }
 
         // Get wrapper script path relative to assembly location (where .exe runs from)
         var wrapperScript = Path.Combine("scripts", "start-model.ps1");
@@ -59,16 +67,26 @@ public class DefaultModelLauncher
             CreateNoWindow = true
         };
 
-        var process = Process.Start(psi);
-
-        // Track the process for shutdown cleanup
-        if (process is not null)
+        try
         {
-            var state = new ModelProcessState(modelName, process.Id, DateTimeOffset.UtcNow);
-            await _repository.SetStateAsync(state);
+            var process = Process.Start(psi);
+            // Track the process for shutdown cleanup
+            if (process is not null)
+            {
+                var state = new ModelProcessState(modelName, process.Id, DateTimeOffset.UtcNow);
+                await _repository.SetStateAsync(state);
+            }
+            return process;
         }
-
-        return process;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to start process for model '{Model}'. WorkingDir: '{WorkingDir}', Wrapper: '{Wrapper}', Script: '{Script}'",
+                modelName,
+                workingDir ?? Environment.CurrentDirectory,
+                fullWrapperPath,
+                scriptPath);
+            throw;
+        }
     }
 
     public async Task<bool> IsModelRunningAsync(string modelName, CancellationToken ct = default)
