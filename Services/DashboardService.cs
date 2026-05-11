@@ -251,12 +251,19 @@ public sealed class DashboardService
             var presence = TryGetDouble(modelElement, "PresencePenalty");
             var repetition = TryGetDouble(modelElement, "RepetitionPenalty");
 
-            return new ModelLaunchParams(temp, topP, topK, minP, presence, repetition);
+            // Fall back to defaults for any null values
+            return new ModelLaunchParams(
+                temp ?? ModelLaunchParams.Defaults.Temperature,
+                topP ?? ModelLaunchParams.Defaults.TopP,
+                topK ?? ModelLaunchParams.Defaults.TopK,
+                minP ?? ModelLaunchParams.Defaults.MinP,
+                presence ?? ModelLaunchParams.Defaults.PresencePenalty,
+                repetition ?? ModelLaunchParams.Defaults.RepetitionPenalty);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to load params for model '{Model}'", modelName);
-            return new ModelLaunchParams(null, null, null, null, null, null);
+            return ModelLaunchParams.Defaults;
         }
     }
 
