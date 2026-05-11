@@ -15,25 +15,15 @@ param(
 . .\common.ps1
 . .\config.ps1
 
-# Verify cache paths are loaded correctly
-Write-Host "CachePaths Type: $($script:CachePaths.GetType().FullName)"
-Write-Host "CachePaths value: '$script:CachePaths'"
-Write-Host "CachePaths['Models']: '$script:CachePaths['Models]'"
-
-# Load paths correctly
+# Load paths - use dot notation for class properties
 $paths = $script:CachePaths
 
-# Verify paths loaded
-Write-Host "Paths Type: $($paths.GetType().FullName)"
-Write-Host "Paths value: '$paths'"
-Write-Host "Paths['Models']: '$paths['Models]'"
+# Build slot path using dot notation ($paths.Models, not $paths['Models'])
+$slotPath = Join-Path $paths.Models "llamacache"
 
-# Build slot path
-$slotPath = Join-Path $paths['Models'] "llamacache"
-
-New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
-Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
-    -HfCache $paths['HfCache'] -NvidiaCache $paths['NvidiaCache']
+New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
+Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
+    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
 
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 

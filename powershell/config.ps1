@@ -1,13 +1,20 @@
 # Centralized configuration for llama-server scripts
 # Modify paths here to change all scripts at once
 
-$script:CachePaths = [PSCustomObject]@{
-    Temp = "F:\Temp"
-    LlamaCache = "F:\llama-cache"
-    HfCache = "F:\hf-cache"
-    NvidiaCache = "F:\NVIDIA-cache"
-    Models = "F:\models"
+class CachePaths {
+    [string]$Temp
+    [string]$LlamaCache
+    [string]$HfCache
+    [string]$NvidiaCache
+    [string]$Models
 }
+
+$script:CachePaths = [CachePaths]::new()
+$script:CachePaths.Temp = "F:\Temp"
+$script:CachePaths.LlamaCache = "F:\llama-cache"
+$script:CachePaths.HfCache = "F:\hf-cache"
+$script:CachePaths.NvidiaCache = "F:\NVIDIA-cache"
+$script:CachePaths.Models = "F:\models"
 
 $script:DefaultParams = @{
     Temperature = 0.6

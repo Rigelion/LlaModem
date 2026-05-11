@@ -15,10 +15,11 @@ param(
 . .\common.ps1
 . .\config.ps1
 
+# Setup paths - use dot notation for class properties
 $paths = $script:CachePaths
-New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
-Setup-Environment -Temp $paths['Temp'] -LlamaCache $paths['LlamaCache'] `
-    -HfCache $paths['HfCache'] -NvidiaCache $paths['NvidiaCache']
+New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
+Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
+    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
 
 $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 
@@ -34,8 +35,8 @@ if ($Verbose) {
 }
 
 try {
-        # Build slot path
-    $slotPath = Join-Path $paths['Models'] "llamacache"
+    # Build slot path using dot notation
+    $slotPath = Join-Path $paths.Models "llamacache"
 
     llama-server `
         --model $ModelPath `
@@ -55,7 +56,7 @@ try {
         --cache-type-v turbo4 `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
-        --slot-save-path "{0}/llamacache" -f $paths['Models'] `
+        --slot-save-path $slotPath `
         --reasoning on `
         -fa on `
         -lv 2
