@@ -31,12 +31,7 @@ public class DefaultModelLauncher
 
     public async Task<Process?> StartAsync(string modelName, string scriptPath, ModelLaunchParams? launchParams = null)
     {
-        var workingDir = Path.GetDirectoryName(scriptPath);
-
-        // Set window title to a constant so we can identify the process later
-        var escapedScript = scriptPath.Replace("'", "''");
-
-        // Build optional launch params suffix
+        // Build launch params as PowerShell array
         var paramParts = new List<string>();
         if (launchParams?.Temperature.HasValue == true) paramParts.Add($"-Temperature {launchParams.Temperature}");
         if (launchParams?.TopP.HasValue == true) paramParts.Add($"-TopP {launchParams.TopP}");
@@ -44,14 +39,16 @@ public class DefaultModelLauncher
         if (launchParams?.MinP.HasValue == true) paramParts.Add($"-MinP {launchParams.MinP}");
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
         if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
-        var paramSuffix = paramParts.Count > 0 ? " " + string.Join(" ", paramParts) : string.Empty;
 
-        var arguments =
-            $"-ExecutionPolicy Bypass -Command \"$Host.UI.RawUI.WindowTitle = '{PowerShellTitle}'; & '{escapedScript}'{paramSuffix}\"";
+        // Get directory of the launcher script for working directory
+        var launcherDir = Path.GetDirectoryName(typeof(DefaultModelLauncher).Assembly.Location) ?? Environment.CurrentDirectory;
+        var wrapperScript = Path.Combine("Scripts", "start-model.ps1");
+        var fullWrapperPath = Path.GetFullPath(wrapperScript);
+
         var psi = new ProcessStartInfo
         {
             FileName = PowerShellExe,
-            Arguments = arguments,
+            Arguments = $"-ExecutionPolicy Bypass -File '{fullWrapperPath}' -ModelScript '{scriptPath}' {string.Join(" ", paramParts)}",
             WorkingDirectory = workingDir ?? Environment.CurrentDirectory,
             UseShellExecute = false,
             RedirectStandardOutput = true,
