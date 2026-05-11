@@ -18,6 +18,17 @@ param(
 # Load paths - bracket notation works for standalone expressions
 $paths = $script:CachePaths
 
+# Debug: Check raw hashtable
+Write-Host "=== RAW DEBUG ===" -ForegroundColor Yellow
+Write-Host "script:CachePaths: $script:CachePaths"
+Write-Host "script:CachePaths type: $($script:CachePaths.GetType().FullName)"
+Write-Host "script:CachePaths keys: $($script:CachePaths.Keys -join ', ')"
+Write-Host "script:CachePaths['Models']: $($script:CachePaths['Models'])"
+Write-Host "script:CachePaths['Models'] type: $($script:CachePaths['Models'].GetType().FullName)"
+Write-Host "$paths type: $($paths.GetType().FullName)"
+Write-Host "paths['Models']: $($paths['Models'])"
+Write-Host "=== END DEBUG ===" -ForegroundColor Yellow
+
 # CRITICAL: Assign to temp variables BEFORE using in string contexts
 # This avoids PowerShell's string interpolation quirk where $paths['Models']
 # inside quotes becomes "@{...}['Models']" instead of the actual value
