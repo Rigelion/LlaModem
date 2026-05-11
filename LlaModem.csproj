@@ -41,7 +41,7 @@
 
   <!-- Copy wrapper script to output -->
   <ItemGroup>
-    <None Update="Scripts\start-model.ps1">
+    <None Update="scripts\start-model.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

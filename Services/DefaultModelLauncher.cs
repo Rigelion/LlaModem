@@ -44,7 +44,7 @@ public class DefaultModelLauncher
         var workingDir = Path.GetDirectoryName(scriptPath);
 
         // Get wrapper script path relative to assembly location (where .exe runs from)
-        var wrapperScript = Path.Combine("Scripts", "start-model.ps1");
+        var wrapperScript = Path.Combine("scripts", "start-model.ps1");
         var wrapperDir = Path.GetDirectoryName(typeof(DefaultModelLauncher).Assembly.Location);
         var fullWrapperPath = wrapperDir is not null ? Path.Combine(wrapperDir, wrapperScript) : Path.Combine(Environment.CurrentDirectory, wrapperScript);
 
