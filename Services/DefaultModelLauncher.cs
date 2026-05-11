@@ -40,10 +40,10 @@ public class DefaultModelLauncher
         if (launchParams?.PresencePenalty.HasValue == true) paramParts.Add($"-PresencePenalty {launchParams.PresencePenalty}");
         if (launchParams?.RepetitionPenalty.HasValue == true) paramParts.Add($"-RepetitionPenalty {launchParams.RepetitionPenalty}");
 
-        // Get directory of the launcher script for working directory
-        var launcherDir = Path.GetDirectoryName(typeof(DefaultModelLauncher).Assembly.Location) ?? Environment.CurrentDirectory;
+        // Get wrapper script path relative to assembly location (where .exe runs from)
         var wrapperScript = Path.Combine("Scripts", "start-model.ps1");
-        var fullWrapperPath = Path.GetFullPath(wrapperScript);
+        var wrapperDir = Path.GetDirectoryName(typeof(DefaultModelLauncher).Assembly.Location);
+        var fullWrapperPath = wrapperDir is not null ? Path.Combine(wrapperDir, wrapperScript) : Path.Combine(Environment.CurrentDirectory, wrapperScript);
 
         var psi = new ProcessStartInfo
         {
