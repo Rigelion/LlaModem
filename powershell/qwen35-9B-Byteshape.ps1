@@ -16,7 +16,18 @@ param(
 . .\config.ps1
 
 $paths = $script:CachePaths
-New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
+
+# Debug output
+Write-Host "=== PATHS DEBUG ===" -ForegroundColor Yellow
+Write-Host "Temp:           '$paths['Temp']'"
+Write-Host "LlamaCache:     '$paths['LlamaCache']'"
+Write-Host "HfCache:        '$paths['HfCache']'"
+Write-Host "NvidiaCache:    '$paths['NvidiaCache']'"
+Write-Host "Models:         '$paths['Models']'"
+Write-Host "Slot Path:      '$paths['Models']/llamacache'"
+Write-Host "==================" -ForegroundColor Yellow
+
+New-CacheDirectories -Directories @($paths['Temp'], $paths['LlamaCache'], $paths['HfCache'], $paths['NvidiaCache'])
 Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
     -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
 
