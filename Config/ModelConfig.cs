@@ -7,4 +7,5 @@ public record ModelConfig
 {
     public string StartScript { get; set; } = string.Empty;
     public string? BackendUrl { get; set; }  // Optional, defaults to global BackendUrl
+    public bool Exclusive { get; set; }  // If true, don't stop other models when this one is requested
 }

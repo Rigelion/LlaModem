@@ -133,9 +133,9 @@ public class ModelManager
 
     private async Task SwitchModelAsync(string modelName, ModelConfig modelConfig, ModelLaunchParams? launchParams = null, CancellationToken ct = default)
     {
-        // Stop current model if different
+        // Stop current model if different AND target model is not exclusive
         var currentModelName = await GetActiveModelNameAsync(ct);
-        if (currentModelName != modelName)
+        if (currentModelName != modelName && !modelConfig.Exclusive)
         {
             await StopActiveModelAsync(ct);
         }
