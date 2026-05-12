@@ -149,8 +149,9 @@ public static class DashboardEndpointExtensions
         }).WithName("GetModel");
 
         dashboardGroup.MapPost("/models/{name}/start", async (
-            DashboardService dashboard,
             HttpContext context,
+            ModelManager modelManager,
+            DashboardService dashboard,
             string name,
             CancellationToken ct) =>
         {
@@ -169,45 +170,49 @@ public static class DashboardEndpointExtensions
                 return Results.BadRequest(new { error = "InvalidRequest", message = "Request body is required" });
             }
 
-            var result = await dashboard.StartModelAsync(name, body, ct);
-
-            if (!result.Success)
+            var launchParams = body.ToLaunchParams();
+            try
             {
-                return Results.Json(new { error = "StartFailed", message = result.Message }, statusCode: 503);
+                await modelManager.EnsureModelAsync(name, launchParams, ct);
+                var state = await dashboard.GetModelStateAsync(name, ct);
+                return Results.Ok(new
+                {
+                    message = "Model started successfully",
+                    processId = state?.ProcessId,
+                    startedAt = state?.StartedAt.ToString("o")
+                });
             }
-
-            return Results.Ok(new
+            catch (InvalidOperationException ex)
             {
-                message = result.Message,
-                processId = result.ProcessId,
-                startedAt = result.StartedAt?.ToString("o")
-            });
+                return Results.Json(new { error = "StartFailed", message = ex.Message }, statusCode: 503);
+            }
         }).WithName("StartModel");
 
         dashboardGroup.MapPost("/models/{name}/stop", async (
-            DashboardService dashboard,
-            HttpContext context,
+            ModelManager modelManager,
             string name,
             CancellationToken ct) =>
         {
-            var result = await dashboard.StopModelAsync(name, ct);
-
-            if (!result.Success)
+            var activeModel = await modelManager.GetActiveModelNameAsync(ct);
+            if (activeModel is null)
             {
-                if (result.Message.Contains("not found"))
-                {
-                    return Results.NotFound(new { error = "ModelNotFound", message = result.Message });
-                }
-
-                if (result.Message.Contains("not active"))
-                {
-                    return Results.BadRequest(new { error = "ModelNotActive", message = result.Message });
-                }
-
-                return Results.Json(new { error = "StopFailed", message = result.Message }, statusCode: 503);
+                return Results.NotFound(new { error = "ModelNotFound", message = $"No model is currently active" });
             }
 
-            return Results.Ok(new { message = result.Message });
+            if (activeModel != name)
+            {
+                return Results.BadRequest(new { error = "ModelNotActive", message = $"Model '{activeModel}' is active, not '{name}'" });
+            }
+
+            try
+            {
+                await modelManager.StopActiveModelAsync(ct);
+                return Results.Ok(new { message = $"Model '{name}' stopped" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { error = "StopFailed", message = ex.Message }, statusCode: 503);
+            }
         }).WithName("StopModel");
 
         dashboardGroup.MapPut("/models/{name}/params", async (
@@ -234,19 +239,30 @@ public static class DashboardEndpointExtensions
         }).WithName("UpdateModelParams");
 
         dashboardGroup.MapGet("/models/{name}/health", async (
-            DashboardService dashboard,
+            ModelManager modelManager,
+            HealthChecker healthChecker,
+            IOptions<AppConfig> config,
             string name,
             CancellationToken ct) =>
         {
-            try
+            var activeModel = await modelManager.GetActiveModelNameAsync(ct);
+            if (activeModel != name)
             {
-                var result = await dashboard.GetHealthAsync(name, ct);
-                return Results.Ok(result);
+                return Results.BadRequest(new { error = "ModelNotRunning", message = $"Model '{name}' is not currently active" });
             }
-            catch (InvalidOperationException ex)
+
+            var healthUrl = $"{config.Value.BackendUrl.TrimEnd('/')}/health";
+            var startTime = DateTimeOffset.UtcNow;
+            var (success, _) = await healthChecker.CheckAsync(healthUrl, ct);
+            var responseTime = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+
+            return Results.Ok(new
             {
-                return Results.BadRequest(new { error = "ModelNotRunning", message = ex.Message });
-            }
+                IsHealthy = success,
+                HealthUrl = healthUrl,
+                LastCheckedAt = DateTimeOffset.UtcNow.ToString("o"),
+                ResponseTimeMs = responseTime
+            });
         }).WithName("GetModelHealth");
     }
 }

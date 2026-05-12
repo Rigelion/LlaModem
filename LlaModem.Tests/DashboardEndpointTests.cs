@@ -167,41 +167,6 @@ public class DashboardEndpointTests
         Assert.NotNull(result.RepetitionPenalty);
     }
 
-    [Fact]
-    public async Task ToDashboardItem_UsesDefaultParameters()
-    {
-        // Arrange
-        var startResult = new StartModelResult(
-            Success: true,
-            ProcessId: 1234,
-            StartedAt: DateTimeOffset.UtcNow,
-            Error: null,
-            Message: "Model already running");
-        
-        var config = new ModelConfig
-        {
-            StartScript = "test-script.ps1"
-        };
-        
-        // Act
-        var item = startResult.ToDashboardItem("test-model", config);
-        
-        // Assert - Parameters should have default values, not nulls (this would fail before the fix)
-        Assert.NotNull(item.Parameters.Temperature);
-        Assert.NotNull(item.Parameters.TopP);
-        Assert.NotNull(item.Parameters.TopK);
-        Assert.NotNull(item.Parameters.MinP);
-        Assert.NotNull(item.Parameters.PresencePenalty);
-        Assert.NotNull(item.Parameters.RepetitionPenalty);
-        
-        // Verify they match defaults
-        Assert.Equal(ModelLaunchParams.Defaults.Temperature, item.Parameters.Temperature);
-        Assert.Equal(ModelLaunchParams.Defaults.TopP, item.Parameters.TopP);
-        Assert.Equal(ModelLaunchParams.Defaults.TopK, item.Parameters.TopK);
-        Assert.Equal(ModelLaunchParams.Defaults.MinP, item.Parameters.MinP);
-        Assert.Equal(ModelLaunchParams.Defaults.PresencePenalty, item.Parameters.PresencePenalty);
-        Assert.Equal(ModelLaunchParams.Defaults.RepetitionPenalty, item.Parameters.RepetitionPenalty);
-    }
 }
 
 /// <summary>

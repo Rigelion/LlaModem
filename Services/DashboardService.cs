@@ -2,19 +2,18 @@ using LlaModem.Config;
 using LlaModem.Models;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace LlaModem.Services;
 
 /// <summary>
-/// Service for admin dashboard operations.
-/// Provides model status, metrics, and parameter management.
+/// Dashboard service — composes other services to build dashboard views.
+/// Follows the principle "Separate what changes from what stays stable":
+/// presentation logic (dashboard) is separate from business logic (model lifecycle).
 /// </summary>
 public sealed class DashboardService
 {
     private readonly AppConfig _config;
     private readonly ModelManager _modelManager;
-    private readonly DefaultModelLauncher _launcher;
     private readonly ModelMetricsService _metricsService;
     private readonly HealthChecker _healthChecker;
     private readonly IModelRepository _repository;
@@ -24,7 +23,6 @@ public sealed class DashboardService
     public DashboardService(
         IOptions<AppConfig> config,
         ModelManager modelManager,
-        DefaultModelLauncher launcher,
         ModelMetricsService metricsService,
         HealthChecker healthChecker,
         IModelRepository repository,
@@ -33,7 +31,6 @@ public sealed class DashboardService
     {
         _config = config.Value;
         _modelManager = modelManager;
-        _launcher = launcher;
         _metricsService = metricsService;
         _healthChecker = healthChecker;
         _repository = repository;
@@ -72,90 +69,16 @@ public sealed class DashboardService
     }
 
     /// <summary>
-    /// Starts a model with optional parameter overrides.
+    /// Gets the current process state for a model.
     /// </summary>
-    public async Task<StartModelResult> StartModelAsync(
-        string modelName,
-        StartModelRequest? request = null,
-        CancellationToken ct = default)
+    public async Task<ModelProcessState?> GetModelStateAsync(string modelName, CancellationToken ct = default)
     {
-        if (!_config.Models.ContainsKey(modelName))
-        {
-            return new StartModelResult(
-                false,
-                null,
-                null,
-                null,
-                $"Model '{modelName}' not found in configuration");
-        }
-
-        var modelConfig = _config.Models[modelName];
-        var launchParams = request?.ToLaunchParams() ?? LoadParams(modelName);
-
-        try
-        {
-            await _modelManager.EnsureModelAsync(modelName, launchParams, ct);
-            _metricsService.StartSession(modelName, DateTimeOffset.UtcNow);
-
-            var state = await _repository.GetStateAsync(modelName, ct);
-            var processId = state?.ProcessId;
-            var startedAt = state?.StartedAt;
-
-            return new StartModelResult(
-                Success: true,
-                ProcessId: processId,
-                StartedAt: startedAt,
-                Error: null,
-                Message: "Model already running");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to start model '{Model}'", modelName);
-            return new StartModelResult(
-                false,
-                null,
-                null,
-                null,
-                ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// Stops a model.
-    /// </summary>
-    public async Task<StopModelResult> StopModelAsync(string modelName, CancellationToken ct = default)
-    {
-        if (!_config.Models.ContainsKey(modelName))
-        {
-            return new StopModelResult(false, null, null, $"Model '{modelName}' not found");
-        }
-
-        var activeModel = await _modelManager.GetActiveModelNameAsync(ct);
-        if (activeModel != modelName)
-        {
-            return new StopModelResult(false, null, null, $"Model '{modelName}' is not active");
-        }
-
-        try
-        {
-            _metricsService.EndSession(modelName);
-            await _modelManager.StopActiveModelAsync(ct);
-
-            return new StopModelResult(true, null, null, $"Model '{modelName}' stopped");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to stop model '{Model}'", modelName);
-            return new StopModelResult(
-                false,
-                null,
-                null,
-                $"Failed to stop model: {ex.Message}");
-        }
+        return await _repository.GetStateAsync(modelName, ct);
     }
 
     /// <summary>
     /// Updates model parameters and persists to dashboard_params.json.
+    /// This is the only business logic DashboardService owns — parameter persistence.
     /// </summary>
     public ParameterUpdateResponse UpdateParamsAsync(string modelName, UpdateModelParamsRequest request)
     {
@@ -198,29 +121,6 @@ public sealed class DashboardService
             "Parameters updated successfully",
             true,
             updatedParams);
-    }
-
-    /// <summary>
-    /// Gets health check status for a model.
-    /// </summary>
-    public async Task<HealthCheckResponse> GetHealthAsync(string modelName, CancellationToken ct = default)
-    {
-        var activeModel = await _modelManager.GetActiveModelNameAsync(ct);
-        if (activeModel != modelName)
-        {
-            throw new InvalidOperationException($"Model '{modelName}' is not running");
-        }
-
-        var healthUrl = $"{_config.BackendUrl.TrimEnd('/')}/health";
-        var startTime = DateTimeOffset.UtcNow;
-        var (success, reason) = await _healthChecker.CheckAsync(healthUrl, ct);
-        var responseTime = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
-
-        return new HealthCheckResponse(
-            IsHealthy: success,
-            HealthUrl: healthUrl,
-            LastCheckedAt: DateTimeOffset.UtcNow,
-            ResponseTimeMs: responseTime);
     }
 
     /// <summary>
@@ -341,43 +241,4 @@ public sealed class DashboardService
             IsHealthy: isHealthy,
             LastError: lastError);
     }
-}
-
-/// <summary>
-/// Result of starting a model.
-/// </summary>
-public sealed record StartModelResult(
-    bool Success,
-    int? ProcessId,
-    DateTimeOffset? StartedAt,
-    string? Error,
-    string Message)
-{
-    public ModelDashboardItem ToDashboardItem(string modelName, ModelConfig config)
-    {
-        return new ModelDashboardItem(
-            Name: modelName,
-            Status: "running_active",
-            CurrentTokensPerSecond: 0,
-            AverageTokensPerSession: null,
-            Parameters: ModelLaunchParams.Defaults,
-            ScriptPath: config.StartScript,
-            ProcessId: ProcessId,
-            StartedAt: StartedAt,
-            LastRequestAt: null,
-            IsHealthy: null,
-            LastError: Error);
-    }
-}
-
-/// <summary>
-/// Result of stopping a model.
-/// </summary>
-public sealed record StopModelResult(
-    bool Success,
-    int? ProcessId,
-    DateTimeOffset? StoppedAt,
-    string Message)
-{
-    public bool HasError => !Success;
 }

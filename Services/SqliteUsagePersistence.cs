@@ -86,22 +86,30 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
     {
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
 
-        var sql = """
+        var sql = $"""
             SELECT 
-                COUNT(*) as total_requests,
-                COALESCE(SUM(prompt_tokens), 0) as total_prompt_tokens,
-                COALESCE(SUM(completion_tokens), 0) as total_completion_tokens,
-                COALESCE(SUM(total_tokens), 0) as total_tokens,
-                CASE WHEN COUNT(*) > 0 THEN AVG(prompt_ms) ELSE 0 END as avg_prompt_ms,
-                CASE WHEN COUNT(*) > 0 THEN AVG(completion_ms) ELSE 0 END as avg_completion_ms,
-                CASE WHEN COUNT(*) > 0 THEN 
-                    COALESCE(AVG(CAST(cache_hits AS REAL) / NULLIF((prompt_tokens + completion_tokens), 0)), 0)
-                ELSE 0 END as cache_hit_rate
+                COUNT(*) as [TotalRequests],
+                COALESCE(SUM(prompt_tokens), 0) as [TotalPromptTokens],
+                COALESCE(SUM(completion_tokens), 0) as [TotalCompletionTokens],
+                COALESCE(SUM(total_tokens), 0) as [TotalTokens],
+                CASE WHEN COUNT(*) > 0 THEN AVG(prompt_ms) ELSE 0 END as [AvgPromptMs],
+                CASE WHEN COUNT(*) > 0 THEN AVG(completion_ms) ELSE 0 END as [AvgCompletionMs],
+                CASE 
+                    WHEN COUNT(*) > 0 THEN COALESCE(CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / NULLIF(COUNT(*), 0), 0)
+                    ELSE 0
+                END as [CacheHitRate]
             FROM usage_records
-            WHERE datetime(timestamp) >= datetime('now', '-' || ? || ' days')
-            """ + (model is not null ? " AND model = @model" : "");
+            WHERE timestamp >= @cutoff
+            {(model is not null ? " AND model = @model" : "")}
+            """;
 
-        var param = new { days, model };
+        var cutoffStr = cutoff.ToString("yyyy-MM-ddTHH:mm:ss");
+        object param;
+        if (model is not null)
+            param = new { model, cutoff = cutoffStr };
+        else
+            param = new { cutoff = cutoffStr };
+        await DbSchema.EnsureAsync(conn);
         return await conn.QueryFirstOrDefaultAsync<UsageSummaryRow?>(sql, param);
     }
 
@@ -109,27 +117,34 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
     {
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
 
-        var sql = """
+        var sql = $"""
             SELECT 
-                DATE(timestamp) as date,
-                model,
-                COUNT(*) as requests,
-                SUM(prompt_tokens) as prompt_tokens,
-                SUM(completion_tokens) as completion_tokens,
-                SUM(total_tokens) as total_tokens,
-                CASE WHEN COUNT(*) > 0 THEN AVG(prompt_ms) ELSE 0 END as avg_prompt_ms,
-                CASE WHEN COUNT(*) > 0 THEN AVG(completion_ms) ELSE 0 END as avg_completion_ms,
-                CASE WHEN COUNT(*) > 0 THEN 
-                    COALESCE(AVG(CAST(cache_hits AS REAL) / NULLIF((prompt_tokens + completion_tokens), 0)), 0)
-                ELSE 0 END as cache_hit_rate
+                DATE(timestamp) as [Date],
+                model as [Model],
+                COUNT(*) as [Requests],
+                COALESCE(SUM(prompt_tokens), 0) as [PromptTokens],
+                COALESCE(SUM(completion_tokens), 0) as [CompletionTokens],
+                COALESCE(SUM(total_tokens), 0) as [TotalTokens],
+                CASE WHEN COUNT(*) > 0 THEN AVG(prompt_ms) ELSE 0 END as [AvgPromptMs],
+                CASE WHEN COUNT(*) > 0 THEN AVG(completion_ms) ELSE 0 END as [AvgCompletionMs],
+                CASE 
+                    WHEN COUNT(*) > 0 THEN COALESCE(CAST(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) AS REAL) / NULLIF(COUNT(*), 0), 0)
+                    ELSE 0
+                END as [CacheHitRate]
             FROM usage_records
-            WHERE datetime(timestamp) >= datetime('now', '-' || ? || ' days')
-            """ + (model is not null ? " AND model = @model" : "") + @"
+            WHERE timestamp >= @cutoff
+            {(model is not null ? " AND model = @model" : "")}
             GROUP BY DATE(timestamp), model
-            ORDER BY date DESC, model;
+            ORDER BY [Date] DESC, model;
             """;
 
-        var param = new { days, model };
+        var cutoffStr = cutoff.ToString("yyyy-MM-ddTHH:mm:ss");
+        object param;
+        if (model is not null)
+            param = new { model, cutoff = cutoffStr };
+        else
+            param = new { cutoff = cutoffStr };
+        await DbSchema.EnsureAsync(conn);
         return (await conn.QueryAsync<DailyUsageRow>(sql, param)).ToArray();
     }
 
@@ -138,27 +153,29 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
         using var conn = new SqliteConnection(_connectionString);
         await conn.OpenAsync(ct);
 
-        var sql = """
+        var whereClause = model is not null ? "WHERE model = @model" : "";
+        var sql = $"""
             SELECT 
-                rowid as id,
+                rowid as [Id],
                 timestamp,
-                model,
-                route,
-                prompt_tokens,
-                completion_tokens,
-                total_tokens,
-                prompt_ms,
-                completion_ms,
-                cache_hits,
-                status_code,
-                client_ip
+                model as [Model],
+                route as [Route],
+                prompt_tokens as [PromptTokens],
+                completion_tokens as [CompletionTokens],
+                total_tokens as [TotalTokens],
+                prompt_ms as [PromptMs],
+                completion_ms as [CompletionMs],
+                cache_hits as [CacheHits],
+                status_code as [StatusCode],
+                client_ip as [ClientIp]
             FROM usage_records
-            """ + (model is not null ? "WHERE model = @model" : "") + @"
+            {whereClause}
             ORDER BY timestamp DESC
             LIMIT @limit OFFSET @offset;
             """;
 
-        var param = new { limit, offset, model };
+        var param = model is not null ? new { limit, offset, model } : (object)new { limit, offset };
+        await DbSchema.EnsureAsync(conn);
         var items = (await conn.QueryAsync<UsageRow>(sql, param)).ToList();
         var total = await GetTotalRequestsAsync(conn, model, ct);
 
@@ -167,11 +184,10 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
 
     private async Task<long> GetTotalRequestsAsync(SqliteConnection conn, string? model, CancellationToken ct)
     {
-        var sql = """
-            SELECT COUNT(*) FROM usage_records
-            """ + (model is not null ? "WHERE model = @model" : "");
+        var sql = $"""SELECT COUNT(*) FROM usage_records {(model is not null ? "WHERE model = @model" : "")}""";
 
-        return await conn.ExecuteScalarAsync<long>(sql, new { model });
+        await DbSchema.EnsureAsync(conn);
+        return await conn.ExecuteScalarAsync<long>(sql, model is not null ? (object)new { model } : (object)null!);
     }
 
     public void Dispose()
