@@ -6,4 +6,5 @@ namespace LlaModem.Config;
 public record ModelConfig
 {
     public string StartScript { get; set; } = string.Empty;
+    public string? BackendUrl { get; set; }  // Optional, defaults to global BackendUrl
 }

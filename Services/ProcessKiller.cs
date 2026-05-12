@@ -66,8 +66,19 @@ public class ProcessKiller
 
     private async Task KillProcessTreeAsync(int parentPid, ILogger logger)
     {
+        // Get all descendant process IDs
+        var descendants = GetDescendantProcessIds(parentPid, logger);
+        
+        if (descendants.Count == 0)
+        {
+            logger.LogWarning("No descendant processes found for PID {Pid}. Using fallback kill strategy.", parentPid);
+        }
+        else
+        {
+            logger.LogInformation("Found {Count} descendant process(es) for PID {Pid}", descendants.Count, parentPid);
+        }
+
         // Kill all descendant processes first
-        var descendants = GetDescendantProcessIds(parentPid);
         foreach (var pid in descendants)
         {
             try
@@ -82,8 +93,14 @@ public class ProcessKiller
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "Could not kill child process PID: {Pid}", pid);
+                logger.LogWarning(ex, "Could not kill child process PID: {Pid}", pid);
             }
+        }
+
+        // Fallback: If no descendants were found, try to find and kill children manually
+        if (descendants.Count == 0)
+        {
+            await KillChildrenManuallyAsync(parentPid, logger);
         }
 
         // Now kill the main process with graceful timeout
@@ -105,14 +122,83 @@ public class ProcessKiller
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Error killing main process PID: {Pid}", parentPid);
+            logger.LogWarning(ex, "Error killing main process PID: {Pid}", parentPid);
+        }
+    }
+
+    /// <summary>
+    /// Fallback method to find and kill child processes when WMI query fails or returns empty.
+    /// Uses a broader search by querying all processes and filtering by parent PID.
+    /// </summary>
+    private async Task KillChildrenManuallyAsync(int parentPid, ILogger logger)
+    {
+        try
+        {
+            // Query all processes and find children of the parent
+            var query = "SELECT * FROM Win32_Process";
+            using var searcher = new ManagementObjectSearcher(query);
+            using var results = searcher.Get();
+
+            var childPids = new List<int>();
+            foreach (var obj in results)
+            {
+                try
+                {
+                    var processId = Convert.ToInt32(obj["ProcessId"]);
+                    var parentId = Convert.ToInt32(obj["ParentProcessId"]);
+                    
+                    if (parentId == parentPid)
+                    {
+                        childPids.Add(processId);
+                        logger.LogDebug("Found child process PID: {Pid} (parent: {ParentPid})", processId, parentPid);
+                    }
+                }
+                catch
+                {
+                    // Skip malformed entries
+                }
+            }
+
+            // Kill all found children with aggressive timeout
+            foreach (var pid in childPids)
+            {
+                try
+                {
+                    var process = Process.GetProcessById(pid);
+                    if (!process.HasExited)
+                    {
+                        logger.LogDebug("Killing manually found child process PID: {Pid}", pid);
+                        process.Kill(false);
+                        // Use shorter timeout for children since they should exit quickly
+                        if (!process.WaitForExit(2000))
+                        {
+                            logger.LogWarning("Child process PID: {Pid} did not exit, force killing", pid);
+                            process.Kill(true);
+                            process.WaitForExit();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not kill manually found child process PID: {Pid}", pid);
+                }
+            }
+
+            if (childPids.Count == 0)
+            {
+                logger.LogWarning("No child processes found via fallback for PID {Pid}. VRAM may not be released.", parentPid);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Manual child process search failed for PID {Pid}. VRAM may not be released.", parentPid);
         }
     }
 
     /// <summary>
     /// Recursively finds all descendant process IDs for a given parent PID using WMI.
     /// </summary>
-    private static HashSet<int> GetDescendantProcessIds(int parentPid)
+    private static HashSet<int> GetDescendantProcessIds(int parentPid, ILogger? logger = null)
     {
 #pragma warning disable CA1416 // Validate platform compatibility
         var descendantIds = new HashSet<int>();
@@ -129,7 +215,7 @@ public class ProcessKiller
                 {
                     descendantIds.Add(pid);
                     // Recursively find grandchildren
-                    var grandchildren = GetDescendantProcessIds(pid);
+                    var grandchildren = GetDescendantProcessIds(pid, logger);
                     foreach (var gpId in grandchildren)
                     {
                         descendantIds.Add(gpId);
@@ -137,10 +223,10 @@ public class ProcessKiller
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // WMI may not be available on all systems — log and continue without tree kill
-            // This is a best-effort operation
+            logger?.LogWarning(ex, "WMI query failed for parent PID {Pid}", parentPid);
+            // Return empty set - fallback will be used
         }
 #pragma warning restore CA1416 // Validate platform compatibility
 

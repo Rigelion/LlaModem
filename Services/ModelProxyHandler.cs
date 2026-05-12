@@ -67,7 +67,8 @@ public class ModelProxyHandler
 
         _systemIdleTracker.RecordRequest();
 
-        var targetUrl = RequestForwarder.BuildTargetUrl(_config.Value.BackendUrl, request);
+        var backendUrl = modelConfig.BackendUrl ?? _config.Value.BackendUrl;
+        var targetUrl = RequestForwarder.BuildTargetUrl(backendUrl, request);
 
         using var httpClient = _httpClientFactory.CreateClient("ModelManager");
 
