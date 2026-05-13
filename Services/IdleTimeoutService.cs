@@ -4,7 +4,12 @@ using LlaModem.Services;
 
 namespace LlaModem.Services;
 
-public class IdleTimeoutService : BackgroundService
+public interface IIdleTimeoutResetter
+{
+    void Reset();
+}
+
+public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
 {
     private const int MinCheckIntervalSec = 15;
     private const int MaxCheckIntervalSec = 60;
@@ -14,7 +19,8 @@ public class IdleTimeoutService : BackgroundService
     private readonly SystemIdleTracker _systemIdleTracker;
     private readonly RouterConfig _config;
     private readonly ILogger<IdleTimeoutService> _logger;
-    private readonly PeriodicTimer _timer;
+    private PeriodicTimer _timer;
+    private readonly ManualResetEventSlim _resetSignal = new(true);
 
     /// <summary>
     /// Derives the idle-check polling interval from the configured timeout.
@@ -45,6 +51,11 @@ public class IdleTimeoutService : BackgroundService
 
         try
         {
+            while (!_resetSignal.IsSet)
+            {
+                await Task.Delay(100, stoppingToken);
+            }
+
             while (await _timer.WaitForNextTickAsync(stoppingToken))
             {
                 if (stoppingToken.IsCancellationRequested)
@@ -71,9 +82,19 @@ public class IdleTimeoutService : BackgroundService
         }
     }
 
+    public void Reset()
+    {
+        _logger.LogInformation("Idle timeout service stopped");
+        Dispose();
+        _logger.LogInformation("Idle timeout service started (timeout: {Seconds}s)", _config.Timeouts.IdleTimeoutSeconds);
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(CheckInterval));
+        _resetSignal.Reset();
+    }
+
     public override void Dispose()
     {
         _timer.Dispose();
+        _resetSignal.Dispose();
         base.Dispose();
     }
 }

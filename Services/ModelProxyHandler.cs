@@ -8,6 +8,7 @@ public class ModelProxyHandler
     private readonly IOptions<AppConfig> _config;
     private readonly ModelManager _modelManager;
     private readonly SystemIdleTracker _systemIdleTracker;
+    private readonly IIdleTimeoutResetter? _idleTimeoutResetter;
     private readonly LaunchParamParser _paramParser;
     private readonly RequestForwarder _forwarder;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -17,6 +18,7 @@ public class ModelProxyHandler
         IOptions<AppConfig> config,
         ModelManager modelManager,
         SystemIdleTracker systemIdleTracker,
+        IIdleTimeoutResetter? idleTimeoutResetter,
         LaunchParamParser paramParser,
         RequestForwarder forwarder,
         IHttpClientFactory httpClientFactory,
@@ -25,6 +27,7 @@ public class ModelProxyHandler
         _config = config;
         _modelManager = modelManager;
         _systemIdleTracker = systemIdleTracker;
+        _idleTimeoutResetter = idleTimeoutResetter;
         _paramParser = paramParser;
         _forwarder = forwarder;
         _httpClientFactory = httpClientFactory;
@@ -63,6 +66,12 @@ public class ModelProxyHandler
         {
             await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.ServiceUnavailable(ex.Message));
             return;
+        }
+
+        var path = context.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/v1", StringComparison.Ordinal) && !path.StartsWith("/admin", StringComparison.Ordinal))
+        {
+            _idleTimeoutResetter?.Reset();
         }
 
         _systemIdleTracker.RecordRequest();
