@@ -20,7 +20,7 @@ public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
     private readonly RouterConfig _config;
     private readonly ILogger<IdleTimeoutService> _logger;
     private PeriodicTimer _timer;
-    private readonly ManualResetEventSlim _resetSignal = new(true);
+    private ManualResetEventSlim _resetSignal = new ManualResetEventSlim(true);
 
     /// <summary>
     /// Derives the idle-check polling interval from the configured timeout.
@@ -88,7 +88,7 @@ public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
         Dispose();
         _logger.LogInformation("Idle timeout service started (timeout: {Seconds}s)", _config.Timeouts.IdleTimeoutSeconds);
         _timer = new PeriodicTimer(TimeSpan.FromSeconds(CheckInterval));
-        _resetSignal.Reset();
+        _resetSignal = new ManualResetEventSlim(true); // Recreate signal after disposal
     }
 
     public override void Dispose()
