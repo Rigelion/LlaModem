@@ -36,15 +36,7 @@ public class Program
             }
         });
         builder.Services.AddSingleton<IUsageService, UsageService>();
-        builder.Services.AddSingleton<IStatsService>(sp =>
-        {
-            var config = sp.GetRequiredService<IOptions<UsageConfig>>().Value;
-            var basePath = config.Path;
-            var fullPath = Path.IsPathRooted(basePath)
-                ? basePath
-                : Path.Combine(AppContext.BaseDirectory, basePath);
-            return new StatsService($"Data Source={fullPath}");
-        });
+        builder.Services.AddSingleton<IStatsService, StatsService>();
 
         // Configure Kestrel to listen on the configured URL
         var routerConfig = builder.Configuration.GetSection("Router");
