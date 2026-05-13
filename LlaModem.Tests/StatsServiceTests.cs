@@ -18,55 +18,36 @@ public class StatsServiceTests : IDisposable
 
     private async Task SeedDataAsync(params (string Timestamp, string Model, string Route, int PromptTokens, int CompletionTokens, int TotalTokens, double? PromptMs, double? CompletionMs, int? CacheHits, int StatusCode, string? ClientIp)[] records)
     {
-        // Database already exists from previous test; using fresh connection ensures clean state
-        await using var conn = new SqliteConnection(ConnString);
-        await conn.OpenAsync();
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            CREATE TABLE IF NOT EXISTS usage_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, request_id TEXT,
-                model TEXT NOT NULL, route TEXT NOT NULL, prompt_tokens INTEGER NOT NULL DEFAULT 0,
-                completion_tokens INTEGER NOT NULL DEFAULT 0, total_tokens INTEGER NOT NULL DEFAULT 0,
-                prompt_ms REAL, completion_ms REAL, prompt_per_token_ms REAL, completion_per_token_ms REAL,
-                cache_hits INTEGER, cached_tokens INTEGER, request_time TEXT, response_time TEXT,
-                client_ip TEXT, status_code INTEGER NOT NULL DEFAULT 200, request_headers TEXT
-            );
-            CREATE INDEX IF NOT EXISTS idx_ts ON usage_records(timestamp);
-            CREATE INDEX IF NOT EXISTS idx_model ON usage_records(model);
-            """;
-        await cmd.ExecuteNonQueryAsync();
-
-        await using var ins = conn.CreateCommand();
-        ins.CommandText = """
-            INSERT INTO usage_records (timestamp, request_id, model, route, prompt_tokens, completion_tokens,
-                total_tokens, prompt_ms, completion_ms, prompt_per_token_ms, completion_per_token_ms,
-                cache_hits, cached_tokens, request_time, response_time, client_ip, status_code, request_headers)
-            VALUES (@ts, NULL, @model, @route, @pt, @ct, @tt, @pm, @cm, NULL, NULL, @ch, NULL, NULL, NULL, @cip, @sc, NULL)
-            """;
+        var persistence = new SqliteUsagePersistence(new Microsoft.Extensions.Options.OptionsWrapper<LlaModem.Config.UsageConfig>(new LlaModem.Config.UsageConfig { Path = _tempDb }));
 
         foreach (var r in records)
         {
-            ins.Parameters.Clear();
-            ins.Parameters.AddWithValue("@ts", r.Timestamp);
-            ins.Parameters.AddWithValue("@model", r.Model);
-            ins.Parameters.AddWithValue("@route", r.Route);
-            ins.Parameters.AddWithValue("@pt", r.PromptTokens);
-            ins.Parameters.AddWithValue("@ct", r.CompletionTokens);
-            ins.Parameters.AddWithValue("@tt", r.TotalTokens);
-            ins.Parameters.AddWithValue("@pm", r.PromptMs ?? (object)DBNull.Value);
-            ins.Parameters.AddWithValue("@cm", r.CompletionMs ?? (object)DBNull.Value);
-            ins.Parameters.AddWithValue("@ch", r.CacheHits ?? (object)DBNull.Value);
-            ins.Parameters.AddWithValue("@cip", r.ClientIp ?? (object)DBNull.Value);
-            ins.Parameters.AddWithValue("@sc", r.StatusCode);
-            await ins.ExecuteNonQueryAsync();
+            await persistence.AppendAsync(
+                usage: new TokenUsage
+                {
+                    PromptTokens = r.PromptTokens,
+                    CompletionTokens = r.CompletionTokens,
+                    TotalTokens = r.TotalTokens,
+                    CacheHits = r.CacheHits is int h ? h : (int?)null,
+                    CachedTokens = 0,
+                    PromptMs = r.PromptMs,
+                    CompletionMs = r.CompletionMs
+                },
+                model: r.Model,
+                route: r.Route,
+                timestamp: DateTimeOffset.Parse(r.Timestamp),
+                requestTime: DateTimeOffset.Parse(r.Timestamp),
+                responseTime: DateTimeOffset.Parse(r.Timestamp),
+                clientIp: r.ClientIp,
+                statusCode: r.StatusCode,
+                requestHeaders: null
+            );
         }
     }
 
     [Fact]
     public async Task GetDailyUsageAsync_EmptyDatabase_ReturnsEmptyResult()
     {
-        // Database already exists from previous test; using fresh connection ensures clean state
-        // Create table with empty data
         await SeedDataAsync();
         var result = await CreateService().GetDailyUsageAsync(30, null);
         Assert.Empty(result.Daily);
@@ -150,7 +131,6 @@ public class StatsServiceTests : IDisposable
     [Fact]
     public async Task GetRecentRequestsAsync_EmptyDatabase_ReturnsEmpty()
     {
-        // Database already exists from previous test; using fresh connection ensures clean state
         var result = await CreateService().GetRecentRequestsAsync(10, 0, null);
         Assert.Equal(0, result.Total);
         Assert.Equal(0, result.Offset);
@@ -316,6 +296,7 @@ public class StatsServiceTests : IDisposable
 
     public void Dispose()
     {
-        // Database already exists from previous test; using fresh connection ensures clean state
+        if (File.Exists(_tempDb))
+            File.Delete(_tempDb);
     }
 }

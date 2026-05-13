@@ -76,16 +76,17 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
         var now = DateTimeOffset.UtcNow;
 
-        var summary = await GetSummaryAsync(conn, days, model, ct) ?? new UsageSummaryRow(0, 0, 0, 0, 0, 0, 0);
+        var summary = await GetSummaryAsync(conn, days, model, ct);
         var daily = await GetDailyRowsAsync(conn, days, model, ct);
 
-        return new DailyUsageResponse(new DateRange { From = cutoff.ToString("yyyy-MM-dd"), To = now.ToString("yyyy-MM-dd") }, summary, daily);
+        return new DailyUsageResponse(new DateRange { From = cutoff.ToString("yyyy-MM-dd"), To = now.ToString("yyyy-MM-dd") }, summary ?? new UsageSummaryRow(0, 0, 0, 0, 0, 0, 0), daily);
     }
 
     private async Task<UsageSummaryRow?> GetSummaryAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)
     {
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
 
+        var whereClause = model is not null ? "WHERE timestamp >= @cutoff AND model = @model" : "WHERE timestamp >= @cutoff";
         var sql = $"""
             SELECT 
                 COUNT(*) as [TotalRequests],
@@ -99,24 +100,20 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
                     ELSE 0
                 END as [CacheHitRate]
             FROM usage_records
-            WHERE timestamp >= @cutoff
-            {(model is not null ? " AND model = @model" : "")}
+            {whereClause}
             """;
 
-        var cutoffStr = cutoff.ToString("yyyy-MM-ddTHH:mm:ss");
-        object param;
-        if (model is not null)
-            param = new { model, cutoff = cutoffStr };
-        else
-            param = new { cutoff = cutoffStr };
         await DbSchema.EnsureAsync(conn);
-        return await conn.QueryFirstOrDefaultAsync<UsageSummaryRow?>(sql, param);
+        var cutoffStr = cutoff.ToString("o");
+        return await conn.QueryFirstOrDefaultAsync<UsageSummaryRow?>(sql, 
+            model is not null ? (object)new { cutoff = cutoffStr, model } : (object)new { cutoff = cutoffStr });
     }
 
     private async Task<DailyUsageRow[]> GetDailyRowsAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)
     {
         var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
 
+        var whereClause = model is not null ? "WHERE timestamp >= @cutoff AND model = @model" : "WHERE timestamp >= @cutoff";
         var sql = $"""
             SELECT 
                 DATE(timestamp) as [Date],
@@ -132,20 +129,15 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
                     ELSE 0
                 END as [CacheHitRate]
             FROM usage_records
-            WHERE timestamp >= @cutoff
-            {(model is not null ? " AND model = @model" : "")}
+            {whereClause}
             GROUP BY DATE(timestamp), model
             ORDER BY [Date] DESC, model;
             """;
 
-        var cutoffStr = cutoff.ToString("yyyy-MM-ddTHH:mm:ss");
-        object param;
-        if (model is not null)
-            param = new { model, cutoff = cutoffStr };
-        else
-            param = new { cutoff = cutoffStr };
         await DbSchema.EnsureAsync(conn);
-        return (await conn.QueryAsync<DailyUsageRow>(sql, param)).ToArray();
+        var cutoffStr = cutoff.ToString("o");
+        return (await conn.QueryAsync<DailyUsageRow>(sql, 
+            model is not null ? (object)new { cutoff = cutoffStr, model } : (object)new { cutoff = cutoffStr })).ToArray();
     }
 
     public async Task<RecentRequestsResponse> GetRecentRequestsAsync(int limit, int offset, string? model = null, CancellationToken ct = default)
