@@ -63,7 +63,7 @@ try {
         --slot-save-path $slotPath `
         -fa on `
         --cache-type-k q8_0 `
-        --cache-type-v turbo4 `
+        --cache-type-v q8_0 `
         --cache-ram 8192 `
         --no-mmap `
         -lv 2
