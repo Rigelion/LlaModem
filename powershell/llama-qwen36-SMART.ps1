@@ -1,71 +1,62 @@
-# Qwen3.6 35B-A3B Smart - Optimized
 param(
     [double]$Temperature = 0.6,
     [double]$TopP = 0.95,
     [double]$TopK = 20,
     [double]$MinP = 0.0,
     [double]$PresencePenalty = 0.00,
-    [double]$RepetitionPenalty = 1.05,
-    [int]$ContextLength = 80000,  # Fixed for consistency
-    [int]$Port = 8001,
-    [int]$Threads = 0,
-    [switch]$Verbose
+    [double]$RepetitionPenalty = 1.05
 )
 
-. .\common.ps1
-. .\config.ps1
+$env:TEMP = "F:\Temp"
+$env:TMP = "F:\Temp"
+$env:LLAMA_CACHE = "F:\llama-cache"
+$env:HF_HOME = "F:\hf-cache"
+$env:HUGGINGFACE_HUB_CACHE = "F:\hf-cache\hub"
+$env:LLAMA_CHAT_TEMPLATE_KWARGS = '{"preserve_thinking": true}'
 
-# Setup paths - use dot notation for class properties
-$paths = $script:CachePaths
-New-CacheDirectories -Directories @($paths.Temp, $paths.LlamaCache, $paths.HfCache, $paths.NvidiaCache)
-Setup-Environment -Temp $paths.Temp -LlamaCache $paths.LlamaCache `
-    -HfCache $paths.HfCache -NvidiaCache $paths.NvidiaCache
+$env:CUDA_CACHE_PATH = "F:\NVIDIA-cache"
+$env:CUDA_CACHE_MAXSIZE = "8147483648"
 
-$ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
+New-Item -ItemType Directory -Force F:\Temp, F:\llama-cache, F:\hf-cache, F:\NVIDIA-cache | Out-Null
 
-try { Validate-Port -Port $Port } catch { Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red; exit 1 }
 
-$ModelPath = "F:\models\models--unsloth--Qwen3.6-35B-A3B-GGUF\snapshots\a483e9e6cbd595906af30beda3187c2663a1118c\Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+# Display parameters before starting
+Write-Host "`n=== Qwen Smart Server Configuration ===" -ForegroundColor Cyan
+Write-Host "Temperature:       $Temperature"
+Write-Host "TopP:              $TopP"
+Write-Host "TopK:              $TopK"
+Write-Host "MinP:              $MinP"
+Write-Host "PresencePenalty:   $PresencePenalty"
+Write-Host "RepetitionPenalty: $RepetitionPenalty"
+Write-Host "Port:              8001"
+Write-Host "Context Length:    131072"
+Write-Host "Predictions:       4096"
+Write-Host "Threads:           6"
+Write-Host "Model Path:        F:\models\models--unsloth--Qwen3.6-35B-A3B-GGUF\snapshots\a483e9e6cbd595906af30beda3187c2663a1118c\Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+Write-Host "========================================`n" -ForegroundColor Cyan
 
-if ($Verbose) {
-    Format-ConfigHeader -Title "Qwen3.6 35B-A3B (UD-Q4_K_M)" `
-        -Temperature $Temperature -TopP $TopP -TopK $TopK -MinP $MinP `
-        -PresencePenalty $PresencePenalty -RepetitionPenalty $RepetitionPenalty `
-        -Port $Port -ContextLength $ContextLength -Predictions 4096 -Threads $ThreadCount -ModelPath $ModelPath
-}
-
-try {
-    # Build slot path using dot notation
-    $slotPath = Join-Path $paths.Models "llamacache"
-
-    llama-server `
-        --model $ModelPath `
-        --port $Port `
-        --alias "qwen36-smart" `
-        --n-gpu-layers 99 `
-        --n-cpu-moe 18 `
-        -c $ContextLength `
-        -n 4096 `
-        --no-context-shift `
-        --batch-size 1024 `
-        --ubatch-size 1024 `
-        --parallel 1 `
-        --threads $ThreadCount `
-        --temp $Temperature `
-        --top-p $TopP `
-        --top-k $TopK `
-        --min-p $MinP `
-        --repeat-penalty $RepetitionPenalty `
-        --presence-penalty $PresencePenalty `
-        --slot-save-path $slotPath `
-        --reasoning on `
-        -fa on `
-        --cache-type-k q8_0 `
-        --cache-type-v q8_0 `
-        --cache-ram 2048 `
-        --no-mmap `
-        -lv 2
-} catch {
-    Write-Host "Error starting llama-server: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
-}
+llama-server `
+    --model "F:\llama-cache\models--cHunter789--Qwen3.6-27B-i1-IQ4_XS-GGUF\snapshots\8f2f875ed8fb2f923941d90f10994b63553e6e3c\Qwen3.6-27B.i1-IQ4_XS-attn_qkv-IQ4_XS.gguf" `
+    --port 8001 `
+    --alias "qwen-smart" `
+    -c 65536 `
+    -n 2000 `
+    --no-context-shift `
+    --batch-size 1024 `
+    --ubatch-size 512 `
+    --parallel 1 `
+    --threads 8 `
+    --temp $Temperature `
+    --top-p $TopP `
+    --top-k $TopK `
+    --min-p $MinP `
+    --repeat-penalty $RepetitionPenalty `
+    --presence-penalty $PresencePenalty `
+    --slot-save-path "F:\models\llamacache" `
+    --reasoning on `
+    -fa on `
+    --cache-type-k turbo4 `
+    --cache-type-v turbo4 `
+    --cache-ram 2048 `
+    --no-mmap `
+    -lv 2

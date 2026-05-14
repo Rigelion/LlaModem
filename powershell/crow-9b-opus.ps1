@@ -3,14 +3,14 @@
 # Context: 128K | Dtype: Qwen3.5 architecture
 
 param(
-    [double]$Temperature = 0.7,
+    [double]$Temperature = 0.4,
     [double]$TopP = 0.95,
     [double]$TopK = 40,
     [double]$MinP = 0.0,
     [double]$PresencePenalty = 0.00,
-    [double]$RepetitionPenalty = 1.05,
-    [int]$ContextLength = 32768,
-    [int]$Port = 8004,
+    [double]$RepetitionPenalty = 1.07,
+    [int]$ContextLength = 132768,
+    [int]$Port = 8001,
     [int]$Threads = 0,
     [switch]$Verbose
 )
@@ -33,7 +33,7 @@ $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 Validate-Port -Port $Port -ErrorAction Stop
 
 # Model path - adjust to your local model storage
-$ModelPath = "$($paths.Models)\Crow-9B-Opus-4.6-Distill-Heretic_Qwen3.5-Q4_K_M.gguf"
+$ModelPath = "F:\llama-cache\models--Crownelius--Crow-9B-HERETIC-4.6\snapshots\761f0e581222372cf1258efa0ccd56901207e83b\Qwen3.5-9B-heretic-v2.Q5_K_M.gguf"
 
 # Validate model exists
 if (-not (Test-Path $ModelPath)) {
@@ -64,15 +64,17 @@ try {
         --alias "crow-9b-opus" `
         -c $ContextLength `
         -n 4096 `
+		--jinja `
         --no-context-shift `
         --batch-size 1024 `
         --ubatch-size 1024 `
-        --parallel 2 `
+        --parallel 1 `
         --threads $ThreadCount `
         --temp $Temperature `
         --top-p $TopP `
         --top-k $TopK `
         --min-p $MinP `
+		--reasoning on `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
         --no-mmap `

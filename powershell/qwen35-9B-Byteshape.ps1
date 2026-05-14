@@ -29,7 +29,7 @@ $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 
 try { Validate-Port -Port $Port } catch { Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red; exit 1 }
 
-$ModelPath = "F:\llama-cache\models--byteshape--Qwen3.5-9B-GGUF\snapshots\c0a342e97e5b33fdee725226f7f559426a675968\Qwen3.5-9B-Q5_K_S-4.60bpw.69bpw.gguf"
+$ModelPath = "F:\llama-cache\models--byteshape--Qwen3.5-9B-GGUF\snapshots\c0a342e97e5b33fdee725226f7f559426a675968\Qwen3.5-9B-Q5_K_S-4.60bpw.gguf"
 
 if ($Verbose) {
     Format-ConfigHeader -Title "Qwen3.5 9B (Q5_K_S)" `

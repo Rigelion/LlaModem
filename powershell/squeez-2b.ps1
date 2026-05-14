@@ -33,7 +33,7 @@ $ThreadCount = if ($Threads -eq 0) { Get-CpuThreads } else { $Threads }
 Validate-Port -Port $Port -ErrorAction Stop
 
 # Model path - adjust to your local model storage
-$ModelPath = "$($paths.Models)\squeez-2b-Q4_K_M.gguf"
+$ModelPath = "F:\llama-cache\models--mradermacher--squeez-2b-GGUF\snapshots\a71cbbbd4a813a1415cf59d2a5835754556ee4f3\squeez-2b.Q4_K_M.gguf"
 
 # Validate model exists
 if (-not (Test-Path $ModelPath)) {

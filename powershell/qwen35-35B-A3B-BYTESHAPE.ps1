@@ -1,12 +1,12 @@
 # Qwen3.5 35B-A3B Byteshape - Optimized
 param(
-    [double]$Temperature = 0.6,
+    [double]$Temperature = 0.3,
     [double]$TopP = 0.95,
     [double]$TopK = 20,
     [double]$MinP = 0.0,
     [double]$PresencePenalty = 0.00,
-    [double]$RepetitionPenalty = 1.00,
-    [int]$ContextLength = 100000,
+    [double]$RepetitionPenalty = 1.08,
+    [int]$ContextLength = 60000,
     [int]$Port = 8001,
     [int]$Threads = 0,  # 0 = auto-detect
     [switch]$Verbose

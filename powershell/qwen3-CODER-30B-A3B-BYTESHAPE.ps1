@@ -1,12 +1,12 @@
 # Qwen3-Coder 30B-A3B Byteshape - Optimized
 param(
-    [double]$Temperature = 0.6,
+    [double]$Temperature = 0.4,
     [double]$TopP = 0.95,
     [double]$TopK = 20,
     [double]$MinP = 0.0,
     [double]$PresencePenalty = 0.00,
     [double]$RepetitionPenalty = 1.00,
-    [int]$ContextLength = 202144,
+    [int]$ContextLength = 60000,
     [int]$Port = 8001,
     [int]$Threads = 0,
     [switch]$Verbose
@@ -52,8 +52,6 @@ try {
         --top-p $TopP `
         --top-k $TopK `
         --min-p $MinP `
-        --cache-type-k turbo4 `
-        --cache-type-v turbo4 `
         --repeat-penalty $RepetitionPenalty `
         --presence-penalty $PresencePenalty `
         --slot-save-path $slotPath `
