@@ -1,0 +1,108 @@
+# ModelManager
+
+**Entity Type:** Service  
+**Responsibility:** Orchestrates model lifecycle operations: lazy start, hot switching, idle shutdown, and health checks. Central coordinator for model state management.
+
+## Dependencies
+
+- `IModelRepository` - State persistence (modelName, processId, startedAt)
+- `IMetaModelManager` - Abstract interface for lifecycle operations
+- `DefaultModelLauncher` - Process launch and tracking
+- `HealthChecker` - Backend health polling
+- `IdleTimeoutService` - Inactivity monitoring
+- `ILogger<ModelManager>` - Lifecycle event logging
+
+## Key Methods
+
+### EnsureModelAsync
+
+```csharp
+public async Task<bool> EnsureModelAsync(
+    string modelName, 
+    ModelLaunchParams? launchParams = null,
+    CancellationToken ct = default)
+{
+    // Check if model already running
+    var activeModel = await GetActiveModelNameAsync();
+    if (activeModel == modelName)
+        return true;
+
+    // Stop current model if different
+    if (activeModel is not null)
+        await StopActiveModelAsync();
+
+    // Start new model
+    var config = _config.Models[modelName];
+    var process = await _launcher.StartAsync(
+        modelName, 
+        config.StartScript, 
+        launchParams, 
+        ct);
+
+    // Wait for health check
+    await WaitForHealthCheckAsync(modelName, process, ct);
+
+    // Update state repository
+    await _repository.SetStateAsync(new ModelProcessState {
+        ModelName = modelName,
+        ProcessId = process.Id,
+        StartedAt = DateTimeOffset.UtcNow
+    });
+
+    return true;
+}
+```
+
+**Behavior:**
+- Lazy start: Only launches when first requested
+- Hot switching: Stops current model before starting new one
+- Health check polling: 5 min max, 500ms interval
+
+### StopActiveModelAsync
+
+```csharp
+public async Task StopActiveModelAsync()
+{
+    var state = await _repository.GetStateAsync();
+    if (state is null) return;
+
+    // Stop process via launcher
+    await _launcher.StopProcessAsync(state.ProcessId);
+
+    // Clear repository state
+    await _repository.ClearStateAsync();
+}
+```
+
+**Behavior:**
+- Graceful shutdown with 5-second timeout
+- Force kill fallback if not stopped in time
+- Clears state repository on success
+
+## State Management
+
+**Repository Pattern:** `IModelRepository` stores `ModelProcessState`:
+```csharp
+public sealed record ModelProcessState(
+    string? ModelName,
+    int? ProcessId,
+    DateTimeOffset? StartedAt);
+```
+
+**Thread-safe dictionary keyed by model name.**
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Model not in config | Throws `KeyNotFoundException` |
+| Health check timeout | Throws `InvalidOperationException` |
+| Process start fails | Logs error, returns false |
+| Port already in use | llama-server exits with error |
+
+## Related Entities
+
+- [[DefaultModelLauncher]]
+- [[HealthChecker]] (not documented yet)
+- [[IdleTimeoutService]] (not documented yet)
+- [[ConfigRecords]]

@@ -1,0 +1,272 @@
+# PowerShell Model Launch Scripts
+
+## Purpose
+
+PowerShell scripts launched by `DefaultModelLauncher` to start `llama-server` instances for each configured model. Scripts are referenced in `appsettings.json` via `StartScript` configuration.
+
+## Module Structure
+
+```
+powershell/
+├── common.ps1              — Shared functions (thread detection, port validation)
+├── config.ps1             — Configuration loading utilities
+├── llama-qwen36-SMART.ps1 — Qwen3.6 35B-A3B model launcher
+├── llama-qwen36-OPTIMIZED.ps1 — Optimized variant
+├── qwen35-35B-A3B-BYTESHAPE.ps1 — Qwen3.5 35B model
+├── qwen35-9B-Byteshape.ps1 — Qwen3.5 9B model
+├── qwen3-CODER-30B-A3B-BYTESHAPE.ps1 — Qwen3-Coder 30B model
+└── README.md              — This file (script template and conventions)
+```
+
+## Script Template
+
+All scripts follow this structure:
+
+```powershell
+param(
+    [double]$Temperature = 0.6,
+    [double]$TopP = 0.95,
+    [double]$PresencePenalty = 0.00
+)
+
+# Set cache and environment paths
+$env:TEMP = "F:\Temp"
+$env:LLAMA_CACHE = "F:\llama-cache"
+$env:HF_HOME = "F:\hf-cache"
+
+# Create directories if they don't exist
+New-Item -ItemType Directory -Force F:\Temp, F:\llama-cache, F:\hf-cache | Out-Null
+
+# Display configuration
+Write-Host "`n=== Model Configuration ===" -ForegroundColor Cyan
+Write-Host "Port:              8001"
+Write-Host "Temperature:       $Temperature"
+Write-Host "TopP:              $TopP"
+Write-Host "Model Path:        <path to .gguf>"
+Write-Host "========================================`n" -ForegroundColor Cyan
+
+# Start llama-server
+llama-server `
+    --model "<path to model.gguf>" `
+    --port 8001 `
+    --alias "qwen36-smart" `
+    -c 131072 `
+    -n 4096 `
+    --threads 0 `
+    --temp $Temperature `
+    --top-p $TopP `
+    --presence-penalty $PresencePenalty
+```
+
+## Launch Parameters
+
+LlaModem passes these parameters as PowerShell arguments on first start:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `-Temperature` | Sampling temperature (0.0–2.0) | 0.6 |
+| `-TopP` | Nucleus sampling threshold (0.0–1.0) | 0.95 |
+| `-PresencePenalty` | Penalty for token reuse (-2.0–2.0) | 0.0 |
+
+**Note:** Parameters only applied on first start — subsequent requests to same model ignore them.
+
+## Common Functions (common.ps1)
+
+### Auto CPU Thread Detection
+
+```powershell
+function Get-CpuThreadCount {
+    return (Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+}
+
+# Usage: --threads $(Get-CpuThreadCount) or --threads 0 for auto-detect
+```
+
+### Port Validation
+
+```powershell
+function Test-PortAvailable {
+    param([int]$Port)
+    
+    try {
+        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any, $Port)
+        $listener.Start()
+        $listener.Stop()
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+# Usage: if (-not (Test-PortAvailable 8001)) { exit 1 }
+```
+
+### Error Handling with Exit Codes
+
+```powershell
+trap {
+    Write-Host "ERROR: $_" -ForegroundColor Red
+    exit 1
+}
+
+# Usage at script start for graceful failure handling
+```
+
+## Model Configuration
+
+Each model in `appsettings.json`:
+
+```json
+{
+  "Models": {
+    "qwen36-smart": { 
+      "StartScript": "%QWEN_SMART_START_SCRIPT%",
+      "BackendUrl": "http://localhost:8001"
+    },
+    "qwen35-9b": { 
+      "StartScript": "%QWEN_9B_START_SCRIPT%",
+      "BackendUrl": "http://localhost:8001"
+    }
+  }
+}
+```
+
+**Environment variable expansion:** `%VAR_NAME%` syntax expanded at startup via `Environment.ExpandEnvironmentVariables()`.
+
+## Port Assignment
+
+**All models use port 8001** — sequential, not concurrent execution.
+
+**Reasoning:**
+- Only one model runs at a time (hot switching)
+- Simplifies routing (`X-Llama-Model` header selects backend)
+- Avoids GPU memory conflicts
+
+## Health Check Endpoint
+
+llama-server exposes `/health` by default:
+
+```bash
+curl http://localhost:8001/health
+```
+
+**Response:**
+```json
+{ "status": "ok" }
+```
+
+**LlaModem usage:** `HealthChecker.PollAsync()` polls this endpoint during model startup.
+
+## Script Deployment Workflow
+
+### Adding a New Model
+
+1. **Create script** in `powershell/` directory:
+   ```powershell
+   # llama-new-model.ps1
+   param(
+       [double]$Temperature = 0.6,
+       [double]$TopP = 0.95
+   )
+   
+   $env:LLAMA_CACHE = "F:\llama-cache"
+   New-Item -ItemType Directory -Force F:\llama-cache | Out-Null
+   
+   llama-server `
+       --model "C:\models\new-model.gguf" `
+       --port 8001 `
+       --alias "new-model" `
+       -c 65536 `
+       --threads 0 `
+       --temp $Temperature `
+       --top-p $TopP
+   ```
+
+2. **Add config** to `appsettings.json`:
+   ```json
+   {
+     "Models": {
+       "new-model": { 
+         "StartScript": "%NEW_MODEL_START_SCRIPT%"
+       }
+     }
+   }
+   ```
+
+3. **Set environment variable**:
+   ```bash
+   export NEW_MODEL_START_SCRIPT="C:\scripts\llama-new-model.ps1"
+   ```
+
+4. **Test manually**:
+   ```powershell
+   & "C:\scripts\llama-new-model.ps1" -Temperature 0.7 -TopP 0.9
+   ```
+
+5. **Verify via LlaModem**:
+   ```bash
+   curl -u admin:password \
+     -H "X-Llama-Model: new-model" \
+     http://localhost:9000/v1/chat/completions
+   ```
+
+## Environment Variables
+
+Scripts can reference environment variables using `%VAR%` syntax:
+
+```powershell
+$env:LLAMA_CACHE = "%LLAMA_CACHE_PATH%"  # Expanded by LlaModem at startup
+$env:TEMP = "F:\Temp"                    # Direct assignment
+```
+
+**Common vars:**
+- `LLAMA_CACHE` — GGUF model cache directory
+- `HF_HOME` — Hugging Face cache directory
+- `TEMP` — Temporary files directory
+- `QWEN_SMART_START_SCRIPT`, etc. — Script paths (expanded by LlaModem)
+
+## Debugging Tips
+
+### Enable Verbose Mode
+
+Add `-Verbose` flag to script invocation:
+```powershell
+llama-server --verbose ...
+```
+
+### Check Process Output
+
+LlaModem captures stdout/stderr via events:
+```csharp
+process.OutputDataReceived += (s, e) => 
+    _logger.LogDebug("[{Model}] {Data}", modelName, e.Data);
+```
+
+**View logs:** Console output or file sink (configured in `Serilog`).
+
+### Test Script Independently
+
+```powershell
+# Run script directly (bypass LlaModem)
+& "C:\scripts\llama-new-model.ps1" -Temperature 0.7
+
+# Verify llama-server running
+curl http://localhost:8001/health
+```
+
+## Critical Notes
+
+- **Port 8001 only:** All scripts use same port — sequential execution enforced by LlaModem
+- **First start only:** Launch parameters ignored on subsequent requests to same model
+- **Health check required:** Script must expose `/health` endpoint (llama-server default)
+- **Process tracking:** Only PowerShell processes launched via `DefaultModelLauncher` tracked for cleanup
+
+## Existing Scripts Reference
+
+| Model | Script | Context | Threads |
+|-------|--------|---------|---------|
+| Qwen3.6 35B-A3B | llama-qwen36-SMART.ps1 | 80K context | Auto |
+| Qwen3.6 35B-A3B (opt) | llama-qwen36-OPTIMIZED.ps1 | 65K context | Auto |
+| Qwen3.5 35B-A3B | qwen35-35B-A3B-BYTESHAPE.ps1 | 100K context | Auto |
+| Qwen3.5 9B | qwen35-9B-Byteshape.ps1 | 65K context | Auto |
+| Qwen3-Coder 30B | qwen3-CODER-30B-A3B-BYTESHAPE.ps1 | 202K context | Auto |

@@ -1,0 +1,228 @@
+# HeaderValueInjector
+
+## Responsibility
+
+Maps HTTP request headers to JSON body fields at root level. Auto-typed values (boolean, integer, double, string) based on header content.
+
+## Dependencies
+
+| Dependency | Purpose |
+|------------|---------|
+| `IOptions<RouterConfig>` | Header mapping configuration (`BodyHeaderMappings`) |
+| `ILogger<HeaderValueInjector>` | Injection logging |
+
+## Configuration
+
+**Source:** `RouterConfig.BodyHeaderMappings`:
+
+```json
+{
+  "Router": {
+    "EnableBodyHeaderInjection": true,
+    "BodyHeaderMappings": {
+      "x-client-id": "clientId",
+      "x-debug": "debug",
+      "x-priority": "priority"
+    }
+  }
+}
+```
+
+**Behavior:**
+- `EnableBodyHeaderInjection`: Toggle injection on/off (default: true)
+- `BodyHeaderMappings`: Dictionary of header → JSON field name pairs
+- Header names are case-insensitive (normalized to lowercase for lookup)
+
+## Injection Pattern
+
+```csharp
+public sealed class HeaderValueInjector
+{
+    private readonly bool _enabled;
+    private readonly Dictionary<string, string> _mappings;
+    
+    public JsonElement Inject(JsonElement body, HttpRequestHeaders headers)
+    {
+        if (!_enabled) return body;
+        
+        var objectNode = body.Deserialize<Dictionary<string, JsonElement>>() ?? new();
+        
+        foreach (var mapping in _mappings)
+        {
+            var headerName = mapping.Key.ToLowerInvariant();
+            var headerValue = headers.FirstOrDefault(h => h.Key.ToLowerInvariant() == headerName).Value;
+            
+            if (headerValue.Any())
+            {
+                var jsonValue = ParseHeaderValue(headerValue.ToString());
+                objectNode[mapping.Value] = jsonValue;
+            }
+        }
+        
+        return JsonDocument.Parse(JsonSerializer.Serialize(objectNode)).RootElement;
+    }
+    
+    private static JsonElement ParseHeaderValue(string value)
+    {
+        // Try boolean
+        if (bool.TryParse(value, out var @bool))
+            return JsonElement.Create(@bool);
+        
+        // Try integer
+        if (int.TryParse(value, out var @int))
+            return JsonElement.Create(@int);
+        
+        // Try double
+        if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var @double))
+            return JsonElement.Create(@double);
+        
+        // Default: string
+        return JsonElement.Create(value);
+    }
+}
+```
+
+## Type Conversion Rules
+
+| Header Value | Parsed As | Example |
+|--------------|-----------|---------|
+| `true`, `false` (case-insensitive) | Boolean | `X-Debug: TRUE` → `"debug": true` |
+| `-123`, `0`, `456` (no decimals) | Integer | `X-Priority: -1` → `"priority": -1` |
+| `1.23`, `0.5`, `-0.75` (with decimal) | Double | `X-Temp: 0.7` → `"temperature": 0.7` |
+| Anything else | String | `X-Client-ID: abc123` → `"clientId": "abc123"` |
+
+**Notes:**
+- Parsing order: boolean → integer → double → string (most specific first)
+- Culture-invariant parsing for doubles (uses `.` as decimal separator)
+- Empty header values skipped (no null/empty fields injected)
+
+## Usage in Request Pipeline
+
+**Location:** Called by `ModelProxyHandler` before forwarding request to backend:
+
+```csharp
+public async Task<HttpResponseMessage> PrepareRequestAsync(
+    HttpContext context, 
+    string backendUrl, 
+    CancellationToken ct)
+{
+    // Create outgoing request
+    var request = new HttpRequestMessage(context.Request.Method, backendUrl);
+    
+    // Inject headers into body (if enabled)
+    if (_injector is not null)
+    {
+        var bodyString = await new StreamReader(context.Request.Body).ReadToEndAsync();
+        context.Request.Body.Position = 0; // Reset for forwarding
+        
+        var bodyJson = JsonDocument.Parse(bodyString);
+        var injectedBody = _injector.Inject(bodyJson, context.Request.Headers);
+        
+        request.Content = new StringContent(injectedBody.ToString(), Encoding.UTF8, "application/json");
+    }
+    
+    // Forward headers to backend
+    foreach (var header in context.Request.Headers)
+        if (!IsHopByHopHeader(header.Key))
+            request.Headers.TryAddWithoutValidation(header.Key, header.ToString());
+    
+    return request;
+}
+```
+
+**Note:** Body modified before forwarding — original body lost unless captured by middleware.
+
+## Header Name Normalization
+
+**Case-insensitive matching:**
+- `X-Llama-Model` → `x-llama-model` (lowercase)
+- `x-client-id` → `x-client-id` (already lowercase)
+- `X-DEBUG` → `x-debug` (normalized)
+
+**Implementation:** `_mappings.Keys.ToLowerInvariant()` for lookup.
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Header not in mappings | Skipped (no injection) |
+| Empty header value | Skipped (no null/empty fields) |
+| Invalid JSON body | Exception thrown (propagated to caller) |
+| Type parse failure | Falls back to string |
+
+## Testing Patterns
+
+**HeaderValueInjectorTests.cs:**
+```csharp
+[Fact]
+public void Inject_WhenHeaderMatchesMapping_AddsFieldToBody()
+{
+    // Arrange
+    var injector = new HeaderValueInjector(enableInjection: true, mappings: new Dictionary<string, string>
+    {
+        ["x-client-id"] = "clientId"
+    });
+    
+    var body = JsonDocument.Parse("{\"model\":\"test\"}").RootElement;
+    var headers = new HttpRequestHeaders();
+    headers.Add("X-Client-ID", "abc123");
+    
+    // Act
+    var result = injector.Inject(body, headers);
+    
+    // Assert
+    Assert.True(result.TryGetProperty("clientId", out var clientId));
+    Assert.Equal("abc123", clientId.GetString());
+}
+
+[Theory]
+[InlineData("true", "boolean")]
+[InlineData("42", "integer")]
+[InlineData("0.7", "double")]
+[InlineData("hello", "string")]
+public void Inject_WhenHeaderValueDifferentTypes_ParsesCorrectly(string value, string type)
+{
+    // Parameterized tests for type conversion
+}
+```
+
+## Workflow: Adding New Header Mapping
+
+1. **Update config** (`appsettings.json`):
+   ```json
+   "BodyHeaderMappings": {
+     "x-new-header": "newField"
+   }
+   ```
+
+2. **Test with curl**:
+   ```bash
+   curl -H "X-New-Header: value" \
+     -d '{"model":"test"}' \
+     http://localhost:9000/v1/chat/completions
+   ```
+
+3. **Verify in logs:** Check `[REQUEST]` log entry for injected body:
+   ```log
+   Body: {"model":"test","newField":"value"}
+   ```
+
+## Security Notes
+
+- **Header values trusted:** No validation on header content (assumes controlled environment)
+- **Body modification:** Injected fields appear at JSON root — may conflict with existing fields
+- **Case sensitivity:** Header names normalized to lowercase for matching
+- **Enable/disable:** Toggle via `EnableBodyHeaderInjection` config flag
+
+## Performance Considerations
+
+- **Single pass:** Body read once, modified in-memory, forwarded
+- **JSON parsing:** `JsonDocument` used (read-only, efficient)
+- **No streaming:** Full body buffered before injection (not suitable for large payloads)
+
+## Critical Notes
+
+- **Root-level only:** Fields injected at JSON root, not nested
+- **Type inference:** Auto-typed based on value content — no explicit type declarations
+- **Empty values skipped:** Prevents null/empty fields in request body
+- **Disabled by default:** Must enable via config (`EnableBodyHeaderInjection: true`)

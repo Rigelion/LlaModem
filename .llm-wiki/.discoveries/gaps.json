@@ -1,0 +1,225 @@
+{
+  "gaps": [
+    {
+      "topic": "HeaderValueInjector",
+      "mentionedBy": [
+        "concepts/headerinjectionpattern",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-005",
+        "sources/SRC-2026-05-18-010",
+        "sources/SRC-2026-05-18-012",
+        "sources/SRC-2026-05-18-014",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "RequestForwarder",
+      "mentionedBy": [
+        "concepts/headerinjectionpattern",
+        "concepts/minimalapiarchitecture",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-003",
+        "sources/SRC-2026-05-18-005",
+        "sources/SRC-2026-05-18-010",
+        "sources/SRC-2026-05-18-012",
+        "sources/SRC-2026-05-18-014",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "RouterConfig",
+      "mentionedBy": [
+        "concepts/headerinjectionpattern"
+      ]
+    },
+    {
+      "topic": "LlaModem.Tests",
+      "mentionedBy": [
+        "concepts/minimalapiarchitecture"
+      ]
+    },
+    {
+      "topic": "DashboardService",
+      "mentionedBy": [
+        "concepts/minimalapiarchitecture",
+        "entities/statsservice",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-003",
+        "sources/SRC-2026-05-18-012",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "BasicAuthMiddleware",
+      "mentionedBy": [
+        "concepts/minimalapiarchitecture",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-007",
+        "sources/SRC-2026-05-18-008",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "DefaultModelLauncher",
+      "mentionedBy": [
+        "concepts/modellifecyclemanagement",
+        "entities/modelmanager",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-009",
+        "sources/SRC-2026-05-18-013",
+        "sources/SRC-2026-05-18-014",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "ModelManager",
+      "mentionedBy": [
+        "concepts/modellifecyclemanagement",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "HealthChecker",
+      "mentionedBy": [
+        "concepts/modellifecyclemanagement",
+        "entities/modelmanager"
+      ]
+    },
+    {
+      "topic": "IdleTimeoutService",
+      "mentionedBy": [
+        "concepts/modellifecyclemanagement",
+        "entities/modelmanager"
+      ]
+    },
+    {
+      "topic": "ResponseUsageMiddleware",
+      "mentionedBy": [
+        "concepts/usagetrackingpattern",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-004",
+        "sources/SRC-2026-05-18-005",
+        "sources/SRC-2026-05-18-006",
+        "sources/SRC-2026-05-18-007",
+        "sources/SRC-2026-05-18-011",
+        "sources/SRC-2026-05-18-012",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "UsageService",
+      "mentionedBy": [
+        "concepts/usagetrackingpattern",
+        "entities/statsservice",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-003",
+        "sources/SRC-2026-05-18-004",
+        "sources/SRC-2026-05-18-006",
+        "sources/SRC-2026-05-18-011",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "UsageExtractor",
+      "mentionedBy": [
+        "concepts/usagetrackingpattern",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-004",
+        "sources/SRC-2026-05-18-006",
+        "sources/SRC-2026-05-18-011",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "StatsService",
+      "mentionedBy": [
+        "concepts/usagetrackingpattern",
+        "sources/SRC-2026-05-18-004",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "ConfigRecords",
+      "mentionedBy": [
+        "entities/modelmanager",
+        "entities/statsservice",
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-003",
+        "sources/SRC-2026-05-18-005",
+        "sources/SRC-2026-05-18-008",
+        "sources/SRC-2026-05-18-009",
+        "sources/SRC-2026-05-18-010",
+        "sources/SRC-2026-05-18-012",
+        "sources/SRC-2026-05-18-013",
+        "sources/SRC-2026-05-18-014",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "RequestLoggingMiddleware",
+      "mentionedBy": [
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-006",
+        "sources/SRC-2026-05-18-007",
+        "sources/SRC-2026-05-18-008",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "ModelLifecycleManagement",
+      "mentionedBy": [
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-003",
+        "sources/SRC-2026-05-18-009",
+        "sources/SRC-2026-05-18-012",
+        "sources/SRC-2026-05-18-013",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "UsageTrackingPattern",
+      "mentionedBy": [
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-004",
+        "sources/SRC-2026-05-18-006",
+        "sources/SRC-2026-05-18-011",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "HeaderInjectionPattern",
+      "mentionedBy": [
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-005",
+        "sources/SRC-2026-05-18-010",
+        "sources/SRC-2026-05-18-014",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    },
+    {
+      "topic": "MinimalAPIArchitecture",
+      "mentionedBy": [
+        "sources/SRC-2026-05-18-001",
+        "sources/SRC-2026-05-18-002",
+        "sources/SRC-2026-05-18-003",
+        "sources/SRC-2026-05-18-005",
+        "sources/SRC-2026-05-18-007",
+        "sources/SRC-2026-05-18-008",
+        "sources/SRC-2026-05-18-012",
+        "syntheses/llamodemarchitectureoverview"
+      ]
+    }
+  ],
+  "generated": "2026-05-18T21:36:43.653Z"
+}
