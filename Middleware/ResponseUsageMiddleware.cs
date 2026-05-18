@@ -16,6 +16,12 @@ public sealed class ResponseUsageMiddleware
     private readonly ModelMetricsService? _metricsService;
     private readonly ILogger<ResponseUsageMiddleware> _logger;
 
+    private static async Task RestoreOriginalBodyAsync(MemoryStream buffer, Stream originalBody)
+    {
+        buffer.Seek(0, SeekOrigin.Begin);
+        await buffer.CopyToAsync(originalBody);
+    }
+
     public ResponseUsageMiddleware(
         RequestDelegate next,
         IUsageService? usageService,
@@ -113,14 +119,12 @@ public sealed class ResponseUsageMiddleware
         }
         catch
         {
-            buffer.Seek(0, SeekOrigin.Begin);
-            await buffer.CopyToAsync(originalBody);
+            await RestoreOriginalBodyAsync(buffer, originalBody);
             throw;
         }
         finally
         {
-            buffer.Seek(0, SeekOrigin.Begin);
-            await buffer.CopyToAsync(originalBody);
+            await RestoreOriginalBodyAsync(buffer, originalBody);
         }
     }
 }

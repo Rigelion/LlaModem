@@ -83,13 +83,21 @@ public class RequestLoggingMiddleware
             // Log response body at Debug level (configurable)
             if (_logResponseBody && context.Response.Body.CanSeek && context.Response.Body.Length > 0)
             {
-                context.Response.Body.Position = 0;
-                var buffer = new byte[context.Response.Body.Length];
-                var bytesRead = context.Response.Body.Read(buffer, 0, buffer.Length);
-                if (bytesRead > 0)
+                try
                 {
-                    var bodyString = System.Text.Encoding.UTF8.GetString(buffer);
-                    _logger.LogDebug("[RESPONSE BODY] {Body}", bodyString);
+                    context.Response.Body.Position = 0;
+                    var buffer = new byte[context.Response.Body.Length];
+                    var bytesRead = context.Response.Body.Read(buffer, 0, buffer.Length);
+                    if (bytesRead > 0)
+                    {
+                        var bodyString = System.Text.Encoding.UTF8.GetString(buffer);
+                        _logger.LogDebug("[RESPONSE BODY] {Body}", bodyString);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't throw - response logging is non-critical
+                    _logger.LogWarning(ex, "[RESPONSE BODY] Failed to log response body");
                 }
             }
         }

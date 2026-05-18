@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,9 +20,9 @@ public class BasicAuthMiddleware
         IOptions<RouterConfig> config,
         ILogger<BasicAuthMiddleware> logger)
     {
-        _next = next;
-        _config = config.Value;
-        _logger = logger;
+        _next = next ?? throw new ArgumentNullException(nameof(next));
+        _config = config?.Value ?? throw new InvalidOperationException("RouterConfig not configured");
+        _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<BasicAuthMiddleware>();
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -73,12 +75,19 @@ public class BasicAuthMiddleware
 
     private static bool CompareConstantTime(string a, string b)
     {
-        if (a.Length != b.Length) return false;
+        int maxLen = Math.Max(a.Length, b.Length);
         int result = 0;
-        for (int i = 0; i < a.Length; i++)
+        
+        for (int i = 0; i < maxLen; i++)
         {
-            result |= a[i] ^ b[i];
+            char ca = i < a.Length ? a[i] : '\0';
+            char cb = i < b.Length ? b[i] : '\0';
+            result |= ca ^ cb;
         }
+        
+        // Account for length difference in constant time
+        result |= a.Length ^ b.Length;
+        
         return result == 0;
     }
 
