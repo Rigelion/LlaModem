@@ -79,10 +79,12 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         _systemIdleTracker.RecordRequest();
 
         var backendUrl = modelConfig.BackendUrl ?? _config.Value.BackendUrl;
+        var targetUrl = RequestForwarder.BuildTargetUrl(backendUrl, request);
 
-        await _forwarder.ForwardAsync(context, backendUrl, ct);
+        await _forwarder.ForwardAsync(context, targetUrl, ct);
     }
 
+    // TODO: add tests for /v1/{**path} forwarding with path stripping
     private async Task WarnIfModelAlreadyRunningAsync(ModelLaunchParams? launchParams, string modelName, CancellationToken ct = default)
     {
         if (launchParams is not null)
