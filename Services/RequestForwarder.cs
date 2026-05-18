@@ -3,7 +3,7 @@ using LlaModem.Utilities;
 
 namespace LlaModem.Services;
 
-public class RequestForwarder
+public sealed class RequestForwarder : IRequestForwarder
 {
     private readonly HeaderValueInjector _headerValueInjector;
     private readonly ILogger<RequestForwarder> _logger;
@@ -14,6 +14,16 @@ public class RequestForwarder
     {
         _headerValueInjector = headerValueInjector;
         _logger = logger;
+    }
+
+    public async Task ForwardAsync(
+        HttpContext context,
+        string backendUrl,
+        CancellationToken ct = default)
+    {
+        var request = context.Request;
+        using var httpClient = new HttpClient();
+        await ForwardAsync(context, request, httpClient, backendUrl);
     }
 
     public async Task ForwardAsync(

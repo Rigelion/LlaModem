@@ -4,7 +4,7 @@ using LlaModem.Config;
 
 namespace LlaModem.Services;
 
-public class ModelManager
+public sealed class ModelManager : IMetaModelManager
 {
     private readonly AppConfig _config;
     private readonly RouterConfig.TimeoutConfig _timeouts;
