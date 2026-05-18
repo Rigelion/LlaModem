@@ -62,7 +62,7 @@ public static class EndpointSetup
 
     private static void MapHealthEndpoint(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/health", async (ModelManager modelManager, CancellationToken ct) =>
+        endpoints.MapGet("/health", async (IMetaModelManager modelManager, CancellationToken ct) =>
         {
             var activeModel = await modelManager.GetActiveModelNameAsync(ct);
             return Results.Json(new { status = "ok", activeModel });
@@ -71,9 +71,9 @@ public static class EndpointSetup
 
     private static void MapV1ProxyEndpoint(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.Map("/v1/{**path}", async (HttpContext context, HttpRequest request, ModelProxyHandler handler) =>
+        endpoints.Map("/v1/{**path}", async (HttpContext context, IModelProxyHandler handler, CancellationToken ct) =>
         {
-            await handler.ProxyAsync(context, request);
+            await handler.RouteAsync(context, ct);
         });
     }
 
@@ -81,13 +81,13 @@ public static class EndpointSetup
     {
         var adminGroup = endpoints.MapGroup("/admin");
 
-        adminGroup.MapGet("/status", async (ModelManager modelManager, IOptions<AppConfig> config, CancellationToken ct) =>
+        adminGroup.MapGet("/status", async (IMetaModelManager modelManager, IOptions<AppConfig> config, CancellationToken ct) =>
         {
             var activeModel = await modelManager.GetActiveModelNameAsync(ct);
             return Results.Json(new { activeModel, backendUrl = config.Value.BackendUrl });
         });
 
-        adminGroup.MapPost("/model", async (HttpContext context, ModelManager modelManager) =>
+        adminGroup.MapPost("/model", async (HttpContext context, IMetaModelManager modelManager) =>
         {
             var body = await System.Text.Json.JsonSerializer.DeserializeAsync<SwitchModelRequest>(context.Request.Body);
             if (body?.Model == null)
@@ -109,7 +109,7 @@ public static class EndpointSetup
             }
         });
 
-        adminGroup.MapPost("/stop", async (HttpContext context, ModelManager modelManager) =>
+        adminGroup.MapPost("/stop", async (HttpContext context, IMetaModelManager modelManager) =>
         {
             var stopped = await modelManager.GetActiveModelNameAsync(context.RequestAborted);
             if (stopped is null)
@@ -150,7 +150,7 @@ public static class DashboardEndpointExtensions
 
         dashboardGroup.MapPost("/models/{name}/start", async (
             HttpContext context,
-            ModelManager modelManager,
+            IMetaModelManager modelManager,
             DashboardService dashboard,
             string name,
             CancellationToken ct) =>
@@ -189,7 +189,7 @@ public static class DashboardEndpointExtensions
         }).WithName("StartModel");
 
         dashboardGroup.MapPost("/models/{name}/stop", async (
-            ModelManager modelManager,
+            IMetaModelManager modelManager,
             string name,
             CancellationToken ct) =>
         {
@@ -239,7 +239,7 @@ public static class DashboardEndpointExtensions
         }).WithName("UpdateModelParams");
 
         dashboardGroup.MapGet("/models/{name}/health", async (
-            ModelManager modelManager,
+            IMetaModelManager modelManager,
             HealthChecker healthChecker,
             IOptions<AppConfig> config,
             string name,

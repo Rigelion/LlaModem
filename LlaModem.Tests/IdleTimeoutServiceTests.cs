@@ -141,9 +141,10 @@ public class IdleTimeoutServiceTests
         var httpClientFactory = new MockHttpClientFactory();
         var logger = new LoggerFactory().CreateLogger<ModelProxyHandler>();
 
-        // Act - Create handler with null resetter (should not throw)
+        // Act - Create handler with null idleTimeoutResetter (should not throw)
+        var paramParser = new LaunchParamParser();
         var handler = new ModelProxyHandler(
-            config, null!, idleTracker, null, null!, forwarder, httpClientFactory, logger);
+            config, null!, idleTracker, null!, paramParser, forwarder, httpClientFactory, logger);
 
         // Assert - Handler should be created successfully
         Assert.NotNull(handler);
