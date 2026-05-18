@@ -65,14 +65,16 @@ public class Program
         builder.Services.AddSingleton<DefaultModelLauncher>();
         builder.Services.AddSingleton<GpuMemoryChecker>();
         builder.Services.AddSingleton<ModelManager>();
+        builder.Services.AddSingleton<IMetaModelManager, ModelManager>();
         builder.Services.AddSingleton<ModelMetricsService>();
         builder.Services.AddSingleton<DashboardService>();
         builder.Services.AddSingleton<IUsagePersistence, SqliteUsagePersistence>();
-        builder.Services.AddSingleton<UsageService>();
+        // DUPLICATE REMOVED: UsageService concrete registration deleted
         builder.Services.AddSingleton<SystemIdleTracker>();
+        builder.Services.AddSingleton<IIdleTimeoutResetter, IdleTimeoutService>();
         builder.Services.AddSingleton<LaunchParamParser>();
-        builder.Services.AddSingleton<RequestForwarder>();
-        builder.Services.AddSingleton<ModelProxyHandler>();
+        builder.Services.AddSingleton<IRequestForwarder, RequestForwarder>();
+        builder.Services.AddSingleton<IModelProxyHandler, ModelProxyHandler>();
         builder.Services.AddHostedService<IdleTimeoutService>();
 
         // Register header value injector with configured mappings

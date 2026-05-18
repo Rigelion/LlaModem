@@ -3,24 +3,25 @@ using Microsoft.Extensions.Options;
 
 namespace LlaModem.Services;
 
-public class ModelProxyHandler
+public sealed class ModelProxyHandler : IModelProxyHandler
 {
     private readonly IOptions<AppConfig> _config;
-    private readonly ModelManager _modelManager;
+    private readonly IMetaModelManager _modelManager;
     private readonly SystemIdleTracker _systemIdleTracker;
     private readonly IIdleTimeoutResetter? _idleTimeoutResetter;
+
     private readonly LaunchParamParser _paramParser;
-    private readonly RequestForwarder _forwarder;
+    private readonly IRequestForwarder _forwarder;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ModelProxyHandler> _logger;
 
     public ModelProxyHandler(
         IOptions<AppConfig> config,
-        ModelManager modelManager,
+        IMetaModelManager modelManager,
         SystemIdleTracker systemIdleTracker,
         IIdleTimeoutResetter? idleTimeoutResetter,
         LaunchParamParser paramParser,
-        RequestForwarder forwarder,
+        IRequestForwarder forwarder,
         IHttpClientFactory httpClientFactory,
         ILogger<ModelProxyHandler> logger)
     {
@@ -34,8 +35,9 @@ public class ModelProxyHandler
         _logger = logger;
     }
 
-    public async Task ProxyAsync(HttpContext context, HttpRequest request)
+    public async Task RouteAsync(HttpContext context, CancellationToken ct)
     {
+        var request = context.Request;
         var modelName = request.Headers[ProxyHeaders.Model].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(modelName))
         {
@@ -77,11 +79,8 @@ public class ModelProxyHandler
         _systemIdleTracker.RecordRequest();
 
         var backendUrl = modelConfig.BackendUrl ?? _config.Value.BackendUrl;
-        var targetUrl = RequestForwarder.BuildTargetUrl(backendUrl, request);
 
-        using var httpClient = _httpClientFactory.CreateClient("ModelManager");
-
-        await _forwarder.ForwardAsync(context, request, httpClient, targetUrl);
+        await _forwarder.ForwardAsync(context, backendUrl, ct);
     }
 
     private async Task WarnIfModelAlreadyRunningAsync(ModelLaunchParams? launchParams, string modelName, CancellationToken ct = default)
