@@ -20,12 +20,12 @@ public class DashboardEndpointTests
         var result = ModelLaunchParams.Defaults;
         
         // Assert - Verify all default values match expected
-        Assert.Equal(0.6, result.Temperature);
-        Assert.Equal(0.95, result.TopP);
-        Assert.Equal(20, result.TopK);
-        Assert.Equal(0.0, result.MinP);
-        Assert.Equal(0.0, result.PresencePenalty);
-        Assert.Equal(1.05, result.RepetitionPenalty);
+        Assert.Equal(0.6m, result.Temperature);
+        Assert.Equal(0.95m, result.TopP);
+        Assert.Equal(20m, result.TopK);
+        Assert.Equal(0.0m, result.MinP);
+        Assert.Equal(0.0m, result.PresencePenalty);
+        Assert.Equal(1.05m, result.RepetitionPenalty);
     }
 
     [Fact]
@@ -34,12 +34,12 @@ public class DashboardEndpointTests
         // Arrange
         var expectedDefaults = new
         {
-            Temperature = 0.6,
-            TopP = 0.95,
-            TopK = 20,
-            MinP = 0.0,
-            PresencePenalty = 0.0,
-            RepetitionPenalty = 1.05
+            Temperature = 0.6m,
+            TopP = 0.95m,
+            TopK = 20m,
+            MinP = 0.0m,
+            PresencePenalty = 0.0m,
+            RepetitionPenalty = 1.05m
         };
         
         // Act
@@ -105,12 +105,12 @@ public class DashboardEndpointTests
         Assert.NotNull(defaults.RepetitionPenalty);
         
         // Assert - Verify all values are within expected ranges
-        Assert.InRange(defaults.Temperature.Value, 0.5, 0.7);
-        Assert.InRange(defaults.TopP.Value, 0.9, 1.0);
-        Assert.Equal(20, defaults.TopK.Value);
-        Assert.InRange(defaults.MinP.Value, 0.0, 0.1);
-        Assert.InRange(defaults.PresencePenalty.Value, -0.1, 0.1);
-        Assert.InRange(defaults.RepetitionPenalty.Value, 1.0, 1.1);
+        Assert.InRange(defaults.Temperature.Value, 0.5m, 0.7m);
+        Assert.InRange(defaults.TopP.Value, 0.9m, 1.0m);
+        Assert.Equal(20m, defaults.TopK.Value);
+        Assert.InRange(defaults.MinP.Value, 0.0m, 0.1m);
+        Assert.InRange(defaults.PresencePenalty.Value, -0.1m, 0.1m);
+        Assert.InRange(defaults.RepetitionPenalty.Value, 1.0m, 1.1m);
     }
 
     [Fact]

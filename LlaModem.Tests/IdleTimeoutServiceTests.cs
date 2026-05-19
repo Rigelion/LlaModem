@@ -137,14 +137,16 @@ public class IdleTimeoutServiceTests
         });
 
         var idleTracker = new SystemIdleTracker();
-        var forwarder = new RequestForwarder(null, new LoggerFactory().CreateLogger<RequestForwarder>());
+        var forwarder = new RequestForwarder(new LoggerFactory().CreateLogger<RequestForwarder>());
         var httpClientFactory = new MockHttpClientFactory();
-        var logger = new LoggerFactory().CreateLogger<ModelProxyHandler>();
+        var modelLogger = new LoggerFactory().CreateLogger<ModelProxyHandler>();
+        var dashboardLogger = new LoggerFactory().CreateLogger<DashboardService>();
 
         // Act - Create handler with null idleTimeoutResetter (should not throw)
-        var paramParser = new LaunchParamParser();
+        var dashboardService = new DashboardService(
+            config, null!, null!, null!, null!, Options.Create(new RouterConfig()), dashboardLogger);
         var handler = new ModelProxyHandler(
-            config, null!, idleTracker, null!, paramParser, forwarder, httpClientFactory, logger);
+            config, null!, idleTracker, null!, dashboardService, forwarder, httpClientFactory, modelLogger);
 
         // Assert - Handler should be created successfully
         Assert.NotNull(handler);
