@@ -2,25 +2,34 @@
 
 ## Responsibility
 
-Proxies HTTP requests from clients to llama-server backends. Handles header injection, backend URL selection, and error response formatting.
+Proxies HTTP requests from clients to llama-server backends. Handles backend URL selection, request body preservation, and error response formatting.
 
 ## Dependencies
 
 | Dependency | Purpose |
-|------------|---------|
-| `IModelProxyHandler` | Prepares request (injects headers, selects backend) |
-| `ErrorResponseWriter` | Structured error responses |
+|------------|----------|
 | `ILogger<RequestForwarder>` | Request/response logging |
 
 ## Request Flow
 
 ```
 Client request (/v1/chat/completions)
-  → HeaderValueInjector (inject X-Llama-* headers to JSON body)
-  → ModelProxyHandler (select backend URL, prepare HttpClient request)
+  → ModelProxyHandler (select backend URL, load params from dashboard_params.json)
   → RequestForwarder (proxy to backend, capture response)
   → ResponseUsageMiddleware (capture usage stats from response)
 ```
+
+## Parameter Loading Strategy
+
+**Source**: `dashboard_params.json` (persisted via admin API)
+
+**Flow**:
+1. Client sends request with `X-Llama-Model: qwen36-smart`
+2. `ModelProxyHandler.LoadParamsForModel()` loads params from file
+3. Model starts with loaded parameters (or defaults if file missing)
+4. Request body forwarded unchanged to backend
+
+**Important**: No HTTP header-to-body injection occurs — parameters come solely from persisted JSON file.
 
 ## Proxy Pattern
 
@@ -56,41 +65,23 @@ public async Task<HttpResponseMessage> ForwardAsync(
 }
 ```
 
-## Header Injection Pattern
-
-**Location:** `HeaderValueInjector` (see `.rpiv/guidance/Services/HeaderValueInjector.md`)
-
-**Configuration:** `RouterConfig.BodyHeaderMappings`:
-```json
-"BodyHeaderMappings": {
-  "x-client-id": "clientId",
-  "x-debug": "debug"
-}
-```
-
-**Behavior:**
-- Reads HTTP headers before forwarding
-- Injects values at JSON root level
-- Auto-typed: boolean, integer, double, or string
-- Example: `X-Llama-Temperature: 0.7` → body `{ "temperature": 0.7, ... }`
-
 ## Backend URL Selection
 
-**Source:** `ModelConfig.BackendUrl` (per-model) or `AppConfig.BackendUrl` (default)
+**Source**: `ModelConfig.BackendUrl` (per-model) or `AppConfig.BackendUrl` (default)
 
 ```csharp
 var backendUrl = modelConfig.BackendUrl ?? _config.BackendUrl;
 // Default: "http://localhost:8001"
 ```
 
-**Notes:**
+**Notes**:
 - All models share port 8001 (sequential execution)
 - Per-model override available via `ModelConfig.BackendUrl`
 - URL constructed from model name + config
 
 ## Error Handling Pattern
 
-**Structured errors:** `ErrorResponseWriter.WriteAsync()` produces consistent JSON:
+**Structured errors**: `ErrorResponseWriter.WriteAsync()` produces consistent JSON:
 
 ```json
 {
@@ -101,13 +92,13 @@ var backendUrl = modelConfig.BackendUrl ?? _config.BackendUrl;
 }
 ```
 
-**Error codes (ApiResult<T>):**
+**Error codes (ApiResult<T>)**:
 - `MODEL_NOT_FOUND` — Model not in config
 - `BACKEND_UNAVAILABLE` — Backend HTTP error / timeout
 - `INVALID_REQUEST` — Malformed request body
 - `INTERNAL_ERROR` — Unexpected exception
 
-**Implementation:**
+**Implementation**:
 ```csharp
 try
 {
@@ -127,14 +118,14 @@ catch (HttpRequestException ex)
 
 ## Streaming Support
 
-**Status:** Not supported — full response buffered for usage capture.
+**Status**: Not supported — full response buffered for usage capture.
 
-**Reasoning:**
+**Reasoning**:
 - Usage stats only available after completion
 - llama-server streaming uses SSE format (not JSON)
 - Buffering simplifies middleware pipeline
 
-**Impact:** Clients must use non-streaming mode (`stream: false` in request body).
+**Impact**: Clients must use non-streaming mode (`stream: false` in request body).
 
 ## Content-Type Handling
 
@@ -146,7 +137,7 @@ catch (HttpRequestException ex)
 
 ## Timeout Configuration
 
-**Source:** `IHttpClientFactory` registered in `Program.cs`:
+**Source**: `IHttpClientFactory` registered in `Program.cs`:
 
 ```csharp
 builder.Services.AddHttpClient("ModelManager", client =>
@@ -155,21 +146,21 @@ builder.Services.AddHttpClient("ModelManager", client =>
 });
 ```
 
-**Notes:**
+**Notes**:
 - Long-running generation requests supported (up to 5 minutes)
 - Health check timeout separate (`HealthCheckTimeoutMinutes`)
 - Idle shutdown independent (`IdleTimeoutSeconds`)
 
 ## Logging Pattern
 
-**Request logging:** `RequestLoggingMiddleware` (see `.rpiv/guidance/Middleware/RequestLoggingMiddleware.md`)
+**Request logging**: `RequestLoggingMiddleware` (see `.rpiv/guidance/Middleware/RequestLoggingMiddleware.md`)
 
-**Forwarding log:**
+**Forwarding log**:
 ```csharp
 _logger.LogInformation("[FORWARD] {Method} {Path} → {BackendUrl} — Status: {Status}", ...);
 ```
 
-**Response body logging:** `ResponseUsageMiddleware` logs full JSON for non-streaming responses.
+**Response body logging**: `ResponseUsageMiddleware` logs full JSON for non-streaming responses.
 
 ## Testing Patterns
 
@@ -179,27 +170,15 @@ _logger.LogInformation("[FORWARD] {Method} {Path} → {BackendUrl} — Status: {
 
 See `.rpiv/guidance/LlaModem.Tests/RequestForwarderTests.cs`.
 
-## Workflow: Adding New Header Mapping
-
-1. Update `appsettings.json`:
-   ```json
-   "BodyHeaderMappings": {
-     "x-new-header": "newField"
-   }
-   ```
-
-2. Values auto-typed by `HeaderValueInjector` (no code change needed)
-
-3. Test with curl:
-   ```bash
-   curl -H "X-New-Header: value" http://localhost:9000/v1/chat/completions
-   ```
-
-4. Verify injected in request body via logs or network capture
-
 ## Critical Notes
 
 - **No streaming**: Clients must use non-streaming mode for usage tracking
-- **Header injection**: Only applies to `/v1/*` proxy routes (not admin endpoints)
-- **Body modification**: Injected fields appear at JSON root level, not nested
+- **No header injection**: Parameters come from `dashboard_params.json` only
+- **Body preservation**: Request body forwarded unchanged to backend
 - **Timeouts**: 5-minute request timeout — long generations may fail
+
+---
+
+**Date**: 2026-05-19  
+**Author**: Rigelion  
+**Related Plan**: `.rpiv/artifacts/plans/2026-05-19_14-30-00_remove-header-body-injection.md`

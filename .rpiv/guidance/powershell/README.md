@@ -24,9 +24,9 @@ All scripts follow this structure:
 
 ```powershell
 param(
-    [double]$Temperature = 0.6,
-    [double]$TopP = 0.95,
-    [double]$PresencePenalty = 0.00
+    [decimal]$Temperature = 0.6,
+    [decimal]$TopP = 0.95,
+    [decimal]$PresencePenalty = 0.00
 )
 
 # Set cache and environment paths
@@ -62,11 +62,13 @@ llama-server `
 
 LlaModem passes these parameters as PowerShell arguments on first start:
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `-Temperature` | Sampling temperature (0.0–2.0) | 0.6 |
-| `-TopP` | Nucleus sampling threshold (0.0–1.0) | 0.95 |
-| `-PresencePenalty` | Penalty for token reuse (-2.0–2.0) | 0.0 |
+| Parameter | Description | Default | Notes |
+|-----------|-------------|---------|-------|
+| `-Temperature` | Sampling temperature (0.0–2.0) | 0.6 | `decimal` type for 2-decimal precision |
+| `-TopP` | Nucleus sampling threshold (0.0–1.0) | 0.95 | `decimal` type for 2-decimal precision |
+| `-PresencePenalty` | Penalty for token reuse (-2.0–2.0) | 0.0 | `decimal` type for 2-decimal precision |
+
+**Note**: Parameters use `[decimal]` type (not `[double]`) to ensure exact 2-decimal precision compatibility with llama-server.
 
 **Note:** Parameters only applied on first start — subsequent requests to same model ignore them.
 
@@ -165,8 +167,8 @@ curl http://localhost:8001/health
    ```powershell
    # llama-new-model.ps1
    param(
-       [double]$Temperature = 0.6,
-       [double]$TopP = 0.95
+       [decimal]$Temperature = 0.6,
+       [decimal]$TopP = 0.95
    )
    
    $env:LLAMA_CACHE = "F:\llama-cache"

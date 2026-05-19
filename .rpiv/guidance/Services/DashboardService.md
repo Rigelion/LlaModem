@@ -219,6 +219,56 @@ public static class StatsEndpointExtensions
 
 See `.rpiv/guidance/LlaModem.Tests/StatsServiceTests.cs` for examples.
 
+## Parameter Management
+
+### Model Launch Parameters
+
+Parameters are persisted to `dashboard_params.json` and loaded on each model start:
+
+**File location**: `./dashboard_params.json`
+
+**Default parameters** (`ModelLaunchParams.Defaults`):
+```csharp
+Temperature: 0.6m,      // decimal? (2-decimal precision)
+TopP: 0.95m,           // decimal?
+TopK: 20m,             // decimal?
+MinP: 0.0m,            // decimal?
+PresencePenalty: 0.0m, // decimal?
+RepetitionPenalty: 1.05m // decimal?
+```
+
+**Type precision**: Changed from `double?` to `decimal?` for exact 2-decimal compatibility with llama-server.
+
+### Loading Flow
+
+```csharp
+// ModelProxyHandler loads params on each request:
+var launchParams = _dashboardService.LoadParams(modelName);
+```
+
+**Behavior**:
+- Returns persisted params if model exists in file
+- Falls back to defaults if file missing or model not found
+- Exceptions logged as warnings, never throw
+
+### Updating Parameters
+
+**API endpoint**: `PUT /admin/models/{name}/params`
+
+**Request body**:
+```json
+{
+  "Temperature": 0.8,
+  "TopP": 0.95,
+  "TopK": 40,
+  "MinP": 0.0,
+  "PresencePenalty": 0.0,
+  "RepetitionPenalty": 1.05
+}
+```
+
+**Important**: Parameter changes do NOT trigger automatic model restart. Model continues with old values until next start.
+
 ## Security Notes
 
 - **All admin endpoints unauthenticated** — accessible to anyone on local network

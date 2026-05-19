@@ -9,10 +9,9 @@ Immutable configuration records bound from `appsettings.json` using the Options 
 ```
 Config/
 ├── AppConfig.cs          — Root config, aggregates all sections
-├── RouterConfig.cs       — Router settings (URL, auth, timeouts, header injection)
+├── RouterConfig.cs       — Router settings (URL, auth, timeouts)
 ├── ModelConfig.cs        — Per-model configuration (start script, backend URL)
-├── UsageConfig.cs        — Usage tracking settings (enabled flag, database path)
-└── ProxyHeaders.cs       — Header mapping config for body injection
+└── UsageConfig.cs        — Usage tracking settings (enabled flag, database path)
 ```
 
 ## Configuration Records
@@ -45,9 +44,6 @@ public sealed record RouterConfig
     public string AuthUsername { get; init; } = "admin";
     public string AuthPassword { get; init; } = ""; // Set via LLAMODEM_AUTH_PASSWORD env var
     
-    public bool EnableBodyHeaderInjection { get; init; } = true;
-    public Dictionary<string, string> BodyHeaderMappings { get; init; } = [];
-    
     public TimeoutConfig Timeouts { get; init; } = new();
 }
 
@@ -64,7 +60,6 @@ public sealed record TimeoutConfig
 
 **Notes:**
 - Auth credentials prefer environment variables (`LLAMODEM_AUTH_USERNAME`, `LLAMODEM_AUTH_PASSWORD`) over JSON config
-- Header injection maps HTTP headers to JSON body root-level fields (auto-typed: bool/int/double/string)
 - Idle timeout: 600s default — model stops after inactivity
 
 ### ModelConfig
@@ -100,19 +95,17 @@ public sealed record UsageConfig
 - Stats persisted to SQLite via Dapper (see `DbSchema.cs` for table structure)
 - Query with: `sqlite3 usage/usage.db`
 
-### ProxyHeaders
+## Parameter Loading Strategy
 
-```csharp
-public sealed record ProxyHeaders
-{
-    public Dictionary<string, string> BodyHeaderMappings { get; init; } = [];
-}
-```
+**Source**: `dashboard_params.json` (persisted via admin API)
 
-**Usage:**
-- Mapped in `RouterConfig.BodyHeaderMappings` (e.g., `"x-client-id": "clientId"`)
-- Values auto-typed and injected at JSON root level by `HeaderValueInjector`
-- Example: header `X-Llama-Client-ID: abc123` → body `{ "clientId": "abc123", ... }`
+**Flow**:
+1. Client sends request with `X-Llama-Model` header
+2. `ModelProxyHandler.LoadParamsForModel()` loads params from file
+3. Model starts with loaded parameters (or defaults if file missing)
+4. Parameters NOT injected from HTTP headers (removed in 2026-05-19)
+
+**Important**: No header-to-body injection occurs — model parameters come solely from persisted JSON file.
 
 ## Configuration Binding Flow
 
@@ -123,10 +116,16 @@ appsettings.json
   → Injected into services via constructor
 ```
 
-**Critical:** Environment variable expansion happens at startup, not per-request. Scripts reference expanded paths directly.
+**Critical**: Environment variable expansion happens at startup, not per-request. Scripts reference expanded paths directly.
 
 ## Validation
 
 - `ValidateOnStart()` ensures config binds correctly before app starts
 - Missing required fields throw during DI container build (fail-fast)
 - Default values provided for all optional fields
+
+---
+
+**Date**: 2026-05-19  
+**Author**: Rigelion  
+**Related Plan**: `.rpiv/artifacts/plans/2026-05-19_14-30-00_remove-header-body-injection.md`
