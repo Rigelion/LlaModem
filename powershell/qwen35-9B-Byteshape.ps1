@@ -1,11 +1,11 @@
 # Qwen3.5 9B Byteshape - Optimized
 param(
-    [double]$Temperature = 0.6,
-    [double]$TopP = 0.95,
-    [double]$TopK = 20,
-    [double]$MinP = 0.0,
-    [double]$PresencePenalty = 0.00,
-    [double]$RepetitionPenalty = 1.00,
+    [decimal]$Temperature = 0.6,
+    [decimal]$TopP = 0.95,
+    [decimal]$TopK = 20,
+    [decimal]$MinP = 0.0,
+    [decimal]$PresencePenalty = 0.00,
+    [decimal]$RepetitionPenalty = 1.00,
     [int]$ContextLength = 65536,
     [int]$Port = 8001,
     [int]$Threads = 0,

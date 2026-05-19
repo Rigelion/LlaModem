@@ -3,12 +3,12 @@
 # Context: 128K | Dtype: Qwen3.5 architecture
 
 param(
-    [double]$Temperature = 0.4,
-    [double]$TopP = 0.95,
-    [double]$TopK = 40,
-    [double]$MinP = 0.0,
-    [double]$PresencePenalty = 0.00,
-    [double]$RepetitionPenalty = 1.07,
+    [decimal]$Temperature = 0.4,
+    [decimal]$TopP = 0.95,
+    [decimal]$TopK = 40,
+    [decimal]$MinP = 0.0,
+    [decimal]$PresencePenalty = 0.00,
+    [decimal]$RepetitionPenalty = 1.07,
     [int]$ContextLength = 132768,
     [int]$Port = 8001,
     [int]$Threads = 0,

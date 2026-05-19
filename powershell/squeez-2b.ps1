@@ -3,12 +3,12 @@
 # Context: 16K | Dtype: bfloat16
 
 param(
-    [double]$Temperature = 0.6,
-    [double]$TopP = 0.95,
-    [double]$TopK = 20,
-    [double]$MinP = 0.0,
-    [double]$PresencePenalty = 0.00,
-    [double]$RepetitionPenalty = 1.05,
+    [decimal]$Temperature = 0.6,
+    [decimal]$TopP = 0.95,
+    [decimal]$TopK = 20,
+    [decimal]$MinP = 0.0,
+    [decimal]$PresencePenalty = 0.00,
+    [decimal]$RepetitionPenalty = 1.05,
     [int]$ContextLength = 16384,
     [int]$Port = 8003,
     [int]$Threads = 0,

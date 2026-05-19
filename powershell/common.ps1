@@ -74,12 +74,12 @@ function Validate-Port {
 function Format-ConfigHeader {
     param(
         [string]$Title,
-        [double]$Temperature,
-        [double]$TopP,
+        [decimal]$Temperature,
+        [decimal]$TopP,
         [int]$TopK,
-        [double]$MinP,
-        [double]$PresencePenalty,
-        [double]$RepetitionPenalty,
+        [decimal]$MinP,
+        [decimal]$PresencePenalty,
+        [decimal]$RepetitionPenalty,
         [int]$Port,
         [int]$ContextLength,
         [int]$Predictions,

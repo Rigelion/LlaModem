@@ -126,7 +126,7 @@ public sealed class DashboardService
     /// <summary>
     /// Loads parameters from dashboard_params.json or returns defaults.
     /// </summary>
-    private ModelLaunchParams LoadParams(string modelName)
+    public ModelLaunchParams LoadParams(string modelName)
     {
         if (!File.Exists(_paramsFilePath))
         {
@@ -144,12 +144,12 @@ public sealed class DashboardService
                 return ModelLaunchParams.Defaults;
             }
 
-            var temp = TryGetDouble(modelElement, "Temperature");
-            var topP = TryGetDouble(modelElement, "TopP");
-            var topK = TryGetDouble(modelElement, "TopK");
-            var minP = TryGetDouble(modelElement, "MinP");
-            var presence = TryGetDouble(modelElement, "PresencePenalty");
-            var repetition = TryGetDouble(modelElement, "RepetitionPenalty");
+            var temp = TryGetDecimal(modelElement, "Temperature");
+            var topP = TryGetDecimal(modelElement, "TopP");
+            var topK = TryGetDecimal(modelElement, "TopK");
+            var minP = TryGetDecimal(modelElement, "MinP");
+            var presence = TryGetDecimal(modelElement, "PresencePenalty");
+            var repetition = TryGetDecimal(modelElement, "RepetitionPenalty");
 
             // Fall back to defaults for any null values
             return new ModelLaunchParams(
@@ -167,11 +167,12 @@ public sealed class DashboardService
         }
     }
 
-    private static double? TryGetDouble(JsonElement element, string propertyName)
+    private static decimal? TryGetDecimal(JsonElement element, string propertyName)
     {
         if (element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.Number)
         {
-            return value.GetDouble();
+            // Round to 2 decimal places (llama-server precision limit)
+            return Math.Round(value.GetDecimal(), 2);
         }
 
         return null;
