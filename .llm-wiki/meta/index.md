@@ -42,9 +42,12 @@
 - [[concepts/ModelLifecycleManagement]] — ModelLifecycleManagement *(created: 2026-05-19)*
 - [[concepts/UsageTrackingPattern]] — UsageTrackingPattern *(created: 2026-05-19)*
 - [[entities/BasicAuthMiddleware]] — BasicAuthMiddleware *(created: 2026-05-19)*
+- [[entities/config-architecture]] — config-architecture *(created: 2026-05-19)*
 - [[entities/ConfigRecords]] — ConfigRecords *(created: 2026-05-19)*
 - [[entities/DashboardService]] — DashboardService *(created: 2026-05-19)*
 - [[entities/DefaultModelLauncher]] — DefaultModelLauncher *(created: 2026-05-19)*
+- [[entities/modelproxyhandler]] — modelproxyhandler *(created: 2026-05-19)*
+- [[entities/powershell-scripts]] — powershell-scripts *(created: 2026-05-19)*
 - [[entities/RequestLoggingMiddleware]] — RequestLoggingMiddleware *(created: 2026-05-19)*
 - [[sources/SRC-2026-05-18-001]] — SRC-2026-05-18-001 *(created: 2026-05-19)*
 - [[sources/SRC-2026-05-18-002]] — SRC-2026-05-18-002 *(created: 2026-05-19)*
@@ -66,6 +69,7 @@
 - [[sources/SRC-2026-05-18-007]] — SRC-2026-05-18-007 *(created: 2026-05-19)*
 - [[sources/SRC-2026-05-18-008]] — SRC-2026-05-18-008 *(created: 2026-05-19)*
 - [[sources/SRC-2026-05-19-001]] — "Wiki Orphan Fix Pattern" *(created: 2026-05-19)*
+- [[sources/SRC-2026-05-19-002]] — "Remove Header-to-Body Parameter Injection System" *(created: 2026-05-19)*
 
 ---
-*Last updated: 2026-05-19T12:42:26.895Z* | *Total pages: 53*
+*Last updated: 2026-05-19T14:19:02.756Z* | *Total pages: 57*

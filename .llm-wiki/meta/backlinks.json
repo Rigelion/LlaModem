@@ -316,6 +316,9 @@
     "sources/SRC-2026-05-18-015",
     "syntheses/llamodemarchitectureoverview"
   ],
+  "entities/config-architecture": [],
+  "entities/modelproxyhandler": [],
+  "entities/powershell-scripts": [],
   "sources/SRC-2026-05-18-001": [
     "concepts/ConfigRecords",
     "concepts/DashboardService",
@@ -373,5 +376,6 @@
     "concepts/LlaModem.Tests"
   ],
   "sources/SRC-2026-05-19-001": [],
+  "sources/SRC-2026-05-19-002": [],
   "syntheses/llamodemarchitectureoverview": []
 }

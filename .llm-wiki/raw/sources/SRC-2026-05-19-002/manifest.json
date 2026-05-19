@@ -1,0 +1,9 @@
+{
+  "id": "SRC-2026-05-19-002",
+  "title": "Remove Header-to-Body Parameter Injection System",
+  "slug": "header-body-injection-removal",
+  "category": "architecture",
+  "captured": "2026-05-19",
+  "format": "insight",
+  "packet_version": "1.0"
+}

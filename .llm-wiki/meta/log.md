@@ -204,3 +204,24 @@
 ## [2026-05-19T12:42:26.892Z] lint
 - orphans: 21, missing_pages: 0, contradictions: 0, auto_fix: false
 
+## [2026-05-19T14:14:43.660Z] retro
+- source_id: "SRC-2026-05-19-002", title: "Remove Header-to-Body Parameter Injection System", slug: "header-body-injection-removal", category: "architecture"
+
+## [2026-05-19T14:15:02.629Z] lint
+- orphans: 22, missing_pages: 5, contradictions: 0, auto_fix: false
+
+## [2026-05-19T14:18:04.477Z] lint
+- orphans: 22, missing_pages: 5, contradictions: 0, auto_fix: false
+
+## [2026-05-19T14:18:26.527Z] ensure_page
+- page_type: "entity", title: "ModelProxyHandler", path: "entities/modelproxyhandler"
+
+## [2026-05-19T14:18:44.867Z] ensure_page
+- page_type: "entity", title: "Config architecture", path: "entities/config-architecture"
+
+## [2026-05-19T14:18:56.967Z] ensure_page
+- page_type: "entity", title: "PowerShell scripts", path: "entities/powershell-scripts"
+
+## [2026-05-19T14:19:02.753Z] lint
+- orphans: 25, missing_pages: 12, contradictions: 0, auto_fix: false
+

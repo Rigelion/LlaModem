@@ -69,3 +69,11 @@
 {"timestamp":"2026-05-19T12:41:56.266Z","kind":"lint","orphans":21,"missing_pages":10,"contradictions":0,"auto_fix":false}
 {"timestamp":"2026-05-19T12:42:23.092Z","kind":"rebuild_meta"}
 {"timestamp":"2026-05-19T12:42:26.892Z","kind":"lint","orphans":21,"missing_pages":0,"contradictions":0,"auto_fix":false}
+{"timestamp":"2026-05-19T14:14:43.660Z","kind":"retro","source_id":"SRC-2026-05-19-002","title":"Remove Header-to-Body Parameter Injection System","slug":"header-body-injection-removal","category":"architecture"}
+{"timestamp":"2026-05-19T14:15:02.629Z","kind":"lint","orphans":22,"missing_pages":5,"contradictions":0,"auto_fix":false}
+{"timestamp":"2026-05-19T14:18:04.477Z","kind":"lint","orphans":22,"missing_pages":5,"contradictions":0,"auto_fix":false}
+{"timestamp":"2026-05-19T14:18:26.527Z","kind":"ensure_page","page_type":"entity","title":"ModelProxyHandler","path":"entities/modelproxyhandler"}
+{"timestamp":"2026-05-19T14:18:44.867Z","kind":"ensure_page","page_type":"entity","title":"Config architecture","path":"entities/config-architecture"}
+{"timestamp":"2026-05-19T14:18:56.967Z","kind":"ensure_page","page_type":"entity","title":"PowerShell scripts","path":"entities/powershell-scripts"}
+{"timestamp":"2026-05-19T14:19:02.753Z","kind":"lint","orphans":25,"missing_pages":12,"contradictions":0,"auto_fix":false}
+{"timestamp":"2026-05-19T14:19:18.152Z","kind":"ensure_page","page_type":"concept","title":"ModelProxyHandler","path":"concepts/modelproxyhandler"}
