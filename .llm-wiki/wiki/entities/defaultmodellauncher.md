@@ -95,3 +95,13 @@ Called on `IHostApplicationLifetime.ApplicationStopping` in `Program.cs`. Iterat
 - **Window hidden:** `CreateNoWindow = true` prevents popup windows
 - **Output buffering:** `BeginOutputReadLine()` enables real-time logging
 - **Process cleanup:** Only processes launched via this launcher tracked on shutdown
+
+## Related Entities
+
+- [[entities/ModelManager]] - Orchestrates lifecycle operations
+- [[entities/HealthChecker]] - Backend health polling service
+- [[entities/ConfigRecords]] - Router configuration (timeouts)
+
+## Related Concepts
+
+- [[entities/DefaultModelLauncher]] - PowerShell process launcher pattern

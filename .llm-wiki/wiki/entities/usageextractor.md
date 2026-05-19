@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # UsageExtractor
 
 **Entity Type:** Utility  
@@ -126,3 +133,13 @@ Llama-specific headers starting with `X-Llama-` prefix:
 - **Optional timing:** Some llama-server versions omit `timing` object
 - **Root or nested:** Handles both root-level and choices-nested usage fields
 - **Model extraction:** Falls back to `(unknown)` if model field missing
+
+## Related Entities
+
+- [[entities/ResponseUsageMiddleware]] - Calls extractor after response capture
+- [[entities/UsageService]] - Persists extracted session entries to SQLite
+- [[entities/StatsService]] - Aggregates usage data for admin endpoints
+
+## Related Concepts
+
+- [[entities/UsageExtractor]] - Token usage extraction utility

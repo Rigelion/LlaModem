@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # ResponseUsageMiddleware
 
 **Entity Type:** Middleware  
@@ -77,3 +84,14 @@ Extraction: `PromptTokens`, `CompletionTokens`, `TotalTokens` from `usage` field
 - SQLite write fails: Logs error, body still restored
 - Buffer copy exception: Caught in try-finally, body restored
 - Empty response body: Skips usage capture (no-op)
+
+## Related Entities
+
+- [[entities/UsageService]] - Records session entries to SQLite
+- [[entities/UsageExtractor]] - Parses token usage from JSON responses
+- [[entities/RequestLoggingMiddleware]] - Logs request details
+- [[entities/BasicAuthMiddleware]] - Validates credentials before proxy routes
+
+## Related Concepts
+
+- [[concepts/UsageTrackingPattern]] - Usage tracking pattern

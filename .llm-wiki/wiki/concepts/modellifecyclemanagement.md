@@ -56,7 +56,11 @@ Stopped → Starting → Running → Stopped
 
 ## Related Entities
 
-- [[DefaultModelLauncher]]
-- [[ModelManager]] (not documented yet)
-- [[HealthChecker]] (not documented yet)
-- [[IdleTimeoutService]] (not documented yet)
+- [[entities/ModelManager]] - Orchestrates lifecycle operations
+- [[entities/DefaultModelLauncher]] - PowerShell process management
+- [[entities/HealthChecker]] - Backend health polling service
+- [[entities/IdleTimeoutService]] - Inactivity monitoring and shutdown trigger
+
+## Related Synthesis
+
+- [[concepts/LlaModemArchitectureOverview]] - Architecture overview tying all components together

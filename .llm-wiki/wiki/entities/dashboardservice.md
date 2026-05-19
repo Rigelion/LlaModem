@@ -38,3 +38,13 @@ Endpoints registered via extension method: `app.MapStatsEndpoints()` in `Program
 
 ## Security Notes
 All admin endpoints unauthenticated — accessible to anyone on local network. Intended for local development/trusted environment only. Proxy routes (`/v1/*`) require Basic Auth.
+
+## Related Entities
+
+- [[entities/ModelManager]] - Model lifecycle operations
+- [[entities/StatsService]] - Usage aggregation and cost comparison
+- [[entities/UsageService]] - Recent request retrieval from SQLite
+
+## Related Concepts
+
+- [[concepts/MinimalAPIArchitecture]] - Minimal API with extension methods

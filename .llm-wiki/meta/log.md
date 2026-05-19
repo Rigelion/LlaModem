@@ -107,3 +107,100 @@
 ## [2026-05-18T21:37:15.726Z] retro
 - source_id: "SRC-2026-05-18-015", title: "LlaModem Architecture Documentation", slug: "llamodem-architecture-documentation", category: "architecture"
 
+## [2026-05-19T11:11:28.444Z] ensure_page
+- page_type: "entity", title: "HealthChecker", path: "entities/healthchecker"
+
+## [2026-05-19T11:11:48.314Z] ensure_page
+- page_type: "entity", title: "IdleTimeoutService", path: "entities/idletimeoutservice"
+
+## [2026-05-19T11:13:11.665Z] lint
+- orphans: 28, missing_pages: 134, contradictions: 0, auto_fix: true
+
+## [2026-05-19T11:13:50.015Z] lint
+- orphans: 29, missing_pages: 134, contradictions: 0, auto_fix: true
+
+## [2026-05-19T11:14:43.020Z] lint
+- orphans: 29, missing_pages: 134, contradictions: 0, auto_fix: false
+
+## [2026-05-19T11:14:47.021Z] lint
+- orphans: 29, missing_pages: 134, contradictions: 0, auto_fix: false
+
+## [2026-05-19T11:15:32.286Z] lint
+- orphans: 29, missing_pages: 134, contradictions: 0, auto_fix: true
+
+## [2026-05-19T11:16:00.750Z] rebuild_meta
+
+## [2026-05-19T11:38:46.561Z] lint
+- orphans: 29, missing_pages: 144, contradictions: 0, auto_fix: false
+
+## [2026-05-19T11:40:56.302Z] bootstrap
+- topic: "LlaModem Router Architecture", mode: "personal"
+
+## [2026-05-19T11:42:02.352Z] lint
+- orphans: 29, missing_pages: 144, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:07:08.584Z] lint
+- orphans: 42, missing_pages: 261, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:22:06.815Z] lint
+- orphans: 42, missing_pages: 272, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:24:11.816Z] lint
+- orphans: 42, missing_pages: 276, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:24:21.727Z] retro
+- source_id: "SRC-2026-05-19-001", title: "Wiki Orphan Fix Pattern", slug: "wiki-orphan-fix-pattern", category: "documentation"
+
+## [2026-05-19T12:24:35.043Z] lint
+- orphans: 43, missing_pages: 282, contradictions: 0, auto_fix: true
+
+## [2026-05-19T12:25:25.270Z] rebuild_meta
+
+## [2026-05-19T12:25:31.100Z] lint
+- orphans: 41, missing_pages: 282, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:31:06.400Z] rebuild_meta
+
+## [2026-05-19T12:31:10.026Z] lint
+- orphans: 41, missing_pages: 282, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:32:14.220Z] rebuild_meta
+
+## [2026-05-19T12:32:18.115Z] lint
+- orphans: 41, missing_pages: 282, contradictions: 0, auto_fix: true
+
+## [2026-05-19T12:35:35.948Z] rebuild_meta
+
+## [2026-05-19T12:35:39.844Z] lint
+- orphans: 28, missing_pages: 65, contradictions: 0, auto_fix: true
+
+## [2026-05-19T12:38:58.522Z] rebuild_meta
+
+## [2026-05-19T12:39:04.142Z] lint
+- orphans: 26, missing_pages: 47, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:39:47.279Z] rebuild_meta
+
+## [2026-05-19T12:39:50.832Z] lint
+- orphans: 26, missing_pages: 39, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:40:28.208Z] rebuild_meta
+
+## [2026-05-19T12:40:32.003Z] lint
+- orphans: 26, missing_pages: 32, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:41:30.577Z] rebuild_meta
+
+## [2026-05-19T12:41:34.444Z] lint
+- orphans: 21, missing_pages: 12, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:41:52.480Z] rebuild_meta
+
+## [2026-05-19T12:41:56.266Z] lint
+- orphans: 21, missing_pages: 10, contradictions: 0, auto_fix: false
+
+## [2026-05-19T12:42:23.092Z] rebuild_meta
+
+## [2026-05-19T12:42:26.892Z] lint
+- orphans: 21, missing_pages: 0, contradictions: 0, auto_fix: false
+

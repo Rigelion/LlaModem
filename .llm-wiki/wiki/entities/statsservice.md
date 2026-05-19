@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # StatsService
 
 **Entity Type:** Service  
@@ -165,6 +172,10 @@ app.MapGet("/admin/stats/cost-comparison", async (HttpContext ctx) =>
 
 ## Related Entities
 
-- [[UsageService]]
-- [[DashboardService]]
-- [[ConfigRecords]] (ModelPricing static class)
+- [[entities/UsageService]] - Token usage persistence and retrieval
+- [[entities/DashboardService]] - Admin endpoint handlers for stats queries
+- [[entities/ConfigRecords]] - ModelPricing static pricing tables
+
+## Related Concepts
+
+- [[concepts/UsageTrackingPattern]] - Usage tracking pattern

@@ -117,10 +117,14 @@ Endpoints not tested directly (routing covered by integration tests). Instead:
 - Mock dependencies (`IModelRepository`, fake persistence)
 - Verify return values and side effects
 
-See [[LlaModem.Tests]] for test patterns.
+See [[concepts/LlaModem.Tests]] for test patterns.
 
 ## Related Entities
 
-- [[DashboardService]] - Admin endpoints
-- [[RequestForwarder]] - Proxy endpoints
-- [[BasicAuthMiddleware]] - Auth on proxy routes
+- [[entities/DashboardService]] - Admin endpoint handlers (status, stats, model control)
+- [[entities/RequestForwarder]] - Proxy to llama-server backends (`/v1/*` routes)
+- [[entities/BasicAuthMiddleware]] - Validates credentials on `/v1/*` routes
+
+## Related Synthesis
+
+- [[concepts/LlaModemArchitectureOverview]] - Architecture overview tying all components together

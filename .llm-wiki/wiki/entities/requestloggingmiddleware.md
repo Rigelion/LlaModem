@@ -80,3 +80,12 @@ Logged headers: All request headers except hop-by-hop. Includes `X-Llama-Model`,
 - Development use: Logs include full request bodies (not for production)
 - Sensitive headers: `Authorization` logged unmasked — mask in production config
 - Client IPs: Logged in usage middleware (`SessionEntry.ClientIp`)
+
+## Related Entities
+
+- [[entities/ResponseUsageMiddleware]] - Captures usage stats after logging passes
+- [[entities/BasicAuthMiddleware]] - Validates credentials after logging
+
+## Related Concepts
+
+- [[entities/RequestLoggingMiddleware]] - Debug logging for HTTP requests

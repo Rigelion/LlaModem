@@ -114,3 +114,13 @@ Source: `RouterConfig` records with environment variable override:
 - Admin endpoints open: `/admin/*` routes bypass auth — security risk on public networks
 - No HTTPS: Basic Auth credentials sent in plaintext (use reverse proxy with TLS)
 - Password rotation: Requires app restart (config loaded at startup)
+
+## Related Entities
+
+- [[entities/RequestLoggingMiddleware]] - Logs request details before auth check
+- [[entities/ResponseUsageMiddleware]] - Captures usage stats after auth passes
+- [[entities/ConfigRecords]] - Router configuration (auth credentials)
+
+## Related Concepts
+
+- [[entities/BasicAuthMiddleware]] - HTTP Basic authentication middleware

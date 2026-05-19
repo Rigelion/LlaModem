@@ -117,24 +117,24 @@ RequestForwarder.ForwardAsync() → backend proxy
 ## Related Documentation
 
 ### Entities
-- [[DashboardService]] - Admin endpoints for model control and stats
-- [[UsageService]] - SQLite usage tracking persistence
-- [[RequestForwarder]] - HTTP proxy to llama-server backends
-- [[ResponseUsageMiddleware]] - Usage capture middleware
-- [[RequestLoggingMiddleware]] - Debug request logging
-- [[BasicAuthMiddleware]] - Basic Auth on proxy routes
-- [[DefaultModelLauncher]] - PowerShell process management
-- [[HeaderValueInjector]] - Header-to-body mapping service
-- [[UsageExtractor]] - Token usage parsing utility
-- [[ConfigRecords]] - Immutable configuration records
-- [[ModelManager]] - Lifecycle orchestration service
-- [[StatsService]] - Usage aggregation and cost comparison
+- [[entities/DashboardService]] - Admin endpoints for model control and stats
+- [[entities/UsageService]] - SQLite usage tracking persistence
+- [[entities/RequestForwarder]] - HTTP proxy to llama-server backends
+- [[entities/ResponseUsageMiddleware]] - Usage capture middleware
+- [[entities/RequestLoggingMiddleware]] - Debug request logging
+- [[entities/BasicAuthMiddleware]] - Basic Auth on proxy routes
+- [[entities/DefaultModelLauncher]] - PowerShell process management
+- [[entities/HeaderValueInjector]] - Header-to-body mapping service
+- [[entities/UsageExtractor]] - Token usage parsing utility
+- [[entities/ConfigRecords]] - Immutable configuration records
+- [[entities/ModelManager]] - Lifecycle orchestration service
+- [[entities/StatsService]] - Usage aggregation and cost comparison
 
 ### Concepts
-- [[ModelLifecycleManagement]] - Automatic model lifecycle pattern
-- [[UsageTrackingPattern]] - SQLite persistence for token stats
-- [[HeaderInjectionPattern]] - HTTP header to JSON body mapping
-- [[MinimalAPIArchitecture]] - Minimal API endpoint patterns
+- [[concepts/ModelLifecycleManagement]] - Automatic model lifecycle pattern
+- [[concepts/UsageTrackingPattern]] - SQLite persistence for token stats
+- [[concepts/HeaderInjectionPattern]] - HTTP header to JSON body mapping
+- [[concepts/MinimalAPIArchitecture]] - Minimal API endpoint patterns
 
 ## Critical Notes
 

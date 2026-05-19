@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # UsageService
 
 **Entity Type:** Service  
@@ -58,3 +65,14 @@ Uses `ModelPricing` static class with pricing tables for cloud models (Claude Op
 - Usage extraction fails (invalid JSON): Logs warning, skips recording
 - SQLite write fails: Logs error, continues execution
 - Metrics service unavailable: Logs warning, persists anyway
+
+## Related Entities
+
+- [[entities/ResponseUsageMiddleware]] - Captures response body for usage parsing
+- [[entities/UsageExtractor]] - Parses token usage from JSON responses
+- [[entities/StatsService]] - Aggregates usage statistics (daily totals, cost comparison)
+- [[entities/ConfigRecords]] - Usage configuration (enabled flag, database path)
+
+## Related Concepts
+
+- [[concepts/UsageTrackingPattern]] - Usage tracking pattern

@@ -1,44 +1,66 @@
 {
   "version": "1.0",
-  "last_updated": "2026-05-18T21:37:15.728Z",
+  "last_updated": "2026-05-19T12:42:26.895Z",
   "pages": {
     "concepts/BasicAuthMiddleware": {
       "type": "concept",
       "title": "BasicAuthMiddleware",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/ConfigRecords": {
       "type": "concept",
       "title": "ConfigRecords",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/DashboardService": {
       "type": "concept",
       "title": "DashboardService",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/DefaultModelLauncher": {
       "type": "concept",
       "title": "DefaultModelLauncher",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
+    },
+    "concepts/HeaderInjectionPattern": {
+      "type": "page",
+      "title": "HeaderInjectionPattern",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
+    },
+    "concepts/HeaderValueInjectionPattern": {
+      "type": "concept",
+      "title": "HeaderValueInjectionPattern",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
       "sources": "[]",
-      "status": "stub"
+      "status": "complete"
     },
     "concepts/HeaderValueInjector": {
       "type": "concept",
       "title": "HeaderValueInjector",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
+    },
+    "concepts/HealthChecker.PollAsync()": {
+      "type": "concept",
+      "title": "HealthChecker.PollAsync()",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
       "sources": "[]",
       "status": "stub"
     },
@@ -46,241 +68,242 @@
       "type": "concept",
       "title": "HealthChecker",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/IdleTimeoutService": {
       "type": "concept",
       "title": "IdleTimeoutService",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
+    },
+    "concepts/LlaModem.Tests": {
+      "type": "concept",
+      "title": "LlaModem.Tests",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
       "sources": "[]",
       "status": "stub"
+    },
+    "concepts/LlaModemArchitectureOverview": {
+      "type": "concept",
+      "title": "LlaModemArchitectureOverview",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
+    },
+    "concepts/MinimalAPIArchitecture": {
+      "type": "page",
+      "title": "MinimalAPIArchitecture",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
+    },
+    "concepts/ModelLifecycleManagement": {
+      "type": "page",
+      "title": "ModelLifecycleManagement",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "concepts/ModelManager": {
       "type": "concept",
       "title": "ModelManager",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/RequestForwarder": {
       "type": "concept",
       "title": "RequestForwarder",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/RequestLoggingMiddleware": {
       "type": "concept",
       "title": "RequestLoggingMiddleware",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/ResponseUsageMiddleware": {
       "type": "concept",
       "title": "ResponseUsageMiddleware",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/StatsService": {
       "type": "concept",
       "title": "StatsService",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/UsageExtractor": {
       "type": "concept",
       "title": "UsageExtractor",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
     "concepts/UsageService": {
       "type": "concept",
       "title": "UsageService",
       "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "sources": "[]",
-      "status": "stub"
+      "updated": "2026-05-19",
+      "sources": "",
+      "status": "complete"
     },
-    "concepts/headerinjectionpattern": {
+    "concepts/UsageTrackingPattern": {
       "type": "page",
-      "title": "headerinjectionpattern",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "title": "UsageTrackingPattern",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
-    "concepts/minimalapiarchitecture": {
+    "entities/BasicAuthMiddleware": {
       "type": "page",
-      "title": "minimalapiarchitecture",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "title": "BasicAuthMiddleware",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
-    "concepts/modellifecyclemanagement": {
+    "entities/ConfigRecords": {
       "type": "page",
-      "title": "modellifecyclemanagement",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "title": "ConfigRecords",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
-    "concepts/usagetrackingpattern": {
+    "entities/DashboardService": {
       "type": "page",
-      "title": "usagetrackingpattern",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "title": "DashboardService",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
-    "entities/basicauthmiddleware": {
+    "entities/DefaultModelLauncher": {
       "type": "page",
-      "title": "basicauthmiddleware",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "title": "DefaultModelLauncher",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
-    "entities/configrecords": {
-      "type": "page",
-      "title": "configrecords",
+    "entities/HeaderValueInjector": {
+      "type": "entity",
+      "title": "HeaderValueInjector",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/dashboardservice": {
-      "type": "page",
-      "title": "dashboardservice",
+    "entities/HealthChecker": {
+      "type": "entity",
+      "title": "HealthChecker",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/defaultmodellauncher": {
-      "type": "page",
-      "title": "defaultmodellauncher",
+    "entities/IdleTimeoutService": {
+      "type": "entity",
+      "title": "IdleTimeoutService",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/headervalueinjector": {
-      "type": "page",
-      "title": "headervalueinjector",
+    "entities/ModelManager": {
+      "type": "entity",
+      "title": "ModelManager",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/modelmanager": {
-      "type": "page",
-      "title": "modelmanager",
+    "entities/RequestForwarder": {
+      "type": "entity",
+      "title": "RequestForwarder",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/requestforwarder": {
+    "entities/RequestLoggingMiddleware": {
       "type": "page",
-      "title": "requestforwarder",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "title": "RequestLoggingMiddleware",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
-    "entities/requestloggingmiddleware": {
-      "type": "page",
-      "title": "requestloggingmiddleware",
+    "entities/ResponseUsageMiddleware": {
+      "type": "entity",
+      "title": "ResponseUsageMiddleware",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/responseusagemiddleware": {
-      "type": "page",
-      "title": "responseusagemiddleware",
+    "entities/StatsService": {
+      "type": "entity",
+      "title": "StatsService",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/statsservice": {
-      "type": "page",
-      "title": "statsservice",
+    "entities/UsageExtractor": {
+      "type": "entity",
+      "title": "UsageExtractor",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
-    "entities/usageextractor": {
-      "type": "page",
-      "title": "usageextractor",
+    "entities/UsageService": {
+      "type": "entity",
+      "title": "UsageService",
       "created": "2026-05-18",
-      "updated": "2026-05-18"
-    },
-    "entities/usageservice": {
-      "type": "page",
-      "title": "usageservice",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "updated": "2026-05-19",
+      "status": "complete"
     },
     "sources/SRC-2026-05-18-001": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-001",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-001",
-      "raw_path": "raw/sources/SRC-2026-05-18-001/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-002": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-002",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-002",
-      "raw_path": "raw/sources/SRC-2026-05-18-002/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-003": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-003",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-003",
-      "raw_path": "raw/sources/SRC-2026-05-18-003/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-004": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-004",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-004",
-      "raw_path": "raw/sources/SRC-2026-05-18-004/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-005": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-005",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-005",
-      "raw_path": "raw/sources/SRC-2026-05-18-005/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-006": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-006",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-006",
-      "raw_path": "raw/sources/SRC-2026-05-18-006/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-007": {
       "type": "source",
       "title": "SRC-2026-05-18-007",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
       "format": "markdown",
       "source_id": "SRC-2026-05-18-007",
       "raw_path": "raw/sources/SRC-2026-05-18-007/extracted.md",
@@ -290,8 +313,8 @@
     "sources/SRC-2026-05-18-008": {
       "type": "source",
       "title": "SRC-2026-05-18-008",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
       "format": "markdown",
       "source_id": "SRC-2026-05-18-008",
       "raw_path": "raw/sources/SRC-2026-05-18-008/extracted.md",
@@ -299,85 +322,61 @@
       "status": "skeleton"
     },
     "sources/SRC-2026-05-18-009": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-009",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-009",
-      "raw_path": "raw/sources/SRC-2026-05-18-009/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-010": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-010",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-010",
-      "raw_path": "raw/sources/SRC-2026-05-18-010/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-011": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-011",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-011",
-      "raw_path": "raw/sources/SRC-2026-05-18-011/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-012": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-012",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-012",
-      "raw_path": "raw/sources/SRC-2026-05-18-012/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-013": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-013",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-013",
-      "raw_path": "raw/sources/SRC-2026-05-18-013/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-014": {
-      "type": "source",
+      "type": "page",
       "title": "SRC-2026-05-18-014",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "format": "markdown",
-      "source_id": "SRC-2026-05-18-014",
-      "raw_path": "raw/sources/SRC-2026-05-18-014/extracted.md",
-      "captured": "2026-05-18",
-      "status": "skeleton"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     },
     "sources/SRC-2026-05-18-015": {
+      "type": "page",
+      "title": "SRC-2026-05-18-015",
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
+    },
+    "sources/SRC-2026-05-19-001": {
       "type": "source",
-      "title": "\"LlaModem Architecture Documentation\"",
-      "created": "2026-05-18",
-      "updated": "2026-05-18",
-      "source_id": "SRC-2026-05-18-015",
+      "title": "\"Wiki Orphan Fix Pattern\"",
+      "created": "2026-05-19",
+      "updated": "2026-05-19",
+      "source_id": "SRC-2026-05-19-001",
       "status": "insight",
-      "category": "architecture"
+      "category": "documentation"
     },
     "syntheses/llamodemarchitectureoverview": {
       "type": "page",
       "title": "llamodemarchitectureoverview",
-      "created": "2026-05-18",
-      "updated": "2026-05-18"
+      "created": "2026-05-19",
+      "updated": "2026-05-19"
     }
   }
 }

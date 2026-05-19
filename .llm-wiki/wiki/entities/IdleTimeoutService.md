@@ -1,17 +1,25 @@
 ---
-type: concept
+type: entity
 created: 2026-05-18
 updated: 2026-05-19
-sources:
-  - [[sources/SRC-2026-05-18-001]]
 status: complete
 ---
 
 # IdleTimeoutService
 
-**Description:** Monitors model inactivity and triggers idle shutdown. Runs as a background task that checks elapsed time since last request.
+**Entity Type:** Service  
+**Responsibility:** Monitors model inactivity and triggers idle shutdown. Runs as a background task that checks elapsed time since last request.
 
-## Monitoring Pattern
+## Dependencies
+
+- `IModelManager` - Stop active model when idle timeout reached
+- `IMetaModelRepository` - Track last request timestamp
+- `ILogger<IdleTimeoutService>` - Idle timeout event logging
+- `IOptions<RouterConfig>` - Idle timeout configuration
+
+## Key Methods
+
+### StartMonitoringAsync
 
 ```csharp
 public async Task StartMonitoringAsync(CancellationToken ct = default)
@@ -51,19 +59,50 @@ public async Task StartMonitoringAsync(CancellationToken ct = default)
 - Triggers shutdown if elapsed time exceeds threshold
 - Continues monitoring after shutdown (ready for next model)
 
+### StopMonitoringAsync
+
+```csharp
+public async Task StopMonitoringAsync()
+{
+    // Called on app shutdown to cancel background task
+}
+```
+
 ## Configuration
 
 Reads from `RouterConfig`:
 - `IdleTimeoutSeconds` - Seconds of inactivity before shutdown (default: 600)
 - `EnableIdleShutdown` - Enable/disable idle monitoring (default: true)
 
+## Usage Pattern
+
+```csharp
+// In Program.cs
+var idleService = new IdleTimeoutService(
+    modelManager, 
+    repository, 
+    config);
+
+await idleService.StartMonitoringAsync(ct);
+
+// On shutdown
+await idleService.StopMonitoringAsync();
+```
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Model not found | Logs warning, continues monitoring |
+| Shutdown throws exception | Logs error, continues monitoring |
+| Repository unavailable | Logs error, skips check for this cycle |
+
 ## Related Entities
 
+- [[entities/ModelManager]] - Performs actual shutdown via `StopActiveModelAsync()`
+- [[entities/ConfigRecords]] - Configures idle timeout threshold
+- [[entities/DefaultModelLauncher]] - Terminates process on shutdown
+
+## Related Concepts
+
 - [[entities/IdleTimeoutService]] - Idle timeout monitoring service
-- [[entities/ModelManager]] - Model lifecycle orchestration
-- [[entities/ConfigRecords]] - Configuration records
-- [[entities/DefaultModelLauncher]] - PowerShell process launcher
-
-## Related Synthesis
-
-- [[concepts/LlaModemArchitectureOverview]] - Architecture overview tying all components together

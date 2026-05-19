@@ -1,17 +1,24 @@
 ---
-type: concept
+type: entity
 created: 2026-05-18
 updated: 2026-05-19
-sources:
-  - [[sources/SRC-2026-05-18-001]]
 status: complete
 ---
 
 # HealthChecker
 
-**Description:** Polls llama-server `/health` endpoint to verify backend readiness. Used by `ModelManager` during model startup and hot switching.
+**Entity Type:** Service  
+**Responsibility:** Polls llama-server `/health` endpoint to verify backend readiness. Used by `ModelManager` during model startup and hot switching.
 
-## Health Check Pattern
+## Dependencies
+
+- `HttpClient` - HTTP client for health polling
+- `ILogger<HealthChecker>` - Health check event logging
+- `IOptions<RouterConfig>` - Timeout configuration (poll timeout, poll interval)
+
+## Key Methods
+
+### PollAsync
 
 ```csharp
 public async Task<bool> PollAsync(
@@ -50,11 +57,28 @@ public async Task<bool> PollAsync(
 - Returns `true` on first successful response
 - Returns `false` after max attempts exceeded
 
+### WaitForHealthAsync
+
+```csharp
+public async Task WaitForHealthAsync(
+    string backendUrl, 
+    int timeoutSeconds = 300,
+    CancellationToken ct = default)
+{
+    var success = await PollAsync(backendUrl, ct: ct);
+    
+    if (!success)
+        throw new InvalidOperationException($"Backend at {backendUrl} failed health check");
+}
+```
+
+**Usage:** Called by `ModelManager.EnsureModelAsync()` after process launch.
+
 ## Configuration
 
 Reads from `RouterConfig`:
 - `HealthCheckPollInterval` - Time between attempts (default: 500ms)
-- `HealthCheckTimeoutMinutes` - Max wait time (default: 5 min = 300 seconds)
+- `HealthCheckTimeoutSeconds` - Max wait time (default: 300s)
 
 ## Error Handling
 
@@ -67,11 +91,10 @@ Reads from `RouterConfig`:
 
 ## Related Entities
 
-- [[entities/HealthChecker]] - Backend health check polling service
-- [[entities/ModelManager]] - Model lifecycle orchestration
-- [[entities/DefaultModelLauncher]] - PowerShell process launcher
-- [[entities/ConfigRecords]] - Configuration records
+- [[entities/ModelManager]] - Orchestrates health check during startup
+- [[entities/DefaultModelLauncher]] - Launches process that exposes `/health` endpoint
+- [[entities/ConfigRecords]] - Configures poll interval and timeout
 
-## Related Synthesis
+## Related Concepts
 
-- [[concepts/LlaModemArchitectureOverview]] - Architecture overview tying all components together
+- [[entities/HealthChecker]] - Backend health check polling

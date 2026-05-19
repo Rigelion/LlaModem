@@ -1,0 +1,217 @@
+{
+  "main": {
+    "id": "29f04bc4c51ef09f",
+    "type": "split",
+    "children": [
+      {
+        "id": "9b9ea4bb2400c760",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6e21178e360c07c1",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/concepts/ConfigRecords.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ConfigRecords"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f38f5e1de274fcc7",
+    "type": "split",
+    "children": [
+      {
+        "id": "2ae1a8ef8b6db8d3",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "312ba4edc2144f60",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "3f47ade787d3501d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "e921d641b8fc0bf3",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "1b322a4ef97de33a",
+    "type": "split",
+    "children": [
+      {
+        "id": "ac4e1637aa8ee854",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "85194bf1a7d853ab",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "wiki/concepts/ConfigRecords.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for ConfigRecords"
+            }
+          },
+          {
+            "id": "4cdaaf5169a24a15",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "wiki/concepts/BasicAuthMiddleware.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from BasicAuthMiddleware"
+            }
+          },
+          {
+            "id": "5486c0fc6634f6ff",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "304b5c919696680a",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "731debc39b670158",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "wiki/concepts/BasicAuthMiddleware.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of BasicAuthMiddleware"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "6e21178e360c07c1",
+  "lastOpenFiles": [
+    "wiki/concepts/HeaderValueInjectionPattern.md",
+    "wiki/concepts/HeaderInjectionPattern.md",
+    "wiki/concepts/UsageTrackingPattern.md",
+    "wiki/concepts/ModelLifecycleManagement.md",
+    "wiki/concepts/MinimalAPIArchitecture.md",
+    "wiki/concepts/BasicAuthMiddleware.md",
+    "WIKI_SCHEMA.md",
+    "meta/log.md",
+    "wiki/entities/UsageService.md",
+    "wiki/entities/UsageExtractor.md",
+    "wiki/entities/StatsService.md",
+    "wiki/entities/ResponseUsageMiddleware.md",
+    "wiki/entities/RequestLoggingMiddleware.md",
+    "wiki/entities/RequestForwarder.md",
+    "wiki/entities/ModelManager.md",
+    "wiki/entities/IdleTimeoutService.md",
+    "wiki/entities/HealthChecker.md",
+    "wiki/entities/HeaderValueInjector.md",
+    "wiki/entities/DefaultModelLauncher.md",
+    "wiki/entities/DashboardService.md",
+    "wiki/entities/ConfigRecords.md",
+    "wiki/entities/BasicAuthMiddleware.md",
+    "wiki/entities/dashboardservice.md",
+    "wiki/entities/basicauthmiddleware.md",
+    "wiki/entities/dashUoardservice.md",
+    "wiki/entities/Uasicauthmiddleware.md",
+    "raw/sources/SRC-2026-05-19-001/manifest.json",
+    "raw/sources/SRC-2026-05-19-001/attachments",
+    "raw/sources/SRC-2026-05-19-001"
+  ]
+}

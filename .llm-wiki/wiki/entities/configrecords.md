@@ -126,3 +126,16 @@ appsettings.json
 - `ValidateOnStart()` ensures config binds correctly before app starts
 - Missing required fields throw during DI container build (fail-fast)
 - Default values provided for all optional fields
+
+## Related Entities
+
+- [[entities/ModelManager]] - Uses ModelConfig for start scripts and backend URLs
+- [[entities/RequestForwarder]] - Reads RouterConfig for timeouts and header injection settings
+- [[entities/ResponseUsageMiddleware]] - Checks UsageConfig.Enabled flag before capturing usage
+- [[entities/BasicAuthMiddleware]] - Reads RouterConfig.AuthUsername/AuthPassword
+- [[entities/DefaultModelLauncher]] - Uses TimeoutConfig for health check polling
+- [[entities/IdleTimeoutService]] - Monitors IdleTimeoutSeconds threshold
+
+## Related Concepts
+
+- [[entities/ConfigRecords]] - Immutable configuration records

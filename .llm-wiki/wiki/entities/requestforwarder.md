@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # RequestForwarder
 
 **Entity Type:** Service  
@@ -67,3 +74,13 @@ Error codes: `MODEL_NOT_FOUND`, `BACKEND_UNAVAILABLE`, `INVALID_REQUEST`, `INTER
 - **No streaming:** Full response buffered for usage capture (streaming not supported)
 - **Timeouts:** 5-minute request timeout via `IHttpClientFactory`
 - **Header injection:** Only applies to `/v1/*` proxy routes
+
+## Related Entities
+
+- [[entities/HeaderValueInjector]] - HTTP header to JSON body mapping
+- [[entities/ResponseUsageMiddleware]] - Usage capture from responses
+- [[entities/ConfigRecords]] - Router configuration (timeouts, mappings)
+
+## Related Concepts
+
+- [[concepts/MinimalAPIArchitecture]] - Minimal API with extension methods

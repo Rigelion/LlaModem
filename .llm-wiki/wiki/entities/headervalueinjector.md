@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # HeaderValueInjector
 
 **Entity Type:** Service  
@@ -116,3 +123,12 @@ Case-insensitive matching: `X-Llama-Model` → `x-llama-model` (lowercase). Impl
 - **Type inference:** Auto-typed based on value content — no explicit type declarations
 - **Empty values skipped:** Prevents null/empty fields in request body
 - **Disabled by default:** Must enable via config (`EnableBodyHeaderInjection: true`)
+
+## Related Entities
+
+- [[entities/RequestForwarder]] - Uses injector before proxying requests
+- [[entities/ConfigRecords]] - Router configuration (mappings, toggle)
+
+## Related Concepts
+
+- [[entities/HeaderValueInjector]] - Header-to-body injection with type inference

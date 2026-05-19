@@ -85,7 +85,7 @@ Content-Type: application/json
 
 ## Implementation Details
 
-**Location:** `HeaderValueInjector` service (see [[HeaderValueInjector]])
+**Location:** `HeaderValueInjector` service (see [[entities/HeaderValueInjector]])
 
 **Case-insensitive matching:** Header names normalized to lowercase (`x-llama-model` → `x-llama-model`).
 
@@ -109,6 +109,10 @@ Content-Type: application/json
 
 ## Related Entities
 
-- [[HeaderValueInjector]]
-- [[RequestForwarder]]
-- [[RouterConfig]]
+- [[entities/HeaderValueInjector]] - Header-to-body mapping service
+- [[entities/RequestForwarder]] - Proxies modified request to backend
+- [[entities/ConfigRecords]] - Configuration source (BodyHeaderMappings)
+
+## Related Synthesis
+
+- [[concepts/LlaModemArchitectureOverview]] - Architecture overview tying all components together

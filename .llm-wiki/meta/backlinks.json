@@ -1,11 +1,69 @@
 {
-  "concepts/BasicAuthMiddleware": [],
+  "concepts/BasicAuthMiddleware": [
+    "concepts/LlaModem.Tests"
+  ],
   "concepts/ConfigRecords": [],
   "concepts/DashboardService": [],
   "concepts/DefaultModelLauncher": [],
-  "concepts/HeaderValueInjector": [],
+  "concepts/HeaderInjectionPattern": [
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "concepts/HeaderValueInjectionPattern": [
+    "concepts/LlaModemArchitectureOverview",
+    "sources/SRC-2026-05-18-015"
+  ],
+  "concepts/HeaderValueInjector": [
+    "concepts/HeaderValueInjectionPattern"
+  ],
+  "concepts/HealthChecker.PollAsync()": [],
   "concepts/HealthChecker": [],
   "concepts/IdleTimeoutService": [],
+  "concepts/LlaModem.Tests": [
+    "concepts/BasicAuthMiddleware",
+    "concepts/MinimalAPIArchitecture",
+    "sources/SRC-2026-05-18-015"
+  ],
+  "concepts/LlaModemArchitectureOverview": [
+    "concepts/BasicAuthMiddleware",
+    "concepts/ConfigRecords",
+    "concepts/DashboardService",
+    "concepts/DefaultModelLauncher",
+    "concepts/HeaderInjectionPattern",
+    "concepts/HeaderValueInjectionPattern",
+    "concepts/HeaderValueInjector",
+    "concepts/HealthChecker",
+    "concepts/IdleTimeoutService",
+    "concepts/MinimalAPIArchitecture",
+    "concepts/ModelLifecycleManagement",
+    "concepts/ModelManager",
+    "concepts/RequestForwarder",
+    "concepts/RequestLoggingMiddleware",
+    "concepts/ResponseUsageMiddleware",
+    "concepts/StatsService",
+    "concepts/UsageExtractor",
+    "concepts/UsageService",
+    "concepts/UsageTrackingPattern",
+    "sources/SRC-2026-05-18-009",
+    "sources/SRC-2026-05-18-013",
+    "sources/SRC-2026-05-18-014",
+    "sources/SRC-2026-05-19-001"
+  ],
+  "concepts/MinimalAPIArchitecture": [
+    "concepts/LlaModem.Tests",
+    "concepts/LlaModemArchitectureOverview",
+    "entities/DashboardService",
+    "entities/RequestForwarder",
+    "sources/SRC-2026-05-18-007",
+    "sources/SRC-2026-05-18-008",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "concepts/ModelLifecycleManagement": [
+    "concepts/LlaModemArchitectureOverview",
+    "entities/ModelManager",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
   "concepts/ModelManager": [],
   "concepts/RequestForwarder": [],
   "concepts/RequestLoggingMiddleware": [],
@@ -13,145 +71,307 @@
   "concepts/StatsService": [],
   "concepts/UsageExtractor": [],
   "concepts/UsageService": [],
-  "concepts/headerinjectionpattern": [
-    "concepts/HeaderValueInjector",
-    "concepts/RequestForwarder"
+  "concepts/UsageTrackingPattern": [
+    "concepts/LlaModemArchitectureOverview",
+    "entities/ResponseUsageMiddleware",
+    "entities/StatsService",
+    "entities/UsageService",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
   ],
-  "concepts/minimalapiarchitecture": [
+  "entities/BasicAuthMiddleware": [
     "concepts/BasicAuthMiddleware",
-    "concepts/DashboardService",
-    "concepts/RequestForwarder"
+    "concepts/ConfigRecords",
+    "concepts/MinimalAPIArchitecture",
+    "concepts/RequestLoggingMiddleware",
+    "concepts/ResponseUsageMiddleware",
+    "entities/BasicAuthMiddleware",
+    "entities/ConfigRecords",
+    "entities/RequestLoggingMiddleware",
+    "entities/ResponseUsageMiddleware",
+    "sources/SRC-2026-05-18-006",
+    "sources/SRC-2026-05-18-007",
+    "sources/SRC-2026-05-18-008",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
   ],
-  "concepts/modellifecyclemanagement": [
+  "entities/ConfigRecords": [
+    "concepts/BasicAuthMiddleware",
+    "concepts/ConfigRecords",
+    "concepts/DefaultModelLauncher",
+    "concepts/HeaderInjectionPattern",
+    "concepts/HeaderValueInjector",
+    "concepts/HealthChecker",
+    "concepts/IdleTimeoutService",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ModelManager",
+    "concepts/RequestForwarder",
+    "concepts/StatsService",
+    "concepts/UsageService",
+    "entities/BasicAuthMiddleware",
+    "entities/ConfigRecords",
+    "entities/DefaultModelLauncher",
+    "entities/HeaderValueInjector",
+    "entities/HealthChecker",
+    "entities/IdleTimeoutService",
+    "entities/ModelManager",
+    "entities/RequestForwarder",
+    "entities/StatsService",
+    "entities/UsageService",
+    "sources/SRC-2026-05-18-004",
+    "sources/SRC-2026-05-18-005",
+    "sources/SRC-2026-05-18-006",
+    "sources/SRC-2026-05-18-008",
+    "sources/SRC-2026-05-18-009",
+    "sources/SRC-2026-05-18-010",
+    "sources/SRC-2026-05-18-011",
+    "sources/SRC-2026-05-18-013",
+    "sources/SRC-2026-05-18-014",
+    "sources/SRC-2026-05-18-015",
+    "sources/SRC-2026-05-19-001",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/DashboardService": [
+    "concepts/DashboardService",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/MinimalAPIArchitecture",
+    "concepts/StatsService",
+    "entities/StatsService",
+    "sources/SRC-2026-05-18-004",
+    "sources/SRC-2026-05-18-012",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/DefaultModelLauncher": [
+    "concepts/ConfigRecords",
     "concepts/DefaultModelLauncher",
     "concepts/HealthChecker",
     "concepts/IdleTimeoutService",
-    "concepts/ModelManager"
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ModelLifecycleManagement",
+    "concepts/ModelManager",
+    "entities/ConfigRecords",
+    "entities/DefaultModelLauncher",
+    "entities/HealthChecker",
+    "entities/IdleTimeoutService",
+    "entities/ModelManager",
+    "sources/SRC-2026-05-18-013",
+    "sources/SRC-2026-05-18-014",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
   ],
-  "concepts/usagetrackingpattern": [
-    "concepts/ResponseUsageMiddleware",
-    "concepts/StatsService",
-    "concepts/UsageExtractor",
-    "concepts/UsageService"
+  "entities/HeaderValueInjector": [
+    "concepts/HeaderInjectionPattern",
+    "concepts/HeaderValueInjector",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/RequestForwarder",
+    "entities/HeaderValueInjector",
+    "entities/RequestForwarder",
+    "sources/SRC-2026-05-18-005",
+    "sources/SRC-2026-05-18-006",
+    "sources/SRC-2026-05-18-012",
+    "sources/SRC-2026-05-18-014",
+    "sources/SRC-2026-05-18-015",
+    "sources/SRC-2026-05-19-001",
+    "syntheses/llamodemarchitectureoverview"
   ],
-  "entities/basicauthmiddleware": [],
-  "entities/configrecords": [],
-  "entities/dashboardservice": [],
-  "entities/defaultmodellauncher": [],
-  "entities/headervalueinjector": [],
-  "entities/modelmanager": [
+  "entities/HealthChecker": [
+    "concepts/DefaultModelLauncher",
     "concepts/HealthChecker",
-    "concepts/IdleTimeoutService"
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ModelLifecycleManagement",
+    "concepts/ModelManager",
+    "entities/DefaultModelLauncher",
+    "entities/HealthChecker",
+    "entities/ModelManager",
+    "sources/SRC-2026-05-18-013",
+    "sources/SRC-2026-05-18-015"
   ],
-  "entities/requestforwarder": [],
-  "entities/requestloggingmiddleware": [],
-  "entities/responseusagemiddleware": [],
-  "entities/statsservice": [],
-  "entities/usageextractor": [],
-  "entities/usageservice": [],
-  "sources/SRC-2026-05-18-001": [
-    "concepts/BasicAuthMiddleware",
+  "entities/IdleTimeoutService": [
+    "concepts/ConfigRecords",
+    "concepts/IdleTimeoutService",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ModelLifecycleManagement",
+    "concepts/ModelManager",
+    "entities/ConfigRecords",
+    "entities/IdleTimeoutService",
+    "entities/ModelManager"
+  ],
+  "entities/ModelManager": [
     "concepts/ConfigRecords",
     "concepts/DashboardService",
     "concepts/DefaultModelLauncher",
+    "concepts/HealthChecker",
+    "concepts/IdleTimeoutService",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ModelLifecycleManagement",
+    "concepts/ModelManager",
+    "entities/ConfigRecords",
+    "entities/DashboardService",
+    "entities/DefaultModelLauncher",
+    "entities/HealthChecker",
+    "entities/IdleTimeoutService",
+    "sources/SRC-2026-05-18-005",
+    "sources/SRC-2026-05-18-009",
+    "sources/SRC-2026-05-18-013",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/RequestForwarder": [
+    "concepts/ConfigRecords",
+    "concepts/HeaderInjectionPattern",
+    "concepts/HeaderValueInjectionPattern",
     "concepts/HeaderValueInjector",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/MinimalAPIArchitecture",
+    "concepts/RequestForwarder",
+    "entities/ConfigRecords",
+    "entities/HeaderValueInjector",
+    "sources/SRC-2026-05-18-010",
+    "sources/SRC-2026-05-18-012",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/RequestLoggingMiddleware": [
+    "concepts/BasicAuthMiddleware",
+    "concepts/RequestLoggingMiddleware",
+    "concepts/ResponseUsageMiddleware",
+    "entities/BasicAuthMiddleware",
+    "entities/RequestLoggingMiddleware",
+    "entities/ResponseUsageMiddleware",
+    "sources/SRC-2026-05-18-005",
+    "sources/SRC-2026-05-18-007",
+    "sources/SRC-2026-05-18-008",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/ResponseUsageMiddleware": [
+    "concepts/BasicAuthMiddleware",
+    "concepts/ConfigRecords",
+    "concepts/LlaModemArchitectureOverview",
     "concepts/RequestForwarder",
     "concepts/RequestLoggingMiddleware",
     "concepts/ResponseUsageMiddleware",
     "concepts/UsageExtractor",
     "concepts/UsageService",
-    "sources/SRC-2026-05-18-001"
+    "concepts/UsageTrackingPattern",
+    "entities/BasicAuthMiddleware",
+    "entities/ConfigRecords",
+    "entities/RequestForwarder",
+    "entities/RequestLoggingMiddleware",
+    "entities/UsageExtractor",
+    "entities/UsageService",
+    "sources/SRC-2026-05-18-004",
+    "sources/SRC-2026-05-18-005",
+    "sources/SRC-2026-05-18-006",
+    "sources/SRC-2026-05-18-007",
+    "sources/SRC-2026-05-18-011",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
   ],
-  "sources/SRC-2026-05-18-002": [
-    "concepts/BasicAuthMiddleware",
+  "entities/StatsService": [
+    "concepts/DashboardService",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/StatsService",
+    "concepts/UsageExtractor",
+    "concepts/UsageService",
+    "concepts/UsageTrackingPattern",
+    "entities/DashboardService",
+    "entities/UsageExtractor",
+    "entities/UsageService",
+    "sources/SRC-2026-05-18-004",
+    "sources/SRC-2026-05-18-011",
+    "sources/SRC-2026-05-18-012",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/UsageExtractor": [
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ResponseUsageMiddleware",
+    "concepts/UsageExtractor",
+    "concepts/UsageService",
+    "concepts/UsageTrackingPattern",
+    "entities/ResponseUsageMiddleware",
+    "entities/UsageExtractor",
+    "entities/UsageService",
+    "sources/SRC-2026-05-18-004",
+    "sources/SRC-2026-05-18-010",
+    "sources/SRC-2026-05-18-012",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "entities/UsageService": [
+    "concepts/DashboardService",
+    "concepts/ResponseUsageMiddleware",
+    "concepts/StatsService",
+    "concepts/UsageExtractor",
+    "concepts/UsageService",
+    "concepts/UsageTrackingPattern",
+    "entities/DashboardService",
+    "entities/ResponseUsageMiddleware",
+    "entities/StatsService",
+    "entities/UsageExtractor",
+    "sources/SRC-2026-05-18-011",
+    "sources/SRC-2026-05-18-014",
+    "sources/SRC-2026-05-18-015",
+    "syntheses/llamodemarchitectureoverview"
+  ],
+  "sources/SRC-2026-05-18-001": [
     "concepts/ConfigRecords",
     "concepts/DashboardService",
     "concepts/DefaultModelLauncher",
     "concepts/HeaderValueInjector",
+    "concepts/HealthChecker",
+    "concepts/IdleTimeoutService",
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/ModelManager",
     "concepts/RequestForwarder",
     "concepts/ResponseUsageMiddleware",
-    "concepts/UsageService",
-    "sources/SRC-2026-05-18-002"
+    "concepts/UsageExtractor",
+    "concepts/UsageService"
+  ],
+  "sources/SRC-2026-05-18-002": [
+    "concepts/ConfigRecords",
+    "concepts/DashboardService",
+    "concepts/DefaultModelLauncher",
+    "concepts/HeaderValueInjector",
+    "concepts/ModelManager",
+    "concepts/RequestForwarder",
+    "concepts/ResponseUsageMiddleware",
+    "concepts/UsageService"
   ],
   "sources/SRC-2026-05-18-003": [
     "concepts/ConfigRecords",
     "concepts/DashboardService",
-    "concepts/RequestForwarder",
-    "concepts/UsageService",
-    "sources/SRC-2026-05-18-003"
+    "concepts/RequestForwarder"
   ],
   "sources/SRC-2026-05-18-004": [
-    "concepts/ResponseUsageMiddleware",
-    "concepts/StatsService",
-    "concepts/UsageExtractor",
-    "concepts/UsageService",
-    "sources/SRC-2026-05-18-004"
+    "concepts/LlaModemArchitectureOverview",
+    "concepts/StatsService"
   ],
-  "sources/SRC-2026-05-18-005": [
-    "concepts/ConfigRecords",
-    "concepts/HeaderValueInjector",
-    "concepts/RequestForwarder",
-    "concepts/ResponseUsageMiddleware",
-    "sources/SRC-2026-05-18-005"
-  ],
+  "sources/SRC-2026-05-18-005": [],
   "sources/SRC-2026-05-18-006": [
-    "concepts/RequestLoggingMiddleware",
-    "concepts/ResponseUsageMiddleware",
-    "concepts/UsageExtractor",
-    "concepts/UsageService",
-    "sources/SRC-2026-05-18-006"
+    "concepts/BasicAuthMiddleware"
   ],
   "sources/SRC-2026-05-18-007": [
-    "concepts/BasicAuthMiddleware",
     "concepts/RequestLoggingMiddleware",
-    "concepts/ResponseUsageMiddleware",
     "sources/SRC-2026-05-18-007"
   ],
   "sources/SRC-2026-05-18-008": [
-    "concepts/BasicAuthMiddleware",
-    "concepts/ConfigRecords",
-    "concepts/RequestLoggingMiddleware",
     "sources/SRC-2026-05-18-008"
   ],
-  "sources/SRC-2026-05-18-009": [
-    "concepts/ConfigRecords",
-    "concepts/DefaultModelLauncher",
-    "sources/SRC-2026-05-18-009"
-  ],
-  "sources/SRC-2026-05-18-010": [
-    "concepts/ConfigRecords",
-    "concepts/HeaderValueInjector",
-    "concepts/RequestForwarder",
-    "sources/SRC-2026-05-18-010"
-  ],
-  "sources/SRC-2026-05-18-011": [
-    "concepts/ResponseUsageMiddleware",
-    "concepts/UsageExtractor",
-    "concepts/UsageService",
-    "sources/SRC-2026-05-18-011"
-  ],
-  "sources/SRC-2026-05-18-012": [
-    "concepts/ConfigRecords",
-    "concepts/DashboardService",
-    "concepts/HeaderValueInjector",
-    "concepts/RequestForwarder",
-    "concepts/ResponseUsageMiddleware",
-    "sources/SRC-2026-05-18-012"
-  ],
+  "sources/SRC-2026-05-18-009": [],
+  "sources/SRC-2026-05-18-010": [],
+  "sources/SRC-2026-05-18-011": [],
+  "sources/SRC-2026-05-18-012": [],
   "sources/SRC-2026-05-18-013": [
-    "concepts/ConfigRecords",
-    "concepts/DefaultModelLauncher",
-    "sources/SRC-2026-05-18-013"
+    "concepts/HealthChecker.PollAsync()"
   ],
-  "sources/SRC-2026-05-18-014": [
-    "concepts/ConfigRecords",
-    "concepts/DefaultModelLauncher",
-    "concepts/HeaderValueInjector",
-    "concepts/RequestForwarder",
-    "sources/SRC-2026-05-18-014"
+  "sources/SRC-2026-05-18-014": [],
+  "sources/SRC-2026-05-18-015": [
+    "concepts/HealthChecker.PollAsync()",
+    "concepts/LlaModem.Tests"
   ],
-  "sources/SRC-2026-05-18-015": [],
-  "syntheses/llamodemarchitectureoverview": [
-    "concepts/ModelManager"
-  ]
+  "sources/SRC-2026-05-19-001": [],
+  "syntheses/llamodemarchitectureoverview": []
 }

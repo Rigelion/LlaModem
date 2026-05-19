@@ -1,3 +1,10 @@
+---
+type: entity
+created: 2026-05-18
+updated: 2026-05-19
+status: complete
+---
+
 # ModelManager
 
 **Entity Type:** Service  
@@ -102,7 +109,11 @@ public sealed record ModelProcessState(
 
 ## Related Entities
 
-- [[DefaultModelLauncher]]
-- [[HealthChecker]] (not documented yet)
-- [[IdleTimeoutService]] (not documented yet)
-- [[ConfigRecords]]
+- [[entities/DefaultModelLauncher]] - PowerShell process management
+- [[entities/HealthChecker]] - Backend health polling service
+- [[entities/IdleTimeoutService]] - Inactivity monitoring and shutdown trigger
+- [[entities/ConfigRecords]] - Configuration records (AppConfig, RouterConfig, ModelConfig)
+
+## Related Concepts
+
+- [[concepts/ModelLifecycleManagement]] - Model lifecycle management pattern

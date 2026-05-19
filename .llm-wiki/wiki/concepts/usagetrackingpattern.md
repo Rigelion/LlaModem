@@ -55,7 +55,7 @@ Table: `session_entries` with columns:
 
 ## Usage Capture Middleware Integration
 
-**Middleware:** `ResponseUsageMiddleware` (see [[ResponseUsageMiddleware]])
+**Middleware:** `ResponseUsageMiddleware` (see [[entities/ResponseUsageMiddleware]])
 
 **Capture flow:**
 1. Non-streaming response detected (`UsageExtractor.IsStreaming()` returns false)
@@ -120,7 +120,11 @@ WHERE model = 'qwen36-smart'
 
 ## Related Entities
 
-- [[UsageService]]
-- [[ResponseUsageMiddleware]]
-- [[UsageExtractor]]
-- [[StatsService]] (not documented yet)
+- [[entities/UsageService]] - SQLite persistence layer for token usage tracking
+- [[entities/ResponseUsageMiddleware]] - Captures non-streaming response body for extraction
+- [[entities/UsageExtractor]] - Parses llama-server JSON for token usage statistics
+- [[entities/StatsService]] - Aggregates usage and provides cost comparison against cloud models
+
+## Related Synthesis
+
+- [[concepts/LlaModemArchitectureOverview]] - Architecture overview tying all components together
