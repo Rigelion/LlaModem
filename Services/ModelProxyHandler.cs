@@ -10,7 +10,7 @@ public sealed class ModelProxyHandler : IModelProxyHandler
     private readonly SystemIdleTracker _systemIdleTracker;
     private readonly IIdleTimeoutResetter? _idleTimeoutResetter;
 
-    private readonly LaunchParamParser _paramParser;
+    private readonly DashboardService _dashboardService;
     private readonly IRequestForwarder _forwarder;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ModelProxyHandler> _logger;
@@ -20,7 +20,7 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         IMetaModelManager modelManager,
         SystemIdleTracker systemIdleTracker,
         IIdleTimeoutResetter? idleTimeoutResetter,
-        LaunchParamParser paramParser,
+        DashboardService dashboardService,
         IRequestForwarder forwarder,
         IHttpClientFactory httpClientFactory,
         ILogger<ModelProxyHandler> logger)
@@ -29,7 +29,7 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         _modelManager = modelManager;
         _systemIdleTracker = systemIdleTracker;
         _idleTimeoutResetter = idleTimeoutResetter;
-        _paramParser = paramParser;
+        _dashboardService = dashboardService;
         _forwarder = forwarder;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
@@ -54,8 +54,7 @@ public sealed class ModelProxyHandler : IModelProxyHandler
             return;
         }
 
-        var launchParams = await _paramParser.ParseAsync(context, request);
-        if (launchParams is null && context.Response.HasStarted) return; // error was written
+        var launchParams = LoadParamsForModel(modelName);
 
         await WarnIfModelAlreadyRunningAsync(launchParams, modelName, context.RequestAborted);
         if (context.Response.HasStarted) return;
@@ -82,6 +81,19 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         var targetUrl = RequestForwarder.BuildTargetUrl(backendUrl, request);
 
         await _forwarder.ForwardAsync(context, targetUrl, ct);
+    }
+
+    private ModelLaunchParams LoadParamsForModel(string modelName)
+    {
+        try
+        {
+            return _dashboardService.LoadParams(modelName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load params for model '{Model}', using defaults", modelName);
+            return ModelLaunchParams.Defaults;
+        }
     }
 
     // TODO: add tests for /v1/{**path} forwarding with path stripping

@@ -5,8 +5,6 @@ public record RouterConfig
     public string ListenUrl { get; init; } = "http://localhost:9000";
     public string AuthUsername { get; init; } = string.Empty;
     public string AuthPassword { get; init; } = string.Empty;
-    public bool EnableBodyHeaderInjection { get; init; } = true;
-    public Dictionary<string, string> BodyHeaderMappings { get; init; } = new();
 
     /// <summary>
     /// Configurable thresholds and timeouts for model management.

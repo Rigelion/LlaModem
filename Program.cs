@@ -72,17 +72,9 @@ public class Program
         // DUPLICATE REMOVED: UsageService concrete registration deleted
         builder.Services.AddSingleton<SystemIdleTracker>();
         builder.Services.AddSingleton<IIdleTimeoutResetter, IdleTimeoutService>();
-        builder.Services.AddSingleton<LaunchParamParser>();
         builder.Services.AddSingleton<IRequestForwarder, RequestForwarder>();
         builder.Services.AddSingleton<IModelProxyHandler, ModelProxyHandler>();
         builder.Services.AddHostedService<IdleTimeoutService>();
-
-        // Register header value injector with configured mappings
-        builder.Services.AddSingleton<HeaderValueInjector>(sp =>
-        {
-            var routerConfig = sp.GetRequiredService<IOptions<RouterConfig>>().Value;
-            return new HeaderValueInjector(routerConfig.EnableBodyHeaderInjection, routerConfig.BodyHeaderMappings);
-        });
 
         var app = builder.Build();
 
