@@ -17,7 +17,8 @@ public class StatsServiceTests : IDisposable
         new(new SqliteUsagePersistence(new Microsoft.Extensions.Options.OptionsWrapper<LlaModem.Config.UsageConfig>(new LlaModem.Config.UsageConfig { Path = _tempDb })));
 
     private static string MakeTimestamp(int daysAgo, int hour) =>
-        DateTime.Now.AddDays(-daysAgo).Date.AddHours(hour).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.0000000Z");
+        new DateTimeOffset(DateTimeOffset.UtcNow.AddDays(-daysAgo).Date.AddHours(hour), TimeSpan.Zero)
+            .ToString("yyyy-MM-ddTHH:mm:ss.0000000Z");
 
     private async Task SeedDataAsync(params (string Timestamp, string Model, string Route, int PromptTokens, int CompletionTokens, int TotalTokens, double? PromptMs, double? CompletionMs, int? CacheHits, int StatusCode, string? ClientIp)[] records)
     {
@@ -102,9 +103,10 @@ public class StatsServiceTests : IDisposable
         var result = await CreateService().GetDailyUsageAsync(30, null);
         Assert.Equal(3, result.Daily.Length);
         // SQL orders by date DESC, so newest first
-        Assert.Equal(DateTime.Now.Date.AddDays(-2).ToString("yyyy-MM-dd"), result.Daily[0].Date);
-        Assert.Equal(DateTime.Now.Date.AddDays(-1).ToString("yyyy-MM-dd"), result.Daily[1].Date);
-        Assert.Equal(DateTime.Now.Date.ToString("yyyy-MM-dd"), result.Daily[2].Date);
+        var utcNow = DateTimeOffset.UtcNow;
+        Assert.Equal(utcNow.Date.ToString("yyyy-MM-dd"), result.Daily[0].Date);
+        Assert.Equal(utcNow.AddDays(-1).Date.ToString("yyyy-MM-dd"), result.Daily[1].Date);
+        Assert.Equal(utcNow.AddDays(-2).Date.ToString("yyyy-MM-dd"), result.Daily[2].Date);
     }
 
 
@@ -151,9 +153,10 @@ public class StatsServiceTests : IDisposable
         var result = await CreateService().GetRecentRequestsAsync(10, 0, null);
         Assert.Equal(3, result.Total);
         Assert.Equal(3, result.Items.Length);
-        Assert.Equal(DateTime.Now.AddDays(-2).Date.ToString("yyyy-MM-dd"), result.Items[0].Timestamp.Substring(0, 10));
-        Assert.Equal(DateTime.Now.Date.AddDays(-1).ToString("yyyy-MM-dd"), result.Items[1].Timestamp.Substring(0, 10));
-        Assert.Equal(DateTime.Now.Date.ToString("yyyy-MM-dd"), result.Items[2].Timestamp.Substring(0, 10));
+        var utcNow = DateTimeOffset.UtcNow;
+        Assert.Equal(utcNow.Date.ToString("yyyy-MM-dd"), result.Items[0].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.AddDays(-1).Date.ToString("yyyy-MM-dd"), result.Items[1].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.AddDays(-2).Date.ToString("yyyy-MM-dd"), result.Items[2].Timestamp.Substring(0, 10));
     }
 
     [Fact]
@@ -168,23 +171,25 @@ public class StatsServiceTests : IDisposable
         var service = CreateService();
 
         var page1 = await service.GetRecentRequestsAsync(2, 0, null);
+
+        var utcNow = DateTimeOffset.UtcNow;
         Assert.Equal(5, page1.Total);
         Assert.Equal(2, page1.Items.Length);
         Assert.Equal(2, page1.Limit);
         Assert.Equal(0, page1.Offset);
-        Assert.Equal(DateTime.Now.Date.AddDays(-4).ToString("yyyy-MM-dd"), page1.Items[0].Timestamp.Substring(0, 10));
-        Assert.Equal(DateTime.Now.Date.AddDays(-3).ToString("yyyy-MM-dd"), page1.Items[1].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.Date.ToString("yyyy-MM-dd"), page1.Items[0].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.AddDays(-1).Date.ToString("yyyy-MM-dd"), page1.Items[1].Timestamp.Substring(0, 10));
 
         var page2 = await service.GetRecentRequestsAsync(2, 2, null);
         Assert.Equal(5, page2.Total);
         Assert.Equal(2, page2.Items.Length);
         Assert.Equal(2, page2.Offset);
-        Assert.Equal(DateTime.Now.Date.AddDays(-2).ToString("yyyy-MM-dd"), page2.Items[0].Timestamp.Substring(0, 10));
-        Assert.Equal(DateTime.Now.Date.AddDays(-1).ToString("yyyy-MM-dd"), page2.Items[1].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.AddDays(-2).Date.ToString("yyyy-MM-dd"), page2.Items[0].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.AddDays(-3).Date.ToString("yyyy-MM-dd"), page2.Items[1].Timestamp.Substring(0, 10));
 
         var page3 = await service.GetRecentRequestsAsync(2, 4, null);
         Assert.Single(page3.Items);
-        Assert.Equal(DateTime.Now.Date.ToString("yyyy-MM-dd"), page3.Items[0].Timestamp.Substring(0, 10));
+        Assert.Equal(utcNow.AddDays(-4).Date.ToString("yyyy-MM-dd"), page3.Items[0].Timestamp.Substring(0, 10));
     }
 
     [Fact]

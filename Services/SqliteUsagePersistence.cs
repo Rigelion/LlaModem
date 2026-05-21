@@ -105,8 +105,18 @@ public sealed class SqliteUsagePersistence : IUsagePersistence, IDisposable
 
         await DbSchema.EnsureAsync(conn);
         var cutoffStr = cutoff.ToString("o");
-        return await conn.QueryFirstOrDefaultAsync<UsageSummaryRow?>(sql, 
-            model is not null ? (object)new { cutoff = cutoffStr, model } : (object)new { cutoff = cutoffStr });
+        var rows = (await conn.QueryAsync(sql, model is not null ? (object)new { cutoff = cutoffStr, model } : (object)new { cutoff = cutoffStr })).ToList();
+        if (rows.Count == 0) return null;
+        // Map dynamic row to UsageSummaryRow
+        var first = rows[0];
+        return new UsageSummaryRow(
+            TotalRequests: Convert.ToInt64(first.TotalRequests),
+            TotalPromptTokens: Convert.ToInt64(first.TotalPromptTokens),
+            TotalCompletionTokens: Convert.ToInt64(first.TotalCompletionTokens),
+            TotalTokens: Convert.ToInt64(first.TotalTokens),
+            AvgPromptMs: Convert.ToDouble(first.AvgPromptMs),
+            AvgCompletionMs: Convert.ToDouble(first.AvgCompletionMs),
+            CacheHitRate: Convert.ToDouble(first.CacheHitRate));
     }
 
     private async Task<DailyUsageRow[]> GetDailyRowsAsync(SqliteConnection conn, int days, string? model, CancellationToken ct)
