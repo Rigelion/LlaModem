@@ -1,4 +1,47 @@
 {
-  "gaps": [],
-  "generated": "2026-05-19T12:42:26.891Z"
+  "gaps": [
+    {
+      "topic": "Services/ModelProxyHandler",
+      "mentionedBy": [
+        "entities/config-architecture",
+        "entities/powershell-scripts",
+        "sources/SRC-2026-05-19-002"
+      ]
+    },
+    {
+      "topic": "Services/DashboardService",
+      "mentionedBy": [
+        "entities/config-architecture",
+        "entities/modelproxyhandler",
+        "sources/SRC-2026-05-19-002"
+      ]
+    },
+    {
+      "topic": "Services/ModelManager",
+      "mentionedBy": [
+        "entities/modelproxyhandler"
+      ]
+    },
+    {
+      "topic": "Config/architecture",
+      "mentionedBy": [
+        "entities/modelproxyhandler",
+        "entities/powershell-scripts",
+        "sources/SRC-2026-05-19-002"
+      ]
+    },
+    {
+      "topic": "powershell/README",
+      "mentionedBy": [
+        "sources/SRC-2026-05-19-002"
+      ]
+    },
+    {
+      "topic": "wikilinks",
+      "mentionedBy": [
+        "sources/SRC-2026-05-19-002"
+      ]
+    }
+  ],
+  "generated": "2026-05-19T14:19:02.752Z"
 }

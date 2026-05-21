@@ -37,15 +37,12 @@ public class RequestLoggingMiddleware
         var queryString = context.Request.QueryString.HasValue ? context.Request.QueryString.Value : string.Empty;
         var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var modelName = context.Request.Headers[ProxyHeaders.Model].FirstOrDefault() ?? "(none)";
-        var temperature = context.Request.Headers[ProxyHeaders.Temperature].FirstOrDefault();
-        var topP = context.Request.Headers[ProxyHeaders.TopP].FirstOrDefault();
-        var presencePenalty = context.Request.Headers[ProxyHeaders.PresencePenalty].FirstOrDefault();
         var hasAuth = context.Request.Headers.ContainsKey("Authorization") ? "yes" : "no";
 
         _logger.LogInformation(
-            "[REQUEST] {Method} {Scheme}://{Host}{Path}{Query} | Client: {ClientIp} | Model: {Model} | Temp: {Temperature} | TopP: {TopP} | PP: {PresencePenalty} | Auth: {HasAuth}",
+            "[REQUEST] {Method} {Scheme}://{Host}{Path}{Query} | Client: {ClientIp} | Model: {Model} | Auth: {HasAuth}",
             method, scheme, context.Request.Host, path, queryString, clientIp, modelName,
-            temperature ?? "(default)", topP ?? "(default)", presencePenalty ?? "(default)", hasAuth);
+            hasAuth);
 
         // Log full request body at Debug level (configurable)
         if (_logRequestBody && context.Request.Body.CanRead)

@@ -1,56 +1,37 @@
 {
   "main": {
-    "id": "29f04bc4c51ef09f",
+    "id": "4777c1fc48d5e248",
     "type": "split",
     "children": [
       {
-        "id": "9b9ea4bb2400c760",
+        "id": "2db2ed3b101a85db",
         "type": "tabs",
         "children": [
           {
-            "id": "6e21178e360c07c1",
+            "id": "980220941210203b",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "wiki/concepts/RequestForwarder.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "RequestForwarder"
-            }
-          },
-          {
-            "id": "86d897e6aa1a8aa5",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "raw/sources/SRC-2026-05-18-005/extracted.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "extracted"
+              "title": "New tab"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
   },
   "left": {
-    "id": "f38f5e1de274fcc7",
+    "id": "5dfb7070a092535b",
     "type": "split",
     "children": [
       {
-        "id": "2ae1a8ef8b6db8d3",
+        "id": "07f325c23168f01b",
         "type": "tabs",
         "children": [
           {
-            "id": "312ba4edc2144f60",
+            "id": "ad4bf6f1232738e0",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -63,12 +44,12 @@
             }
           },
           {
-            "id": "3f47ade787d3501d",
+            "id": "c4d53ac0aa55e7d7",
             "type": "leaf",
             "state": {
               "type": "search",
               "state": {
-                "query": "HeaderValueInjector",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -80,7 +61,7 @@
             }
           },
           {
-            "id": "e921d641b8fc0bf3",
+            "id": "b95572537c81c5f5",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -89,28 +70,26 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
     "width": 300
   },
   "right": {
-    "id": "1b322a4ef97de33a",
+    "id": "ff5e686caa9dd858",
     "type": "split",
     "children": [
       {
-        "id": "ac4e1637aa8ee854",
+        "id": "a5e5ed8365493995",
         "type": "tabs",
         "children": [
           {
-            "id": "85194bf1a7d853ab",
+            "id": "5196ab0539c58c0e",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "raw/sources/SRC-2026-05-18-005/extracted.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -120,25 +99,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for extracted"
+              "title": "Backlinks"
             }
           },
           {
-            "id": "4cdaaf5169a24a15",
+            "id": "c55a97eaad6b8abd",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "wiki/concepts/BasicAuthMiddleware.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from BasicAuthMiddleware"
+              "title": "Outgoing links"
             }
           },
           {
-            "id": "5486c0fc6634f6ff",
+            "id": "45da265335e23fba",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -153,7 +131,7 @@
             }
           },
           {
-            "id": "304b5c919696680a",
+            "id": "d54d3567e797db96",
             "type": "leaf",
             "state": {
               "type": "all-properties",
@@ -167,25 +145,25 @@
             }
           },
           {
-            "id": "731debc39b670158",
+            "id": "9ab41ae58c7d2cd1",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "wiki/concepts/BasicAuthMiddleware.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of BasicAuthMiddleware"
+              "title": "Outline"
             }
           }
         ]
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -198,39 +176,6 @@
       "bases:Create new base": false
     }
   },
-  "active": "86d897e6aa1a8aa5",
-  "lastOpenFiles": [
-    "wiki/concepts/modelproxyhandler.md",
-    "wiki/entities/powershell-scripts.md",
-    "wiki/entities/config-architecture.md",
-    "wiki/entities/modelproxyhandler.md",
-    "wiki/sources/SRC-2026-05-19-002.md",
-    "raw/sources/SRC-2026-05-19-002/manifest.json",
-    "raw/sources/SRC-2026-05-19-002/extracted.md",
-    "raw/sources/SRC-2026-05-19-002/attachments",
-    "raw/sources/SRC-2026-05-19-002",
-    "raw/sources/SRC-2026-05-18-010/extracted.md",
-    "wiki/entities/DashboardService.md",
-    "raw/sources/SRC-2026-05-18-002/original/architecture.md",
-    "wiki/entities/HeaderValueInjector.md",
-    "wiki/concepts/RequestForwarder.md",
-    "wiki/concepts/DefaultModelLauncher.md",
-    "wiki/concepts/ConfigRecords.md",
-    "wiki/concepts/HeaderValueInjectionPattern.md",
-    "wiki/concepts/HeaderInjectionPattern.md",
-    "wiki/concepts/UsageTrackingPattern.md",
-    "wiki/concepts/ModelLifecycleManagement.md",
-    "wiki/concepts/MinimalAPIArchitecture.md",
-    "wiki/concepts/BasicAuthMiddleware.md",
-    "WIKI_SCHEMA.md",
-    "meta/log.md",
-    "wiki/entities/UsageService.md",
-    "wiki/entities/UsageExtractor.md",
-    "wiki/entities/StatsService.md",
-    "wiki/entities/ResponseUsageMiddleware.md",
-    "wiki/entities/RequestLoggingMiddleware.md",
-    "raw/sources/SRC-2026-05-19-001/manifest.json",
-    "raw/sources/SRC-2026-05-19-001/attachments",
-    "raw/sources/SRC-2026-05-19-001"
-  ]
+  "active": "980220941210203b",
+  "lastOpenFiles": []
 }

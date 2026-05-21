@@ -5,14 +5,10 @@ namespace LlaModem.Services;
 
 public sealed class RequestForwarder : IRequestForwarder
 {
-    private readonly HeaderValueInjector _headerValueInjector;
     private readonly ILogger<RequestForwarder> _logger;
 
-    public RequestForwarder(
-        HeaderValueInjector headerValueInjector,
-        ILogger<RequestForwarder> logger)
+    public RequestForwarder(ILogger<RequestForwarder> logger)
     {
-        _headerValueInjector = headerValueInjector;
         _logger = logger;
     }
 
@@ -32,10 +28,7 @@ public sealed class RequestForwarder : IRequestForwarder
         HttpClient httpClient,
         string targetUrl)
     {
-        // Inject configured header values into the JSON request body
-        await _headerValueInjector.InjectAsync(context, _logger);
-
-        // Explicitly capture the (possibly modified) body so forwarding is independent of middleware ordering
+        // Explicitly capture the request body so forwarding is independent of middleware ordering
         var buffer = await HttpRequestExtensions.ReadBodyAsync(request);
 
         var method = System.Net.Http.HttpMethod.Parse(request.Method);

@@ -22,12 +22,12 @@ public readonly record struct ModelDashboardItem(
 /// Request to start a model with optional parameter overrides.
 /// </summary>
 public sealed record StartModelRequest(
-    double? Temperature = null,
-    double? TopP = null,
-    double? TopK = null,
-    double? MinP = null,
-    double? PresencePenalty = null,
-    double? RepetitionPenalty = null)
+    decimal? Temperature = null,
+    decimal? TopP = null,
+    decimal? TopK = null,
+    decimal? MinP = null,
+    decimal? PresencePenalty = null,
+    decimal? RepetitionPenalty = null)
 {
     public ModelLaunchParams ToLaunchParams() => new(
         Temperature ?? Services.ModelLaunchParams.Defaults.Temperature,
@@ -42,12 +42,12 @@ public sealed record StartModelRequest(
 /// Request to update model parameters.
 /// </summary>
 public sealed record UpdateModelParamsRequest(
-    double? Temperature = null,
-    double? TopP = null,
-    double? TopK = null,
-    double? MinP = null,
-    double? PresencePenalty = null,
-    double? RepetitionPenalty = null)
+    decimal? Temperature = null,
+    decimal? TopP = null,
+    decimal? TopK = null,
+    decimal? MinP = null,
+    decimal? PresencePenalty = null,
+    decimal? RepetitionPenalty = null)
 {
     public ModelLaunchParams ToLaunchParams() => new(
         Temperature ?? ModelLaunchParams.Defaults.Temperature,
