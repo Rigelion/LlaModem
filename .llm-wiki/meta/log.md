@@ -225,3 +225,9 @@
 ## [2026-05-19T14:19:02.753Z] lint
 - orphans: 25, missing_pages: 12, contradictions: 0, auto_fix: false
 
+## [2026-05-19T14:19:18.152Z] ensure_page
+- page_type: "concept", title: "ModelProxyHandler", path: "concepts/modelproxyhandler"
+
+## [2026-05-21T14:37:15.726Z] retro
+- slug: "idle-timer-epoch-zero-bug", title: "Idle timer fires immediately due to zero-initialized LastRequest", category: "bugfix"
+

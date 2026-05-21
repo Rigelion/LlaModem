@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-05-19T14:19:02.756Z",
+  "last_updated": "2026-05-21T14:37:15.735Z",
   "pages": {
     "concepts/BasicAuthMiddleware": {
       "type": "concept",
@@ -37,8 +37,8 @@
     "concepts/HeaderInjectionPattern": {
       "type": "page",
       "title": "HeaderInjectionPattern",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "concepts/HeaderValueInjectionPattern": {
       "type": "concept",
@@ -99,14 +99,14 @@
     "concepts/MinimalAPIArchitecture": {
       "type": "page",
       "title": "MinimalAPIArchitecture",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "concepts/ModelLifecycleManagement": {
       "type": "page",
       "title": "ModelLifecycleManagement",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "concepts/ModelManager": {
       "type": "concept",
@@ -167,32 +167,38 @@
     "concepts/UsageTrackingPattern": {
       "type": "page",
       "title": "UsageTrackingPattern",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
+    },
+    "concepts/modelproxyhandler": {
+      "type": "page",
+      "title": "modelproxyhandler",
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/BasicAuthMiddleware": {
       "type": "page",
       "title": "BasicAuthMiddleware",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/ConfigRecords": {
       "type": "page",
       "title": "ConfigRecords",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/DashboardService": {
       "type": "page",
       "title": "DashboardService",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/DefaultModelLauncher": {
       "type": "page",
       "title": "DefaultModelLauncher",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/HeaderValueInjector": {
       "type": "entity",
@@ -232,8 +238,8 @@
     "entities/RequestLoggingMiddleware": {
       "type": "page",
       "title": "RequestLoggingMiddleware",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/ResponseUsageMiddleware": {
       "type": "entity",
@@ -266,62 +272,62 @@
     "entities/config-architecture": {
       "type": "page",
       "title": "config-architecture",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/modelproxyhandler": {
       "type": "page",
       "title": "modelproxyhandler",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "entities/powershell-scripts": {
       "type": "page",
       "title": "powershell-scripts",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-001": {
       "type": "page",
       "title": "SRC-2026-05-18-001",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-002": {
       "type": "page",
       "title": "SRC-2026-05-18-002",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-003": {
       "type": "page",
       "title": "SRC-2026-05-18-003",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-004": {
       "type": "page",
       "title": "SRC-2026-05-18-004",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-005": {
       "type": "page",
       "title": "SRC-2026-05-18-005",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-006": {
       "type": "page",
       "title": "SRC-2026-05-18-006",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-007": {
       "type": "source",
       "title": "SRC-2026-05-18-007",
-      "created": "2026-05-19",
-      "updated": "2026-05-19",
+      "created": "2026-05-21",
+      "updated": "2026-05-21",
       "format": "markdown",
       "source_id": "SRC-2026-05-18-007",
       "raw_path": "raw/sources/SRC-2026-05-18-007/extracted.md",
@@ -331,8 +337,8 @@
     "sources/SRC-2026-05-18-008": {
       "type": "source",
       "title": "SRC-2026-05-18-008",
-      "created": "2026-05-19",
-      "updated": "2026-05-19",
+      "created": "2026-05-21",
+      "updated": "2026-05-21",
       "format": "markdown",
       "source_id": "SRC-2026-05-18-008",
       "raw_path": "raw/sources/SRC-2026-05-18-008/extracted.md",
@@ -342,44 +348,44 @@
     "sources/SRC-2026-05-18-009": {
       "type": "page",
       "title": "SRC-2026-05-18-009",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-010": {
       "type": "page",
       "title": "SRC-2026-05-18-010",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-011": {
       "type": "page",
       "title": "SRC-2026-05-18-011",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-012": {
       "type": "page",
       "title": "SRC-2026-05-18-012",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-013": {
       "type": "page",
       "title": "SRC-2026-05-18-013",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-014": {
       "type": "page",
       "title": "SRC-2026-05-18-014",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-18-015": {
       "type": "page",
       "title": "SRC-2026-05-18-015",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     },
     "sources/SRC-2026-05-19-001": {
       "type": "source",
@@ -399,11 +405,20 @@
       "status": "insight",
       "category": "architecture"
     },
+    "sources/idle-timer-epoch-zero-bug": {
+      "type": "source",
+      "title": "\"Idle timer fires immediately due to zero-initialized LastRequest\"",
+      "created": "2026-05-21",
+      "updated": "2026-05-21",
+      "slug": "idle-timer-epoch-zero-bug",
+      "status": "insight",
+      "category": "bugfix"
+    },
     "syntheses/llamodemarchitectureoverview": {
       "type": "page",
       "title": "llamodemarchitectureoverview",
-      "created": "2026-05-19",
-      "updated": "2026-05-19"
+      "created": "2026-05-21",
+      "updated": "2026-05-21"
     }
   }
 }

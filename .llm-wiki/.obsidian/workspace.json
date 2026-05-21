@@ -200,6 +200,7 @@
   },
   "active": "86d897e6aa1a8aa5",
   "lastOpenFiles": [
+    "wiki/sources/idle-timer-epoch-zero-bug.md",
     "wiki/concepts/modelproxyhandler.md",
     "wiki/entities/powershell-scripts.md",
     "wiki/entities/config-architecture.md",
@@ -228,7 +229,6 @@
     "wiki/entities/UsageExtractor.md",
     "wiki/entities/StatsService.md",
     "wiki/entities/ResponseUsageMiddleware.md",
-    "wiki/entities/RequestLoggingMiddleware.md",
     "raw/sources/SRC-2026-05-19-001/manifest.json",
     "raw/sources/SRC-2026-05-19-001/attachments",
     "raw/sources/SRC-2026-05-19-001"
