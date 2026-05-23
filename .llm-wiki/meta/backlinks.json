@@ -378,6 +378,8 @@
   ],
   "sources/SRC-2026-05-19-001": [],
   "sources/SRC-2026-05-19-002": [],
+  "sources/dapper-queryfromfirstordefault-fails-on-aggregates": [],
   "sources/idle-timer-epoch-zero-bug": [],
+  "sources/test-seeding-utc-vs-local-timezone-drift": [],
   "syntheses/llamodemarchitectureoverview": []
 }

@@ -231,3 +231,9 @@
 ## [2026-05-21T14:37:15.726Z] retro
 - slug: "idle-timer-epoch-zero-bug", title: "Idle timer fires immediately due to zero-initialized LastRequest", category: "bugfix"
 
+## [2026-05-21T15:21:45.025Z] retro
+- slug: "dapper-queryfromfirstordefault-fails-on-aggregates", title: "Dapper QueryFirstOrDefaultAsync fails silently on aggregate function return types", category: "bugfix"
+
+## [2026-05-21T15:21:51.495Z] retro
+- slug: "test-seeding-utc-vs-local-timezone-drift", title: "Test seeding uses UTC but assertions used local time causing date drift", category: "bugfix"
+

@@ -67,11 +67,13 @@
 
 ## Sources
 
+- [[sources/dapper-queryfromfirstordefault-fails-on-aggregates]] — "Dapper QueryFirstOrDefaultAsync fails silently on aggregate function return types" *(created: 2026-05-21)*
 - [[sources/idle-timer-epoch-zero-bug]] — "Idle timer fires immediately due to zero-initialized LastRequest" *(created: 2026-05-21)*
 - [[sources/SRC-2026-05-18-007]] — SRC-2026-05-18-007 *(created: 2026-05-21)*
 - [[sources/SRC-2026-05-18-008]] — SRC-2026-05-18-008 *(created: 2026-05-21)*
 - [[sources/SRC-2026-05-19-001]] — "Wiki Orphan Fix Pattern" *(created: 2026-05-19)*
 - [[sources/SRC-2026-05-19-002]] — "Remove Header-to-Body Parameter Injection System" *(created: 2026-05-19)*
+- [[sources/test-seeding-utc-vs-local-timezone-drift]] — "Test seeding uses UTC but assertions used local time causing date drift" *(created: 2026-05-21)*
 
 ---
-*Last updated: 2026-05-21T14:37:15.735Z* | *Total pages: 59*
+*Last updated: 2026-05-21T15:21:51.500Z* | *Total pages: 61*

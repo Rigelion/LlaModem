@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-05-21T14:37:15.735Z",
+  "last_updated": "2026-05-21T15:21:51.500Z",
   "pages": {
     "concepts/BasicAuthMiddleware": {
       "type": "concept",
@@ -405,12 +405,30 @@
       "status": "insight",
       "category": "architecture"
     },
+    "sources/dapper-queryfromfirstordefault-fails-on-aggregates": {
+      "type": "source",
+      "title": "\"Dapper QueryFirstOrDefaultAsync fails silently on aggregate function return types\"",
+      "created": "2026-05-21",
+      "updated": "2026-05-21",
+      "slug": "dapper-queryfromfirstordefault-fails-on-aggregates",
+      "status": "insight",
+      "category": "bugfix"
+    },
     "sources/idle-timer-epoch-zero-bug": {
       "type": "source",
       "title": "\"Idle timer fires immediately due to zero-initialized LastRequest\"",
       "created": "2026-05-21",
       "updated": "2026-05-21",
       "slug": "idle-timer-epoch-zero-bug",
+      "status": "insight",
+      "category": "bugfix"
+    },
+    "sources/test-seeding-utc-vs-local-timezone-drift": {
+      "type": "source",
+      "title": "\"Test seeding uses UTC but assertions used local time causing date drift\"",
+      "created": "2026-05-21",
+      "updated": "2026-05-21",
+      "slug": "test-seeding-utc-vs-local-timezone-drift",
       "status": "insight",
       "category": "bugfix"
     },
