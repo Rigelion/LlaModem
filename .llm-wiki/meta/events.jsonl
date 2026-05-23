@@ -80,3 +80,4 @@
 {"timestamp":"2026-05-21T14:37:15.726Z","kind":"retro","slug":"idle-timer-epoch-zero-bug","title":"Idle timer fires immediately due to zero-initialized LastRequest","category":"bugfix"}
 {"timestamp":"2026-05-21T15:21:45.025Z","kind":"retro","slug":"dapper-queryfromfirstordefault-fails-on-aggregates","title":"Dapper QueryFirstOrDefaultAsync fails silently on aggregate function return types","category":"bugfix"}
 {"timestamp":"2026-05-21T15:21:51.495Z","kind":"retro","slug":"test-seeding-utc-vs-local-timezone-drift","title":"Test seeding uses UTC but assertions used local time causing date drift","category":"bugfix"}
+{"timestamp":"2026-05-23T17:20:47.565Z","kind":"retro","slug":"nullable-warning-squelch-strategy","title":"Nullability warning squelch strategy for test vs production code","category":"bugfix"}

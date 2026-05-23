@@ -200,6 +200,7 @@
   },
   "active": "86d897e6aa1a8aa5",
   "lastOpenFiles": [
+    "wiki/sources/nullable-warning-squelch-strategy.md",
     "wiki/sources/test-seeding-utc-vs-local-timezone-drift.md",
     "wiki/sources/dapper-queryfromfirstordefault-fails-on-aggregates.md",
     "wiki/sources/idle-timer-epoch-zero-bug.md",
@@ -228,7 +229,6 @@
     "WIKI_SCHEMA.md",
     "meta/log.md",
     "wiki/entities/UsageService.md",
-    "wiki/entities/UsageExtractor.md",
     "raw/sources/SRC-2026-05-19-001/manifest.json",
     "raw/sources/SRC-2026-05-19-001/attachments",
     "raw/sources/SRC-2026-05-19-001"

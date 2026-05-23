@@ -237,3 +237,6 @@
 ## [2026-05-21T15:21:51.495Z] retro
 - slug: "test-seeding-utc-vs-local-timezone-drift", title: "Test seeding uses UTC but assertions used local time causing date drift", category: "bugfix"
 
+## [2026-05-23T17:20:47.565Z] retro
+- slug: "nullable-warning-squelch-strategy", title: "Nullability warning squelch strategy for test vs production code", category: "bugfix"
+
