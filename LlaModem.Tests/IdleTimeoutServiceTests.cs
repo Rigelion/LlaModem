@@ -93,7 +93,7 @@ public class IdleTimeoutServiceTests
     {
         // Act - Verify interface exists and can be cast
         var resetter = (IIdleTimeoutResetter)new IdleTimeoutService(
-            null!, null, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
 
         // Assert
         Assert.NotNull(resetter);
@@ -108,7 +108,7 @@ public class IdleTimeoutServiceTests
     {
         // Arrange
         var service = new IdleTimeoutService(
-            null!, null, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
 
         // Act - Get the signal field via reflection
         var resetSignalField = typeof(IdleTimeoutService).GetField("_resetSignal", 
@@ -161,7 +161,7 @@ public class IdleTimeoutServiceTests
     {
         // Arrange
         var service = new IdleTimeoutService(
-            null!, null, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
 
         // Act - Get the timer field via reflection before reset
         var timerField = typeof(IdleTimeoutService).GetField("_timer", 
@@ -181,7 +181,7 @@ public class IdleTimeoutServiceTests
     {
         // Arrange
         var service = new IdleTimeoutService(
-            null!, null, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
 
         // Act & Assert - Verify Reset can be called (no exception thrown)
         var exception = Record.Exception(() => service.Reset());

@@ -50,9 +50,9 @@ public class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
         OpenApiDocument document)
     {
         var schema = context.GetOrCreateSchemaAsync(type, null, CancellationToken.None).Result;
-        if (schema != null && document.Components.Schemas != null)
+        if (schema is not null && document.Components is { Schemas: { } schemas })
         {
-            document.Components.Schemas[name] = schema;
+            schemas[name] = schema;
         }
     }
 

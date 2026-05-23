@@ -4,6 +4,9 @@ using System.Text.Json;
 using LlaModem.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 
+#nullable enable
+#pragma warning disable CS8602 // Dereference of a possibly null reference — intentional in test fixtures
+
 namespace LlaModem.Tests;
 
 public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
@@ -46,9 +49,9 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+        var schemas = document.RootElement!.GetProperty("components")!.GetProperty("schemas");
         var schemaNames = new HashSet<string>();
         foreach (var prop in schemas.EnumerateObject())
         {
@@ -68,13 +71,13 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var usagePath = document.RootElement.GetProperty("paths").GetProperty("/admin/stats/usage");
-        var getOperation = usagePath.GetProperty("get");
-        var responses = getOperation.GetProperty("responses");
-        var response200 = responses.GetProperty("200");
-        var content = response200.GetProperty("content").GetProperty("application/json");
+        var usagePath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/stats/usage");
+        var getOperation = usagePath.GetProperty("get")!;
+        var responses = getOperation.GetProperty("responses")!;
+        var response200 = responses.GetProperty("200")!;
+        var content = response200.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert - should have $ref, not unknown
@@ -88,13 +91,13 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var requestsPath = document.RootElement.GetProperty("paths").GetProperty("/admin/stats/requests");
-        var getOperation = requestsPath.GetProperty("get");
-        var responses = getOperation.GetProperty("responses");
-        var response200 = responses.GetProperty("200");
-        var content = response200.GetProperty("content").GetProperty("application/json");
+        var requestsPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/stats/requests");
+        var getOperation = requestsPath.GetProperty("get")!;
+        var responses = getOperation.GetProperty("responses")!;
+        var response200 = responses.GetProperty("200")!;
+        var content = response200.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert
@@ -108,13 +111,13 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var costPath = document.RootElement.GetProperty("paths").GetProperty("/admin/stats/cost-comparison");
-        var getOperation = costPath.GetProperty("get");
-        var responses = getOperation.GetProperty("responses");
-        var response200 = responses.GetProperty("200");
-        var content = response200.GetProperty("content").GetProperty("application/json");
+        var costPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/stats/cost-comparison");
+        var getOperation = costPath.GetProperty("get")!;
+        var responses = getOperation.GetProperty("responses")!;
+        var response200 = responses.GetProperty("200")!;
+        var content = response200.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert
@@ -128,13 +131,13 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var modelsPath = document.RootElement.GetProperty("paths").GetProperty("/admin/dashboard/models");
-        var getOperation = modelsPath.GetProperty("get");
-        var responses = getOperation.GetProperty("responses");
-        var response200 = responses.GetProperty("200");
-        var content = response200.GetProperty("content").GetProperty("application/json");
+        var modelsPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/dashboard/models");
+        var getOperation = modelsPath.GetProperty("get")!;
+        var responses = getOperation.GetProperty("responses")!;
+        var response200 = responses.GetProperty("200")!;
+        var content = response200.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert - should be array with $ref in items
@@ -151,13 +154,13 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var modelPath = document.RootElement.GetProperty("paths").GetProperty("/admin/dashboard/models/{name}");
-        var getOperation = modelPath.GetProperty("get");
-        var responses = getOperation.GetProperty("responses");
-        var response200 = responses.GetProperty("200");
-        var content = response200.GetProperty("content").GetProperty("application/json");
+        var modelPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/dashboard/models/{name}");
+        var getOperation = modelPath.GetProperty("get")!;
+        var responses = getOperation.GetProperty("responses")!;
+        var response200 = responses.GetProperty("200")!;
+        var content = response200.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert
@@ -171,12 +174,12 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var startPath = document.RootElement.GetProperty("paths").GetProperty("/admin/dashboard/models/{name}/start");
-        var postOperation = startPath.GetProperty("post");
-        var requestBody = postOperation.GetProperty("requestBody");
-        var content = requestBody.GetProperty("content").GetProperty("application/json");
+        var startPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/dashboard/models/{name}/start");
+        var postOperation = startPath.GetProperty("post")!;
+        var requestBody = postOperation.GetProperty("requestBody")!;
+        var content = requestBody.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert
@@ -190,14 +193,14 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var paramsPath = document.RootElement.GetProperty("paths").GetProperty("/admin/dashboard/models/{name}/params");
-        var putOperation = paramsPath.GetProperty("put");
+        var paramsPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/dashboard/models/{name}/params");
+        var putOperation = paramsPath.GetProperty("put")!;
 
         // Request body
-        var requestBody = putOperation.GetProperty("requestBody");
-        var requestContent = requestBody.GetProperty("content").GetProperty("application/json");
+        var requestBody = putOperation.GetProperty("requestBody")!;
+        var requestContent = requestBody.GetProperty("content")!.GetProperty("application/json");
         var requestSchema = requestContent.GetProperty("schema");
         Assert.True(requestSchema.TryGetProperty("$ref", out var requestRef), "Request body should have $ref");
         Assert.Equal("#/components/schemas/UpdateModelParamsRequest", requestRef.GetString());
@@ -217,13 +220,13 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var healthPath = document.RootElement.GetProperty("paths").GetProperty("/admin/dashboard/models/{name}/health");
-        var getOperation = healthPath.GetProperty("get");
-        var responses = getOperation.GetProperty("responses");
-        var response200 = responses.GetProperty("200");
-        var content = response200.GetProperty("content").GetProperty("application/json");
+        var healthPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/dashboard/models/{name}/health");
+        var getOperation = healthPath.GetProperty("get")!;
+        var responses = getOperation.GetProperty("responses")!;
+        var response200 = responses.GetProperty("200")!;
+        var content = response200.GetProperty("content")!.GetProperty("application/json");
         var schema = content.GetProperty("schema");
 
         // Assert
@@ -237,7 +240,7 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
         // Check dashboard endpoints have 400/404/503
         var endpoints = new[]
@@ -251,9 +254,9 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
 
         foreach (var endpoint in endpoints)
         {
-            var path = document.RootElement.GetProperty("paths").GetProperty(endpoint.Path);
-            var operation = path.GetProperty(endpoint.Method);
-            var responses = operation.GetProperty("responses");
+            var path = document.RootElement!.GetProperty("paths")!.GetProperty(endpoint.Path)!;
+            var operation = path.GetProperty(endpoint.Method)!;
+            var responses = operation.GetProperty("responses")!;
 
             Assert.True(responses.TryGetProperty("400", out var _), $"Endpoint {endpoint.Path} should have 400 response");
             Assert.True(responses.TryGetProperty("404", out var _), $"Endpoint {endpoint.Path} should have 404 response");
@@ -267,17 +270,17 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
         // Check /admin/stats/usage has days and model query params
-        var usagePath = document.RootElement.GetProperty("paths").GetProperty("/admin/stats/usage");
-        var getOperation = usagePath.GetProperty("get");
-        var parameters = getOperation.GetProperty("parameters");
+        var usagePath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/stats/usage");
+        var getOperation = usagePath.GetProperty("get")!;
+        var parameters = getOperation.GetProperty("parameters")!;
 
         var paramNames = new HashSet<string>();
         foreach (var param in parameters.EnumerateArray())
         {
-            var name = param.GetProperty("name").GetString();
+            var name = param.GetProperty("name").GetString()!;
             paramNames.Add(name);
         }
 
@@ -285,14 +288,14 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.True(paramNames.Contains("model"), "Usage endpoint should have 'model' parameter");
 
         // Check /admin/stats/requests has limit, offset, model params
-        var requestsPath = document.RootElement.GetProperty("paths").GetProperty("/admin/stats/requests");
-        var requestsOp = requestsPath.GetProperty("get");
-        var requestParams = requestsOp.GetProperty("parameters");
+        var requestsPath = document.RootElement!.GetProperty("paths")!.GetProperty("/admin/stats/requests");
+        var requestsOp = requestsPath.GetProperty("get")!;
+        var requestParams = requestsOp.GetProperty("parameters")!;
 
         var requestParamNames = new HashSet<string>();
         foreach (var param in requestParams.EnumerateArray())
         {
-            var name = param.GetProperty("name").GetString();
+            var name = param.GetProperty("name").GetString()!;
             requestParamNames.Add(name);
         }
 
@@ -307,13 +310,14 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
         // Assert
-        Assert.True(document.RootElement.TryGetProperty("openapi", out var openApiProp), "Document should have 'openapi' property");
-        Assert.True(document.RootElement.TryGetProperty("info", out var infoProp), "Document should have 'info' property");
-        Assert.True(document.RootElement.TryGetProperty("paths", out var pathsProp), "Document should have 'paths' property");
-        Assert.True(document.RootElement.TryGetProperty("components", out var componentsProp), "Document should have 'components' property");
+        var root = document.RootElement!;
+        Assert.True(root.TryGetProperty("openapi", out var openApiProp), "Document should have 'openapi' property");
+        Assert.True(root.TryGetProperty("info", out var infoProp), "Document should have 'info' property");
+        Assert.True(root.TryGetProperty("paths", out var pathsProp), "Document should have 'paths' property");
+        Assert.True(root.TryGetProperty("components", out var componentsProp), "Document should have 'components' property");
     }
 
     [Fact]
@@ -322,9 +326,10 @@ public class OpenApiSchemaTests : IClassFixture<WebApplicationFactory<Program>>
         // Act
         var response = await _client.GetAsync("/openapi/v1.json");
         response.EnsureSuccessStatusCode();
-        var document = await response.Content.ReadFromJsonAsync<JsonDocument>();
+        var document = await response.Content.ReadFromJsonAsync<JsonDocument>()!;
 
-        var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+        var root = document.RootElement!;
+        var schemas = root.GetProperty("components")!.GetProperty("schemas");
         var dateRange = schemas.GetProperty("DateRange");
 
         // Assert - should be object type

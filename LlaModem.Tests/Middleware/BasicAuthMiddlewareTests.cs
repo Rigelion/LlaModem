@@ -111,11 +111,11 @@ public class BasicAuthMiddlewareTests
     {
         // Arrange
         var config = Mock.Of<IOptions<RouterConfig>>(m => m.Value == new RouterConfig { AuthUsername = "a", AuthPassword = "b" });
-        var middleware = new BasicAuthMiddleware(_next, config, null);
+        var middleware = new BasicAuthMiddleware(_next, config, null!);
         
         // Act - use reflection to call private method
-        var method = typeof(BasicAuthMiddleware).GetMethod("CompareConstantTime", BindingFlags.NonPublic | BindingFlags.Static);
-        var result = (bool)method.Invoke(null, new object[] { "short", "muchlongerstring" });
+        var method = typeof(BasicAuthMiddleware).GetMethod("CompareConstantTime", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var result = (bool)method.Invoke(null, new object?[] { "short", "muchlongerstring" })!;
         
         // Assert
         Assert.False(result);
@@ -126,11 +126,11 @@ public class BasicAuthMiddlewareTests
     {
         // Arrange
         var config = Mock.Of<IOptions<RouterConfig>>(m => m.Value == new RouterConfig { AuthUsername = "a", AuthPassword = "b" });
-        var middleware = new BasicAuthMiddleware(_next, config, null);
+        var middleware = new BasicAuthMiddleware(_next, config, null!);
         
         // Act
-        var method = typeof(BasicAuthMiddleware).GetMethod("CompareConstantTime", BindingFlags.NonPublic | BindingFlags.Static);
-        var result = (bool)method.Invoke(null, new object[] { "same", "same" });
+        var method = typeof(BasicAuthMiddleware).GetMethod("CompareConstantTime", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var result = (bool)method.Invoke(null, new object?[] { "same", "same" })!;
         
         // Assert
         Assert.True(result);
@@ -143,7 +143,7 @@ public class BasicAuthMiddlewareTests
         var config = Mock.Of<IOptions<RouterConfig>>();
         
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new BasicAuthMiddleware(null, config, null));
+        Assert.Throws<ArgumentNullException>(() => new BasicAuthMiddleware(null!, config, null!));
     }
     
     [Fact]
@@ -153,7 +153,7 @@ public class BasicAuthMiddlewareTests
         var nullOptions = Mock.Of<IOptions<RouterConfig>>(m => m.Value == null);
         
         // Act & Assert
-        var ex = Assert.Throws<InvalidOperationException>(() => new BasicAuthMiddleware(_next, nullOptions, null));
+        var ex = Assert.Throws<InvalidOperationException>(() => new BasicAuthMiddleware(_next, nullOptions, null!));
         Assert.Contains("RouterConfig not configured", ex.Message);
     }
 }
