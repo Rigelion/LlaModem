@@ -14,4 +14,6 @@ public class SystemIdleTracker
     public DateTimeOffset LastRequest => DateTimeOffset.FromUnixTimeMilliseconds(Interlocked.Read(ref _lastRequestTicks));
 
     public void RecordRequest() => Interlocked.Exchange(ref _lastRequestTicks, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+    public void Reset() => Interlocked.Exchange(ref _lastRequestTicks, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 }

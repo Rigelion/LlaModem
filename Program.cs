@@ -74,12 +74,18 @@ public class Program
         builder.Services.AddSingleton<IIdleTimeoutResetter, IdleTimeoutService>();
         builder.Services.AddSingleton<IRequestForwarder, RequestForwarder>();
         builder.Services.AddSingleton<IModelProxyHandler, ModelProxyHandler>();
-        builder.Services.AddHostedService<IdleTimeoutService>();
 
         var app = builder.Build();
 
-        // Register shutdown handler to kill all tracked PowerShell windows
+        // Wire the idle stop callback after DI is fully built (avoids circular dependency)
         var modelManager = app.Services.GetRequiredService<ModelManager>();
+        var idleTimeoutResetter = app.Services.GetRequiredService<IIdleTimeoutResetter>();
+        if (idleTimeoutResetter is IdleTimeoutService idleService)
+        {
+            idleService.SetIdleStopCallback(modelManager.StopActiveModelAsync);
+        }
+
+        // Register shutdown handler to kill all tracked PowerShell windows
         var appLogger = app.Services.GetRequiredService<ILogger<Program>>();
         var appLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
         appLifetime.ApplicationStopping.Register(async () =>

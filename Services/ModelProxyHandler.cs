@@ -8,8 +8,6 @@ public sealed class ModelProxyHandler : IModelProxyHandler
     private readonly IOptions<AppConfig> _config;
     private readonly IMetaModelManager _modelManager;
     private readonly SystemIdleTracker _systemIdleTracker;
-    private readonly IIdleTimeoutResetter? _idleTimeoutResetter;
-
     private readonly DashboardService _dashboardService;
     private readonly IRequestForwarder _forwarder;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -19,7 +17,6 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         IOptions<AppConfig> config,
         IMetaModelManager modelManager,
         SystemIdleTracker systemIdleTracker,
-        IIdleTimeoutResetter? idleTimeoutResetter,
         DashboardService dashboardService,
         IRequestForwarder forwarder,
         IHttpClientFactory httpClientFactory,
@@ -28,7 +25,6 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         _config = config;
         _modelManager = modelManager;
         _systemIdleTracker = systemIdleTracker;
-        _idleTimeoutResetter = idleTimeoutResetter;
         _dashboardService = dashboardService;
         _forwarder = forwarder;
         _httpClientFactory = httpClientFactory;
@@ -67,12 +63,6 @@ public sealed class ModelProxyHandler : IModelProxyHandler
         {
             await ApiResponseBuilder.WriteAsync(context, ApiResponseBuilder.ServiceUnavailable(ex.Message));
             return;
-        }
-
-        var path = context.Request.Path.Value ?? string.Empty;
-        if (path.StartsWith("/v1", StringComparison.Ordinal) && !path.StartsWith("/admin", StringComparison.Ordinal))
-        {
-            _idleTimeoutResetter?.Reset();
         }
 
         _systemIdleTracker.RecordRequest();

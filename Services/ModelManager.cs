@@ -15,6 +15,7 @@ public sealed class ModelManager : IMetaModelManager
     private readonly DefaultModelLauncher _launcher;
     private readonly IModelRepository _repository;
     private readonly GpuMemoryChecker _gpuChecker;
+    private readonly IIdleTimeoutResetter _idleTimeout;
 
     public ModelManager(
         IOptions<AppConfig> config,
@@ -25,7 +26,8 @@ public sealed class ModelManager : IMetaModelManager
         ProcessKiller processKiller,
         DefaultModelLauncher launcher,
         IModelRepository repository,
-        GpuMemoryChecker gpuChecker)
+        GpuMemoryChecker gpuChecker,
+        IIdleTimeoutResetter idleTimeout)
     {
         _config = config.Value;
         _timeouts = routerConfig.Value.Timeouts;
@@ -36,6 +38,7 @@ public sealed class ModelManager : IMetaModelManager
         _launcher = launcher;
         _repository = repository;
         _gpuChecker = gpuChecker;
+        _idleTimeout = idleTimeout;
     }
 
     /// <summary>
@@ -123,10 +126,12 @@ public sealed class ModelManager : IMetaModelManager
         {
             var process = Process.GetProcessById(state.ProcessId);
             await _processKiller.StopAsync(process, state.ModelName, _logger);
+            _idleTimeout.StopIdleTracking();
         }
         catch (ArgumentException)
         {
             // Process no longer exists — just clear state
+            _idleTimeout.StopIdleTracking();
             await _repository.ClearStateAsync(ct);
         }
     }
@@ -149,6 +154,8 @@ public sealed class ModelManager : IMetaModelManager
 
         // VRAM check — disabled, see below
         // CheckVramAvailability(modelName);
+
+        _idleTimeout.StartIdleTracking();
 
         _logger.LogInformation(
             "Starting model '{Model}' via script '{Script}' on backend {Url}",
@@ -222,6 +229,7 @@ public sealed class ModelManager : IMetaModelManager
     public async Task ShutdownAsync(CancellationToken ct = default)
     {
         await _launcher.ShutdownAllAsync(_logger, ct);
+        _idleTimeout.StopIdleTracking();
         await _repository.ClearStateAsync(ct);
     }
 }

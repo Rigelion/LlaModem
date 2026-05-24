@@ -200,6 +200,9 @@
   },
   "active": "86d897e6aa1a8aa5",
   "lastOpenFiles": [
+    "wiki/sources/lifecycle-management-via-start-stop-tracking.md",
+    "wiki/sources/post-construction-callback-wiring-pattern.md",
+    "wiki/sources/idle-service-two-instance-bug-fix.md",
     "wiki/sources/nullable-warning-squelch-strategy.md",
     "wiki/sources/test-seeding-utc-vs-local-timezone-drift.md",
     "wiki/sources/dapper-queryfromfirstordefault-fails-on-aggregates.md",
@@ -226,9 +229,6 @@
     "wiki/concepts/ModelLifecycleManagement.md",
     "wiki/concepts/MinimalAPIArchitecture.md",
     "wiki/concepts/BasicAuthMiddleware.md",
-    "WIKI_SCHEMA.md",
-    "meta/log.md",
-    "wiki/entities/UsageService.md",
     "raw/sources/SRC-2026-05-19-001/manifest.json",
     "raw/sources/SRC-2026-05-19-001/attachments",
     "raw/sources/SRC-2026-05-19-001"
