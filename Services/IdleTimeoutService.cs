@@ -6,7 +6,8 @@ namespace LlaModem.Services;
 
 public interface IIdleTimeoutResetter
 {
-    void Reset();
+    void StartIdleTracking();
+    void StopIdleTracking();
 }
 
 public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
@@ -15,12 +16,13 @@ public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
     private const int MaxCheckIntervalSec = 60;
     private const int CheckIntervalDivisor = 20;
 
-    private readonly ModelManager _modelManager;
+    private Func<CancellationToken, Task>? _stopActiveModel;
     private readonly SystemIdleTracker _systemIdleTracker;
     private readonly RouterConfig _config;
     private readonly ILogger<IdleTimeoutService> _logger;
     private PeriodicTimer _timer;
     private ManualResetEventSlim _resetSignal = new ManualResetEventSlim(true);
+    private CancellationTokenSource? _stoppingCts;
 
     /// <summary>
     /// Derives the idle-check polling interval from the configured timeout.
@@ -31,15 +33,14 @@ public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
         Math.Min(MaxCheckIntervalSec, Math.Max(MinCheckIntervalSec, _config.Timeouts.IdleTimeoutSeconds / CheckIntervalDivisor));
 
     public IdleTimeoutService(
-        ModelManager modelManager,
         SystemIdleTracker systemIdleTracker,
         IOptions<RouterConfig> config,
         ILogger<IdleTimeoutService> logger)
     {
-        _modelManager = modelManager;
         _systemIdleTracker = systemIdleTracker;
         _config = config.Value;
         _logger = logger;
+        // Callback is wired post-construction by ModelManager to avoid circular DI dependency
         _timer = new PeriodicTimer(TimeSpan.FromSeconds(CheckInterval));
     }
 
@@ -68,7 +69,10 @@ public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
                         "Idle timeout reached ({Elapsed}s). Stopping active model...",
                         elapsed.TotalSeconds);
 
-                    await _modelManager.StopActiveModelAsync(stoppingToken);
+                    if (_stopActiveModel != null)
+                    {
+                        await _stopActiveModel(stoppingToken);
+                    }
                 }
             }
         }
@@ -82,13 +86,29 @@ public class IdleTimeoutService : BackgroundService, IIdleTimeoutResetter
         }
     }
 
-    public void Reset()
+    /// <summary>
+    /// Sets the callback to invoke when idle timeout is reached.
+    /// Wired by ModelManager after DI container is fully built.
+    /// </summary>
+    public void SetIdleStopCallback(Func<CancellationToken, Task> callback)
     {
-        _logger.LogInformation("Idle timeout service stopped");
+        _stopActiveModel = callback;
+    }
+
+    public void StartIdleTracking()
+    {
+        _logger.LogInformation("Idle timeout tracking started (timeout: {Seconds}s)", _config.Timeouts.IdleTimeoutSeconds);
+        _resetSignal = new ManualResetEventSlim(true);
+        _stoppingCts?.Cancel();
+        _stoppingCts = new CancellationTokenSource();
+        _ = ExecuteAsync(_stoppingCts.Token);
+    }
+
+    public void StopIdleTracking()
+    {
+        _logger.LogInformation("Idle timeout tracking stopped");
+        _stoppingCts?.Cancel();
         Dispose();
-        _logger.LogInformation("Idle timeout service started (timeout: {Seconds}s)", _config.Timeouts.IdleTimeoutSeconds);
-        _timer = new PeriodicTimer(TimeSpan.FromSeconds(CheckInterval));
-        _resetSignal = new ManualResetEventSlim(true); // Recreate signal after disposal
     }
 
     public override void Dispose()
