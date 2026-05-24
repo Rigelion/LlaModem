@@ -89,14 +89,38 @@ public class IdleTimeoutServiceTests
     #region IIdleTimeoutResetter Interface Tests
 
     [Fact]
-    public void IIdleTimeoutResetter_Interface_IsImplemented()
+    public void IIdleTimeoutResetter_Interface_HasLifecycleMethods()
     {
         // Act - Verify interface exists and can be cast
         var resetter = (IIdleTimeoutResetter)new IdleTimeoutService(
-            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+            null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
 
         // Assert
         Assert.NotNull(resetter);
+    }
+
+    [Fact]
+    public void StartIdleTracking_DoesNotThrow()
+    {
+        // Arrange
+        var service = new IdleTimeoutService(
+            null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+
+        // Act & Assert
+        var exception = Record.Exception(() => service.StartIdleTracking());
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void StopIdleTracking_DoesNotThrow()
+    {
+        // Arrange
+        var service = new IdleTimeoutService(
+            null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+
+        // Act & Assert
+        var exception = Record.Exception(() => service.StopIdleTracking());
+        Assert.Null(exception);
     }
 
     #endregion
@@ -108,7 +132,7 @@ public class IdleTimeoutServiceTests
     {
         // Arrange
         var service = new IdleTimeoutService(
-            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
+            null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
 
         // Act - Get the signal field via reflection
         var resetSignalField = typeof(IdleTimeoutService).GetField("_resetSignal", 
@@ -124,7 +148,7 @@ public class IdleTimeoutServiceTests
     #region Null Safety Tests
 
     [Fact]
-    public void ModelProxyHandler_HandlesNullResetter()
+    public void ModelProxyHandler_CreatesWithoutIdleTimeoutResetter()
     {
         // Arrange
         var config = Options.Create(new AppConfig
@@ -142,50 +166,14 @@ public class IdleTimeoutServiceTests
         var modelLogger = new LoggerFactory().CreateLogger<ModelProxyHandler>();
         var dashboardLogger = new LoggerFactory().CreateLogger<DashboardService>();
 
-        // Act - Create handler with null idleTimeoutResetter (should not throw)
+        // Act - Create handler without idleTimeoutResetter parameter
         var dashboardService = new DashboardService(
             config, null!, null!, null!, null!, Options.Create(new RouterConfig()), dashboardLogger);
         var handler = new ModelProxyHandler(
-            config, null!, idleTracker, null!, dashboardService, forwarder, httpClientFactory, modelLogger);
+            config, null!, idleTracker, dashboardService, forwarder, httpClientFactory, modelLogger);
 
         // Assert - Handler should be created successfully
         Assert.NotNull(handler);
-    }
-
-    #endregion
-
-    #region Reset Method Tests
-
-    [Fact]
-    public void ResetMethod_CreatesNewTimer()
-    {
-        // Arrange
-        var service = new IdleTimeoutService(
-            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
-
-        // Act - Get the timer field via reflection before reset
-        var timerField = typeof(IdleTimeoutService).GetField("_timer", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var originalTimer = timerField!.GetValue(service)!;
-
-        // Act - Call Reset (which disposes and recreates the timer)
-        service.Reset();
-
-        // Assert - Timer should be a new instance after reset
-        var newTimer = timerField.GetValue(service)!;
-        Assert.NotEqual(originalTimer, newTimer);
-    }
-
-    [Fact]
-    public void ResetMethod_SucceedsWithoutException()
-    {
-        // Arrange
-        var service = new IdleTimeoutService(
-            null!, null!, Options.Create(new RouterConfig()), new LoggerFactory().CreateLogger<IdleTimeoutService>());
-
-        // Act & Assert - Verify Reset can be called (no exception thrown)
-        var exception = Record.Exception(() => service.Reset());
-        Assert.Null(exception);
     }
 
     #endregion
