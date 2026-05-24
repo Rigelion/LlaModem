@@ -379,8 +379,11 @@
   "sources/SRC-2026-05-19-001": [],
   "sources/SRC-2026-05-19-002": [],
   "sources/dapper-queryfromfirstordefault-fails-on-aggregates": [],
+  "sources/idle-service-two-instance-bug-fix": [],
   "sources/idle-timer-epoch-zero-bug": [],
+  "sources/lifecycle-management-via-start-stop-tracking": [],
   "sources/nullable-warning-squelch-strategy": [],
+  "sources/post-construction-callback-wiring-pattern": [],
   "sources/test-seeding-utc-vs-local-timezone-drift": [],
   "syntheses/llamodemarchitectureoverview": []
 }

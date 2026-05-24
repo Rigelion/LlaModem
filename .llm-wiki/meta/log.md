@@ -240,3 +240,12 @@
 ## [2026-05-23T17:20:47.565Z] retro
 - slug: "nullable-warning-squelch-strategy", title: "Nullability warning squelch strategy for test vs production code", category: "bugfix"
 
+## [2026-05-24T19:05:36.908Z] retro
+- slug: "idle-service-two-instance-bug-fix", title: "IdleTimeoutService two-instance DI bug fix", category: "bugfix"
+
+## [2026-05-24T19:05:47.665Z] retro
+- slug: "post-construction-callback-wiring-pattern", title: "Post-construction callback wiring to break DI cycles", category: "architecture"
+
+## [2026-05-24T19:05:58.300Z] retro
+- slug: "lifecycle-management-via-start-stop-tracking", title: "Lifecycle management via StartIdleTracking and StopIdleTracking", category: "design"
+
